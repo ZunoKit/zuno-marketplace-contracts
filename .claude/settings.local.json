@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npx husky add:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm format:js:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(git commit:*)",
+      "Bash(forge fmt:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(git reset:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
