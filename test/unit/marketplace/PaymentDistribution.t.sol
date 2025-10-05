@@ -77,8 +77,17 @@ contract PaymentDistributionTest is Test {
         // Setup listing
         vm.startPrank(SELLER);
         mockERC721.approve(address(erc721Exchange), 1);
-        bytes32 listingId = erc721Exchange.getGeneratedListingId(address(mockERC721), 1, SELLER);
-        erc721Exchange.listNFT(address(mockERC721), 1, DEFAULT_PRICE, DEFAULT_DURATION);
+        bytes32 listingId = erc721Exchange.getGeneratedListingId(
+            address(mockERC721),
+            1,
+            SELLER
+        );
+        erc721Exchange.listNFT(
+            address(mockERC721),
+            1,
+            DEFAULT_PRICE,
+            DEFAULT_DURATION
+        );
         vm.stopPrank();
 
         // Record initial balances
@@ -104,14 +113,21 @@ contract PaymentDistributionTest is Test {
 
         // Verify marketplace received fee
         assertEq(
-            MARKETPLACE_WALLET.balance, marketplaceBalanceBefore + takerFee, "Marketplace should receive taker fee"
+            MARKETPLACE_WALLET.balance,
+            marketplaceBalanceBefore + takerFee,
+            "Marketplace should receive taker fee"
         );
 
         // Verify NFT ownership transferred
         assertEq(mockERC721.ownerOf(1), BUYER, "Buyer should own the NFT");
     }
 
-    function test_ERC721_BuyNFT_WithRoyalty_PaymentsDistributedCorrectly() public {
+    function test_ERC721_BuyNFT_WithRoyalty_PaymentsDistributedCorrectly()
+        public
+    {
+        // Ensure ERC2981 default royalty does not interfere
+        vm.prank(address(this));
+        mockERC721.setDefaultRoyalty(address(this), 0);
         // Setup royalty via Fee contract (not ERC2981)
         vm.prank(address(this));
         Fee feeContract = mockERC721.getFeeContract();
@@ -120,8 +136,17 @@ contract PaymentDistributionTest is Test {
         // Setup listing
         vm.startPrank(SELLER);
         mockERC721.approve(address(erc721Exchange), 1);
-        bytes32 listingId = erc721Exchange.getGeneratedListingId(address(mockERC721), 1, SELLER);
-        erc721Exchange.listNFT(address(mockERC721), 1, DEFAULT_PRICE, DEFAULT_DURATION);
+        bytes32 listingId = erc721Exchange.getGeneratedListingId(
+            address(mockERC721),
+            1,
+            SELLER
+        );
+        erc721Exchange.listNFT(
+            address(mockERC721),
+            1,
+            DEFAULT_PRICE,
+            DEFAULT_DURATION
+        );
         vm.stopPrank();
 
         // Record initial balances
@@ -147,10 +172,14 @@ contract PaymentDistributionTest is Test {
             "Seller should receive listing price minus royalty"
         );
         assertEq(
-            MARKETPLACE_WALLET.balance, marketplaceBalanceBefore + takerFee, "Marketplace should receive taker fee"
+            MARKETPLACE_WALLET.balance,
+            marketplaceBalanceBefore + takerFee,
+            "Marketplace should receive taker fee"
         );
         assertEq(
-            address(this).balance, royaltyReceiverBalanceBefore + royalty, "Royalty receiver should receive royalty"
+            address(this).balance,
+            royaltyReceiverBalanceBefore + royalty,
+            "Royalty receiver should receive royalty"
         );
     }
 
@@ -162,8 +191,18 @@ contract PaymentDistributionTest is Test {
         // Setup listing
         vm.startPrank(SELLER);
         mockERC1155.setApprovalForAll(address(erc1155Exchange), true);
-        bytes32 listingId = erc1155Exchange.getGeneratedListingId(address(mockERC1155), 1, SELLER);
-        erc1155Exchange.listNFT(address(mockERC1155), 1, 5, DEFAULT_PRICE, DEFAULT_DURATION);
+        bytes32 listingId = erc1155Exchange.getGeneratedListingId(
+            address(mockERC1155),
+            1,
+            SELLER
+        );
+        erc1155Exchange.listNFT(
+            address(mockERC1155),
+            1,
+            5,
+            DEFAULT_PRICE,
+            DEFAULT_DURATION
+        );
         vm.stopPrank();
 
         // Record initial balances
@@ -189,18 +228,26 @@ contract PaymentDistributionTest is Test {
 
         // Verify marketplace received fee
         assertEq(
-            MARKETPLACE_WALLET.balance, marketplaceBalanceBefore + takerFee, "Marketplace should receive taker fee"
+            MARKETPLACE_WALLET.balance,
+            marketplaceBalanceBefore + takerFee,
+            "Marketplace should receive taker fee"
         );
 
         // Verify NFT ownership transferred
-        assertEq(mockERC1155.balanceOf(BUYER, 1), 5, "Buyer should own the NFTs");
+        assertEq(
+            mockERC1155.balanceOf(BUYER, 1),
+            5,
+            "Buyer should own the NFTs"
+        );
     }
 
     // ============================================================================
     // AUCTION PAYMENT TESTS
     // ============================================================================
 
-    function test_EnglishAuction_Settlement_SellerReceivesCorrectPayment() public {
+    function test_EnglishAuction_Settlement_SellerReceivesCorrectPayment()
+        public
+    {
         // Set royalty to 0% for this test to match expected calculations
         mockERC721.setDefaultRoyalty(SELLER, 0);
 
@@ -243,7 +290,9 @@ contract PaymentDistributionTest is Test {
             "Seller should receive correct amount after fees"
         );
         assertEq(
-            MARKETPLACE_WALLET.balance, marketplaceBalanceBefore + marketplaceFee, "Marketplace should receive fee"
+            MARKETPLACE_WALLET.balance,
+            marketplaceBalanceBefore + marketplaceFee,
+            "Marketplace should receive fee"
         );
 
         // Verify NFT ownership
@@ -254,12 +303,20 @@ contract PaymentDistributionTest is Test {
     // MULTIPLE BIDDING TESTS
     // ============================================================================
 
-    function test_EnglishAuction_MultipleBidsFromSameUser_RefundsAccumulate() public {
+    function test_EnglishAuction_MultipleBidsFromSameUser_RefundsAccumulate()
+        public
+    {
         // Create auction
         vm.startPrank(SELLER);
         mockERC721.setApprovalForAll(address(auctionFactory), true);
-        bytes32 auctionId =
-            auctionFactory.createEnglishAuction(address(mockERC721), 1, 1, DEFAULT_PRICE, 0, DEFAULT_DURATION);
+        bytes32 auctionId = auctionFactory.createEnglishAuction(
+            address(mockERC721),
+            1,
+            1,
+            DEFAULT_PRICE,
+            0,
+            DEFAULT_DURATION
+        );
         vm.stopPrank();
 
         // BIDDER1 places first bid
@@ -285,20 +342,38 @@ contract PaymentDistributionTest is Test {
         // Check pending refunds for BIDDER1 (should have thirdBid refund)
         // When BIDDER1 bid thirdBid and became highest bidder, their pending refunds were cleared
         // But when BIDDER2 bid fourthBid, BIDDER1's thirdBid becomes refundable
-        uint256 bidder1Refund = auctionFactory.getPendingRefund(auctionId, BIDDER1);
-        assertEq(bidder1Refund, thirdBid, "BIDDER1 should have refund from third bid (outbid by BIDDER2's fourth bid)");
+        uint256 bidder1Refund = auctionFactory.getPendingRefund(
+            auctionId,
+            BIDDER1
+        );
+        assertEq(
+            bidder1Refund,
+            thirdBid,
+            "BIDDER1 should have refund from third bid (outbid by BIDDER2's fourth bid)"
+        );
 
         // Check pending refunds for BIDDER2 (should have 0 because they are currently highest bidder)
         // When BIDDER2 bid fourthBid and became highest bidder again, their pending refunds were cleared
         // This prevents the double-withdraw bug
-        uint256 bidder2Refund = auctionFactory.getPendingRefund(auctionId, BIDDER2);
-        assertEq(bidder2Refund, 0, "BIDDER2 should have NO refunds when they are highest bidder");
+        uint256 bidder2Refund = auctionFactory.getPendingRefund(
+            auctionId,
+            BIDDER2
+        );
+        assertEq(
+            bidder2Refund,
+            0,
+            "BIDDER2 should have NO refunds when they are highest bidder"
+        );
 
         // Withdraw refunds
         uint256 bidder1BalanceBefore = BIDDER1.balance;
         vm.prank(BIDDER1);
         auctionFactory.withdrawBid(auctionId);
-        assertEq(BIDDER1.balance, bidder1BalanceBefore + bidder1Refund, "BIDDER1 should receive accumulated refunds");
+        assertEq(
+            BIDDER1.balance,
+            bidder1BalanceBefore + bidder1Refund,
+            "BIDDER1 should receive accumulated refunds"
+        );
     }
 
     // ============================================================================
