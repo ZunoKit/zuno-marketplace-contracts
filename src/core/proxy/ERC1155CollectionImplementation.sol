@@ -4,35 +4,37 @@ pragma solidity ^0.8.30;
 import {ERC1155Collection} from "../collection/ERC1155Collection.sol";
 import {CollectionParams, MintStage} from "src/types/ListingTypes.sol";
 import {Fee} from "src/common/Fee.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 /**
  * @title ERC1155CollectionImplementation
  * @notice Implementation contract for ERC1155 collections using proxy pattern
  * @dev This contract is deployed once and used as implementation for all ERC1155 collection proxies
+ * @dev Uses OpenZeppelin's Initializable to prevent re-initialization attacks
  * @author NFT Marketplace Team
  */
-contract ERC1155CollectionImplementation is ERC1155Collection {
-    /// @notice Flag to track if contract has been initialized
-    bool private _initialized;
-
+contract ERC1155CollectionImplementation is ERC1155Collection, Initializable {
     /**
      * @notice Constructor that prevents direct usage
-     * @dev This ensures the implementation contract cannot be used directly
+     * @dev Disables initializers to prevent implementation contract initialization
+     * @dev Uses dummy params to satisfy parent constructor requirements
      */
     constructor() ERC1155Collection(_getDefaultParams()) {
-        _initialized = true; // Prevent initialization of implementation
+        _disableInitializers();
     }
 
     /**
      * @notice Initializes the ERC1155 collection implementation
      * @param params Collection parameters
      * @dev This function replaces the constructor for proxy pattern
+     * @dev Uses OpenZeppelin's initializer modifier to prevent re-initialization
+     * @dev Can only be called once per proxy instance
      */
-    function initialize(CollectionParams memory params) external {
-        require(!_initialized, "Already initialized");
+    function initialize(CollectionParams memory params) external initializer {
         require(params.owner != address(0), "Zero address owner");
-
-        _initialized = true;
+        require(params.maxSupply > 0, "Max supply must be greater than 0");
+        require(bytes(params.name).length > 0, "Name cannot be empty");
+        require(bytes(params.symbol).length > 0, "Symbol cannot be empty");
 
         // For proxy pattern, we need to manually initialize state
         // since constructors are not called on proxies

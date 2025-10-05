@@ -43,9 +43,24 @@ contract BaseCollection is Ownable {
         s_feeContract = new Fee(params.owner, params.royaltyFee);
     }
 
-    // Add addresses to allowlist
+    /// @notice Maximum batch size for allowlist operations to prevent DoS
+    uint256 public constant MAX_ALLOWLIST_BATCH_SIZE = 100;
+
+    /**
+     * @notice Adds addresses to the allowlist
+     * @param addresses Array of addresses to add to allowlist
+     * @dev Limited to MAX_ALLOWLIST_BATCH_SIZE to prevent DoS attacks
+     * @dev Reverts if batch size exceeds limit or contains zero addresses
+     */
     function addToAllowlist(address[] calldata addresses) external onlyOwner {
-        for (uint256 i = 0; i < addresses.length; i++) {
+        uint256 length = addresses.length;
+        if (length == 0) revert Collection__InvalidAmount();
+        if (length > MAX_ALLOWLIST_BATCH_SIZE) {
+            revert Collection__MintLimitExceeded(); // Reusing error for batch limit
+        }
+
+        for (uint256 i = 0; i < length; i++) {
+            if (addresses[i] == address(0)) revert Collection__InvalidAmount();
             s_allowlist[addresses[i]] = true;
         }
     }

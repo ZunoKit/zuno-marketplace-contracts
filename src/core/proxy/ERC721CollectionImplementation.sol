@@ -4,35 +4,37 @@ pragma solidity ^0.8.30;
 import {ERC721Collection} from "../collection/ERC721Collection.sol";
 import {CollectionParams, MintStage} from "src/types/ListingTypes.sol";
 import {Fee} from "src/common/Fee.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 /**
  * @title ERC721CollectionImplementation
  * @notice Implementation contract for ERC721 collections using proxy pattern
  * @dev This contract is deployed once and used as implementation for all ERC721 collection proxies
+ * @dev Uses OpenZeppelin's Initializable to prevent re-initialization attacks
  * @author NFT Marketplace Team
  */
-contract ERC721CollectionImplementation is ERC721Collection {
-    /// @notice Flag to track if contract has been initialized
-    bool private _initialized;
-
+contract ERC721CollectionImplementation is ERC721Collection, Initializable {
     /**
      * @notice Constructor that prevents direct usage
-     * @dev This ensures the implementation contract cannot be used directly
+     * @dev Disables initializers to prevent implementation contract initialization
+     * @dev Uses dummy params to satisfy parent constructor requirements
      */
     constructor() ERC721Collection(_getDefaultParams()) {
-        _initialized = true; // Prevent initialization of implementation
+        _disableInitializers();
     }
 
     /**
      * @notice Initializes the ERC721 collection implementation
      * @param params Collection parameters
      * @dev This function replaces the constructor for proxy pattern
+     * @dev Uses OpenZeppelin's initializer modifier to prevent re-initialization
+     * @dev Can only be called once per proxy instance
      */
-    function initialize(CollectionParams memory params) external {
-        require(!_initialized, "Already initialized");
+    function initialize(CollectionParams memory params) external initializer {
         require(params.owner != address(0), "Zero address owner");
-
-        _initialized = true;
+        require(params.maxSupply > 0, "Max supply must be greater than 0");
+        require(bytes(params.name).length > 0, "Name cannot be empty");
+        require(bytes(params.symbol).length > 0, "Symbol cannot be empty");
 
         // Initialize collection state manually since we can't call parent constructors
         _initializeCollection(params);
