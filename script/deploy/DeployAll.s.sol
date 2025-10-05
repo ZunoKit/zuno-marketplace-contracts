@@ -169,12 +169,7 @@ contract DeployAll is Script {
         // Deploy registries
         hubExchangeRegistry = new ExchangeRegistry(admin);
         hubCollectionRegistry = new CollectionRegistry(admin);
-        hubFeeRegistry = new FeeRegistry(
-            admin,
-            address(baseFee),
-            address(feeManager),
-            address(royaltyManager)
-        );
+        hubFeeRegistry = new FeeRegistry(admin, address(baseFee), address(feeManager), address(royaltyManager));
         hubAuctionRegistry = new AuctionRegistry(admin);
 
         // Deploy hub
@@ -187,26 +182,14 @@ contract DeployAll is Script {
         );
 
         // Register all contracts
-        hubExchangeRegistry.registerExchange(
-            IExchangeRegistry.TokenStandard.ERC721,
-            address(erc721Exchange)
-        );
-        hubExchangeRegistry.registerExchange(
-            IExchangeRegistry.TokenStandard.ERC1155,
-            address(erc1155Exchange)
-        );
+        hubExchangeRegistry.registerExchange(IExchangeRegistry.TokenStandard.ERC721, address(erc721Exchange));
+        hubExchangeRegistry.registerExchange(IExchangeRegistry.TokenStandard.ERC1155, address(erc1155Exchange));
 
         hubCollectionRegistry.registerFactory("ERC721", address(erc721Factory));
         hubCollectionRegistry.registerFactory("ERC1155", address(erc1155Factory));
 
-        hubAuctionRegistry.registerAuction(
-            IAuctionRegistry.AuctionType.ENGLISH,
-            address(englishAuction)
-        );
-        hubAuctionRegistry.registerAuction(
-            IAuctionRegistry.AuctionType.DUTCH,
-            address(dutchAuction)
-        );
+        hubAuctionRegistry.registerAuction(IAuctionRegistry.AuctionType.ENGLISH, address(englishAuction));
+        hubAuctionRegistry.registerAuction(IAuctionRegistry.AuctionType.DUTCH, address(dutchAuction));
         hubAuctionRegistry.updateAuctionFactory(address(auctionFactory));
 
         console.log("  HubExchangeRegistry:", address(hubExchangeRegistry));
@@ -250,18 +233,22 @@ contract DeployAll is Script {
      * @notice Get all deployed addresses
      * @dev Useful for integration tests
      */
-    function getDeployedAddresses() external view returns (
-        address _hub,
-        address _erc721Exchange,
-        address _erc1155Exchange,
-        address _erc721Factory,
-        address _erc1155Factory,
-        address _englishAuction,
-        address _dutchAuction,
-        address _baseFee,
-        address _feeManager,
-        address _royaltyManager
-    ) {
+    function getDeployedAddresses()
+        external
+        view
+        returns (
+            address _hub,
+            address _erc721Exchange,
+            address _erc1155Exchange,
+            address _erc721Factory,
+            address _erc1155Factory,
+            address _englishAuction,
+            address _dutchAuction,
+            address _baseFee,
+            address _feeManager,
+            address _royaltyManager
+        )
+    {
         return (
             address(hub),
             address(erc721Exchange),

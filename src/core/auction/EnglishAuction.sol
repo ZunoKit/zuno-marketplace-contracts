@@ -453,9 +453,9 @@ contract EnglishAuction is BaseAuction {
             revert Auction__UnsupportedAuctionType();
         }
 
-        // If there are bids, refund all bidders
+        // If there are bids, cancellation is not allowed for English auctions
         if (auction.bidCount > 0) {
-            _refundAllBidders(auctionId);
+            revert Auction__CannotCancelWithBids();
         }
 
         // Cancel the auction
@@ -475,10 +475,7 @@ contract EnglishAuction is BaseAuction {
     function _refundAllBidders(bytes32 auctionId) internal {
         Auction storage auction = auctions[auctionId];
 
-        // Add current highest bidder to pending refunds if exists
-        if (auction.highestBidder != address(0)) {
-            pendingRefunds[auctionId][auction.highestBidder] += auction.highestBid;
-        }
+        // Highest bidder is handled directly in cancelAuctionFor; ensure others are marked refunded
 
         // Mark all bids as refunded in the bids array
         Bid[] storage bids = auctionBids[auctionId];

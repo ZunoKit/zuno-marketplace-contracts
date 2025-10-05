@@ -63,20 +63,13 @@ contract GasBenchmarks is Test {
         console2.log("Target Gas Limit:", TARGET_LIST_GAS);
 
         if (gasUsed > TARGET_LIST_GAS) {
-            console2.log(
-                "WARNING: Gas usage exceeds target by",
-                gasUsed - TARGET_LIST_GAS
-            );
+            console2.log("WARNING: Gas usage exceeds target by", gasUsed - TARGET_LIST_GAS);
         } else {
             console2.log("Gas usage within target");
         }
 
         // Alert if significantly over target (20% tolerance)
-        assertLt(
-            gasUsed,
-            (TARGET_LIST_GAS * 120) / 100,
-            "Gas usage significantly exceeds target"
-        );
+        assertLt(gasUsed, (TARGET_LIST_GAS * 120) / 100, "Gas usage significantly exceeds target");
 
         vm.stopPrank();
     }
@@ -89,11 +82,7 @@ contract GasBenchmarks is Test {
         vm.prank(seller);
         exchange.listNFT(address(nft), 1, NFT_PRICE, LISTING_DURATION);
 
-        bytes32 listingId = exchange.getGeneratedListingId(
-            address(nft),
-            1,
-            seller
-        );
+        bytes32 listingId = exchange.getGeneratedListingId(address(nft), 1, seller);
         uint256 buyerSeesPrice = exchange.getBuyerSeesPrice(listingId);
 
         vm.startPrank(buyer);
@@ -106,19 +95,12 @@ contract GasBenchmarks is Test {
         console2.log("Target Gas Limit:", TARGET_BUY_GAS);
 
         if (gasUsed > TARGET_BUY_GAS) {
-            console2.log(
-                "WARNING: Gas usage exceeds target by",
-                gasUsed - TARGET_BUY_GAS
-            );
+            console2.log("WARNING: Gas usage exceeds target by", gasUsed - TARGET_BUY_GAS);
         } else {
             console2.log("Gas usage within target");
         }
 
-        assertLt(
-            gasUsed,
-            (TARGET_BUY_GAS * 120) / 100,
-            "Gas usage significantly exceeds target"
-        );
+        assertLt(gasUsed, (TARGET_BUY_GAS * 120) / 100, "Gas usage significantly exceeds target");
 
         vm.stopPrank();
     }
@@ -152,19 +134,12 @@ contract GasBenchmarks is Test {
         console2.log("Target Gas Per NFT:", TARGET_BATCH_LIST_GAS);
 
         if (gasPerNFT > TARGET_BATCH_LIST_GAS) {
-            console2.log(
-                "WARNING: Gas per NFT exceeds target by",
-                gasPerNFT - TARGET_BATCH_LIST_GAS
-            );
+            console2.log("WARNING: Gas per NFT exceeds target by", gasPerNFT - TARGET_BATCH_LIST_GAS);
         } else {
             console2.log("Batch gas efficiency within target");
         }
 
-        assertLt(
-            gasPerNFT,
-            (TARGET_BATCH_LIST_GAS * 120) / 100,
-            "Batch gas efficiency exceeds target"
-        );
+        assertLt(gasPerNFT, (TARGET_BATCH_LIST_GAS * 120) / 100, "Batch gas efficiency exceeds target");
 
         vm.stopPrank();
     }
@@ -177,11 +152,7 @@ contract GasBenchmarks is Test {
         vm.prank(seller);
         exchange.listNFT(address(nft), 1, NFT_PRICE, LISTING_DURATION);
 
-        bytes32 listingId = exchange.getGeneratedListingId(
-            address(nft),
-            1,
-            seller
-        );
+        bytes32 listingId = exchange.getGeneratedListingId(address(nft), 1, seller);
 
         vm.startPrank(seller);
 
@@ -193,19 +164,12 @@ contract GasBenchmarks is Test {
         console2.log("Target Gas Limit:", TARGET_CANCEL_GAS);
 
         if (gasUsed > TARGET_CANCEL_GAS) {
-            console2.log(
-                "WARNING: Gas usage exceeds target by",
-                gasUsed - TARGET_CANCEL_GAS
-            );
+            console2.log("WARNING: Gas usage exceeds target by", gasUsed - TARGET_CANCEL_GAS);
         } else {
             console2.log("Gas usage within target");
         }
 
-        assertLt(
-            gasUsed,
-            (TARGET_CANCEL_GAS * 120) / 100,
-            "Gas usage significantly exceeds target"
-        );
+        assertLt(gasUsed, (TARGET_CANCEL_GAS * 120) / 100, "Gas usage significantly exceeds target");
 
         vm.stopPrank();
     }

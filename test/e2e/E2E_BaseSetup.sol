@@ -206,14 +206,8 @@ abstract contract E2E_BaseSetup is Test {
         // Deploy base Fee contract
         baseFeeContract = new Fee(admin, ROYALTY_FEE_BPS);
 
-        feeManager = new AdvancedFeeManager(
-            address(accessControl),
-            marketplaceWallet
-        );
-        royaltyManager = new AdvancedRoyaltyManager(
-            address(accessControl),
-            address(baseFeeContract)
-        );
+        feeManager = new AdvancedFeeManager(address(accessControl), marketplaceWallet);
+        royaltyManager = new AdvancedRoyaltyManager(address(accessControl), address(baseFeeContract));
 
         console2.log("Fee management deployed");
         console2.log("  BaseFee:", address(baseFeeContract));
@@ -239,10 +233,7 @@ abstract contract E2E_BaseSetup is Test {
         erc1155Factory = new ERC1155CollectionFactory();
 
         // Deploy registry with both factory addresses
-        factoryRegistry = new CollectionFactoryRegistry(
-            address(erc721Factory),
-            address(erc1155Factory)
-        );
+        factoryRegistry = new CollectionFactoryRegistry(address(erc721Factory), address(erc1155Factory));
 
         // Deploy verifier
         collectionVerifier = new CollectionVerifier(
@@ -269,14 +260,8 @@ abstract contract E2E_BaseSetup is Test {
     }
 
     function _deployAdvancedFeatures() internal {
-        offerManager = new OfferManager(
-            address(accessControl),
-            address(feeManager)
-        );
-        bundleManager = new BundleManager(
-            address(accessControl),
-            address(feeManager)
-        );
+        offerManager = new OfferManager(address(accessControl), address(feeManager));
+        bundleManager = new BundleManager(address(accessControl), address(feeManager));
 
         console2.log("Advanced features deployed");
         console2.log("  OfferManager:", address(offerManager));
@@ -360,11 +345,10 @@ abstract contract E2E_BaseSetup is Test {
     // HELPER FUNCTIONS - COLLECTION CREATION
     // ============================================================================
 
-    function createERC721Collection(
-        address creator,
-        string memory name,
-        string memory symbol
-    ) internal returns (address collection) {
+    function createERC721Collection(address creator, string memory name, string memory symbol)
+        internal
+        returns (address collection)
+    {
         CollectionParams memory params = CollectionParams({
             name: name,
             symbol: symbol,
@@ -388,11 +372,10 @@ abstract contract E2E_BaseSetup is Test {
         return collection;
     }
 
-    function createERC1155Collection(
-        address creator,
-        string memory name,
-        string memory symbol
-    ) internal returns (address collection) {
+    function createERC1155Collection(address creator, string memory name, string memory symbol)
+        internal
+        returns (address collection)
+    {
         CollectionParams memory params = CollectionParams({
             name: name,
             symbol: symbol,
@@ -420,51 +403,27 @@ abstract contract E2E_BaseSetup is Test {
     // HELPER FUNCTIONS - NFT OPERATIONS
     // ============================================================================
 
-    function mintERC721(
-        address collection,
-        address to,
-        uint256 /* tokenId */
-    ) internal {
+    function mintERC721(address collection, address to, uint256 /* tokenId */ ) internal {
         vm.prank(to);
         ERC721Collection(collection).mint{value: 0.1 ether}(to);
     }
 
-    function mintERC1155(
-        address collection,
-        address to,
-        uint256 /* tokenId */,
-        uint256 amount
-    ) internal {
+    function mintERC1155(address collection, address to, uint256, /* tokenId */ uint256 amount) internal {
         vm.prank(to);
-        ERC1155Collection(collection).mint{value: 0.05 ether * amount}(
-            to,
-            amount
-        );
+        ERC1155Collection(collection).mint{value: 0.05 ether * amount}(to, amount);
     }
 
-    function approveERC721(
-        address collection,
-        address _operator,
-        uint256 tokenId
-    ) internal {
+    function approveERC721(address collection, address _operator, uint256 tokenId) internal {
         vm.prank(ERC721Collection(collection).ownerOf(tokenId));
         ERC721Collection(collection).approve(_operator, tokenId);
     }
 
-    function setApprovalForAllERC721(
-        address collection,
-        address owner,
-        address _operator
-    ) internal {
+    function setApprovalForAllERC721(address collection, address owner, address _operator) internal {
         vm.prank(owner);
         ERC721Collection(collection).setApprovalForAll(_operator, true);
     }
 
-    function setApprovalForAllERC1155(
-        address collection,
-        address owner,
-        address _operator
-    ) internal {
+    function setApprovalForAllERC1155(address collection, address owner, address _operator) internal {
         vm.prank(owner);
         ERC1155Collection(collection).setApprovalForAll(_operator, true);
     }
@@ -473,27 +432,17 @@ abstract contract E2E_BaseSetup is Test {
     // HELPER FUNCTIONS - LISTINGS
     // ============================================================================
 
-    function listERC721(
-        address seller,
-        address collection,
-        uint256 tokenId,
-        uint256 price,
-        uint256 duration
-    ) internal returns (bytes32 listingId) {
+    function listERC721(address seller, address collection, uint256 tokenId, uint256 price, uint256 duration)
+        internal
+        returns (bytes32 listingId)
+    {
         vm.prank(seller);
-        ERC721Collection(collection).setApprovalForAll(
-            address(erc721Exchange),
-            true
-        );
+        ERC721Collection(collection).setApprovalForAll(address(erc721Exchange), true);
 
         vm.prank(seller);
         erc721Exchange.listNFT(collection, tokenId, price, duration);
 
-        listingId = erc721Exchange.getGeneratedListingId(
-            collection,
-            tokenId,
-            seller
-        );
+        listingId = erc721Exchange.getGeneratedListingId(collection, tokenId, seller);
         console2.log("Listed ERC721: collection", collection);
         console2.log("  tokenId:", tokenId);
         return listingId;
@@ -508,19 +457,12 @@ abstract contract E2E_BaseSetup is Test {
         uint256 duration
     ) internal returns (bytes32 listingId) {
         vm.prank(seller);
-        ERC1155Collection(collection).setApprovalForAll(
-            address(erc1155Exchange),
-            true
-        );
+        ERC1155Collection(collection).setApprovalForAll(address(erc1155Exchange), true);
 
         vm.prank(seller);
         erc1155Exchange.listNFT(collection, tokenId, amount, price, duration);
 
-        listingId = erc1155Exchange.getGeneratedListingId(
-            collection,
-            tokenId,
-            seller
-        );
+        listingId = erc1155Exchange.getGeneratedListingId(collection, tokenId, seller);
         console2.log("Listed ERC1155: collection", collection);
         console2.log("  tokenId:", tokenId, "amount:", amount);
         return listingId;
@@ -539,13 +481,8 @@ abstract contract E2E_BaseSetup is Test {
         console2.log("Buyer", buyer, "purchased listing for", price);
     }
 
-    function buyERC1155(
-        address buyer,
-        bytes32 listingId,
-        uint256 amount
-    ) internal {
-        uint256 totalPrice = erc1155Exchange.getBuyerSeesPrice(listingId) *
-            amount;
+    function buyERC1155(address buyer, bytes32 listingId, uint256 amount) internal {
+        uint256 totalPrice = erc1155Exchange.getBuyerSeesPrice(listingId) * amount;
 
         vm.prank(buyer);
         erc1155Exchange.buyNFT{value: totalPrice}(listingId, amount);
@@ -565,19 +502,17 @@ abstract contract E2E_BaseSetup is Test {
         uint256 royaltyReceiver;
     }
 
-    function snapshotBalances(
-        address buyer,
-        address seller,
-        address marketplace,
-        address royaltyReceiver
-    ) internal view returns (BalanceSnapshot memory) {
-        return
-            BalanceSnapshot({
-                buyer: buyer.balance,
-                seller: seller.balance,
-                marketplace: marketplace.balance,
-                royaltyReceiver: royaltyReceiver.balance
-            });
+    function snapshotBalances(address buyer, address seller, address marketplace, address royaltyReceiver)
+        internal
+        view
+        returns (BalanceSnapshot memory)
+    {
+        return BalanceSnapshot({
+            buyer: buyer.balance,
+            seller: seller.balance,
+            marketplace: marketplace.balance,
+            royaltyReceiver: royaltyReceiver.balance
+        });
     }
 
     function assertBalanceChanges(
@@ -588,30 +523,16 @@ abstract contract E2E_BaseSetup is Test {
         uint256 expectedMarketplaceFee,
         uint256 expectedRoyalty
     ) internal {
+        assertApproxEqAbs(before.buyer - afterSnapshot.buyer, expectedBuyerDecrease, 1e15, "Buyer balance incorrect");
         assertApproxEqAbs(
-            before.buyer - afterSnapshot.buyer,
-            expectedBuyerDecrease,
-            1e15,
-            "Buyer balance incorrect"
+            afterSnapshot.seller - before.seller, expectedSellerIncrease, 1e15, "Seller balance incorrect"
         );
         assertApproxEqAbs(
-            afterSnapshot.seller - before.seller,
-            expectedSellerIncrease,
-            1e15,
-            "Seller balance incorrect"
-        );
-        assertApproxEqAbs(
-            afterSnapshot.marketplace - before.marketplace,
-            expectedMarketplaceFee,
-            1e15,
-            "Marketplace fee incorrect"
+            afterSnapshot.marketplace - before.marketplace, expectedMarketplaceFee, 1e15, "Marketplace fee incorrect"
         );
         if (expectedRoyalty > 0) {
             assertApproxEqAbs(
-                afterSnapshot.royaltyReceiver - before.royaltyReceiver,
-                expectedRoyalty,
-                1e15,
-                "Royalty incorrect"
+                afterSnapshot.royaltyReceiver - before.royaltyReceiver, expectedRoyalty, 1e15, "Royalty incorrect"
             );
         }
     }
@@ -620,25 +541,15 @@ abstract contract E2E_BaseSetup is Test {
     // HELPER FUNCTIONS - ASSERTIONS
     // ============================================================================
 
-    function assertNFTOwner(
-        address collection,
-        uint256 tokenId,
-        address expectedOwner
-    ) internal {
+    function assertNFTOwner(address collection, uint256 tokenId, address expectedOwner) internal {
         address actualOwner = ERC721Collection(collection).ownerOf(tokenId);
         assertEq(actualOwner, expectedOwner, "NFT owner mismatch");
     }
 
-    function assertERC1155Balance(
-        address collection,
-        address owner,
-        uint256 tokenId,
-        uint256 expectedBalance
-    ) internal {
-        uint256 actualBalance = ERC1155Collection(collection).balanceOf(
-            owner,
-            tokenId
-        );
+    function assertERC1155Balance(address collection, address owner, uint256 tokenId, uint256 expectedBalance)
+        internal
+    {
+        uint256 actualBalance = ERC1155Collection(collection).balanceOf(owner, tokenId);
         assertEq(actualBalance, expectedBalance, "ERC1155 balance mismatch");
     }
 
@@ -646,10 +557,7 @@ abstract contract E2E_BaseSetup is Test {
     // HELPER FUNCTIONS - GAS TRACKING
     // ============================================================================
 
-    function logGasUsage(
-        string memory operation,
-        uint256 gasUsed
-    ) internal view {
+    function logGasUsage(string memory operation, uint256 gasUsed) internal view {
         console2.log(string.concat(operation, " gas used:"), gasUsed);
     }
 

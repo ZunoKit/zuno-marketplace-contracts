@@ -89,11 +89,7 @@ contract RoyaltyIntegrationTest is Test {
         exchange.listNFT(address(mockNFT), 1, NFT_PRICE, 7 days);
         vm.stopPrank();
 
-        bytes32 listingId = exchange.getGeneratedListingId(
-            address(mockNFT),
-            1,
-            seller
-        );
+        bytes32 listingId = exchange.getGeneratedListingId(address(mockNFT), 1, seller);
 
         // Track balances
         uint256 creatorBalanceBefore = creator.balance;
@@ -108,10 +104,7 @@ contract RoyaltyIntegrationTest is Test {
         uint256 expectedRoyalty = (NFT_PRICE * ROYALTY_5_PERCENT) / 10000;
 
         assertApproxEqAbs(
-            creatorBalanceAfter - creatorBalanceBefore,
-            expectedRoyalty,
-            1e15,
-            "ERC2981 royalty not paid correctly"
+            creatorBalanceAfter - creatorBalanceBefore, expectedRoyalty, 1e15, "ERC2981 royalty not paid correctly"
         );
 
         console2.log("ERC2981 royalty paid:", expectedRoyalty);
@@ -139,27 +132,18 @@ contract RoyaltyIntegrationTest is Test {
         exchange.listNFT(address(simpleNFT), 1, NFT_PRICE, 7 days);
         vm.stopPrank();
 
-        bytes32 listingId = exchange.getGeneratedListingId(
-            address(simpleNFT),
-            1,
-            seller
-        );
+        bytes32 listingId = exchange.getGeneratedListingId(address(simpleNFT), 1, seller);
 
         uint256 creatorBalanceBefore = creator.balance;
 
         vm.prank(buyer);
-        exchange.buyNFT{value: exchange.getBuyerSeesPrice(listingId)}(
-            listingId
-        );
+        exchange.buyNFT{value: exchange.getBuyerSeesPrice(listingId)}(listingId);
 
         uint256 creatorBalanceAfter = creator.balance;
         uint256 expectedRoyalty = (NFT_PRICE * ROYALTY_5_PERCENT) / 10000;
 
         assertApproxEqAbs(
-            creatorBalanceAfter - creatorBalanceBefore,
-            expectedRoyalty,
-            1e15,
-            "Fee contract royalty not paid"
+            creatorBalanceAfter - creatorBalanceBefore, expectedRoyalty, 1e15, "Fee contract royalty not paid"
         );
 
         console2.log("Fee contract royalty paid:", expectedRoyalty);
@@ -183,28 +167,17 @@ contract RoyaltyIntegrationTest is Test {
         exchange.listNFT(address(mockNFT), 3, NFT_PRICE, 7 days);
         vm.stopPrank();
 
-        bytes32 listingId = exchange.getGeneratedListingId(
-            address(mockNFT),
-            3,
-            seller
-        );
+        bytes32 listingId = exchange.getGeneratedListingId(address(mockNFT), 3, seller);
 
         uint256 creatorBalanceBefore = creator.balance;
 
         vm.prank(buyer);
-        exchange.buyNFT{value: exchange.getBuyerSeesPrice(listingId)}(
-            listingId
-        );
+        exchange.buyNFT{value: exchange.getBuyerSeesPrice(listingId)}(listingId);
 
         uint256 creatorBalanceAfter = creator.balance;
         uint256 expectedRoyalty = (NFT_PRICE * ROYALTY_10_PERCENT) / 10000;
 
-        assertApproxEqAbs(
-            creatorBalanceAfter - creatorBalanceBefore,
-            expectedRoyalty,
-            1e15,
-            "Max royalty not paid"
-        );
+        assertApproxEqAbs(creatorBalanceAfter - creatorBalanceBefore, expectedRoyalty, 1e15, "Max royalty not paid");
 
         console2.log("Maximum royalty (10%) paid correctly");
         console2.log("=== Royalty Rate Validation: SUCCESS ===\n");
@@ -227,27 +200,17 @@ contract RoyaltyIntegrationTest is Test {
         exchange.listNFT(address(mockNFT), 4, NFT_PRICE, 7 days);
         vm.stopPrank();
 
-        bytes32 listingId = exchange.getGeneratedListingId(
-            address(mockNFT),
-            4,
-            seller
-        );
+        bytes32 listingId = exchange.getGeneratedListingId(address(mockNFT), 4, seller);
 
         uint256 creatorBalanceBefore = creator.balance;
 
         vm.prank(buyer);
-        exchange.buyNFT{value: exchange.getBuyerSeesPrice(listingId)}(
-            listingId
-        );
+        exchange.buyNFT{value: exchange.getBuyerSeesPrice(listingId)}(listingId);
 
         uint256 creatorBalanceAfter = creator.balance;
 
         // No royalty should be paid
-        assertEq(
-            creatorBalanceAfter,
-            creatorBalanceBefore,
-            "No royalty should be paid"
-        );
+        assertEq(creatorBalanceAfter, creatorBalanceBefore, "No royalty should be paid");
 
         console2.log("Zero royalty case handled correctly");
         console2.log("=== Zero Royalty Edge Case: SUCCESS ===\n");
@@ -273,21 +236,14 @@ contract RoyaltyIntegrationTest is Test {
         exchange.listNFT(address(mockNFT), 5, 1 ether, 7 days);
         vm.stopPrank();
 
-        bytes32 listing1 = exchange.getGeneratedListingId(
-            address(mockNFT),
-            5,
-            seller
-        );
+        bytes32 listing1 = exchange.getGeneratedListingId(address(mockNFT), 5, seller);
 
         uint256 price1 = exchange.getBuyerSeesPrice(listing1);
         vm.prank(buyer);
         exchange.buyNFT{value: price1}(listing1);
 
         creatorTotalRoyalties += (1 ether * ROYALTY_5_PERCENT) / 10000;
-        console2.log(
-            "Sale 1 complete, royalty:",
-            (1 ether * ROYALTY_5_PERCENT) / 10000
-        );
+        console2.log("Sale 1 complete, royalty:", (1 ether * ROYALTY_5_PERCENT) / 10000);
 
         // Sale 2: Buyer to another address
         address buyer2 = address(0x6);
@@ -298,26 +254,16 @@ contract RoyaltyIntegrationTest is Test {
         exchange.listNFT(address(mockNFT), 5, 2 ether, 7 days);
         vm.stopPrank();
 
-        bytes32 listing2 = exchange.getGeneratedListingId(
-            address(mockNFT),
-            5,
-            buyer
-        );
+        bytes32 listing2 = exchange.getGeneratedListingId(address(mockNFT), 5, buyer);
 
         uint256 price2 = exchange.getBuyerSeesPrice(listing2);
         vm.prank(buyer2);
         exchange.buyNFT{value: price2}(listing2);
 
         creatorTotalRoyalties += (2 ether * ROYALTY_5_PERCENT) / 10000;
-        console2.log(
-            "Sale 2 complete, royalty:",
-            (2 ether * ROYALTY_5_PERCENT) / 10000
-        );
+        console2.log("Sale 2 complete, royalty:", (2 ether * ROYALTY_5_PERCENT) / 10000);
 
-        console2.log(
-            "Total royalties across multiple sales:",
-            creatorTotalRoyalties
-        );
+        console2.log("Total royalties across multiple sales:", creatorTotalRoyalties);
         console2.log("=== Multiple Sales Royalty Tracking: SUCCESS ===\n");
     }
 
@@ -334,12 +280,7 @@ contract RoyaltyIntegrationTest is Test {
         mockNFT.setDefaultRoyalty(creator, uint96(ROYALTY_10_PERCENT));
         mockNFT.setFeeContract(address(feeContract)); // Also has fee contract
 
-        RoyaltyLib.RoyaltyParams memory params = RoyaltyLib.createRoyaltyParams(
-            address(mockNFT),
-            6,
-            NFT_PRICE,
-            1000
-        );
+        RoyaltyLib.RoyaltyParams memory params = RoyaltyLib.createRoyaltyParams(address(mockNFT), 6, NFT_PRICE, 1000);
 
         RoyaltyLib.RoyaltyInfo memory info = RoyaltyLib.getRoyaltyInfo(params);
 
@@ -353,12 +294,7 @@ contract RoyaltyIntegrationTest is Test {
         vm.prank(seller);
         nftWithoutERC2981.mint(seller, 1);
 
-        params = RoyaltyLib.createRoyaltyParams(
-            address(nftWithoutERC2981),
-            1,
-            NFT_PRICE,
-            1000
-        );
+        params = RoyaltyLib.createRoyaltyParams(address(nftWithoutERC2981), 1, NFT_PRICE, 1000);
         info = RoyaltyLib.getRoyaltyInfo(params);
 
         assertTrue(info.hasRoyalty, "Should detect royalty via fee contract");
@@ -388,18 +324,12 @@ contract RoyaltyIntegrationTest is Test {
         for (uint256 i = 0; i < prices.length; i++) {
             uint256 expectedRoyalty = (prices[i] * ROYALTY_5_PERCENT) / 10000;
 
-            RoyaltyLib.RoyaltyParams memory params = RoyaltyLib
-                .createRoyaltyParams(address(mockNFT), 7, prices[i], 1000);
+            RoyaltyLib.RoyaltyParams memory params =
+                RoyaltyLib.createRoyaltyParams(address(mockNFT), 7, prices[i], 1000);
 
-            RoyaltyLib.RoyaltyInfo memory info = RoyaltyLib.getRoyaltyInfo(
-                params
-            );
+            RoyaltyLib.RoyaltyInfo memory info = RoyaltyLib.getRoyaltyInfo(params);
 
-            assertEq(
-                info.amount,
-                expectedRoyalty,
-                "Royalty amount incorrect for price"
-            );
+            assertEq(info.amount, expectedRoyalty, "Royalty amount incorrect for price");
             console2.log("Price:", prices[i], "Royalty:", expectedRoyalty);
         }
 
@@ -437,12 +367,7 @@ contract RoyaltyIntegrationTest is Test {
         mockNFT.mint(seller, 9);
         mockNFT.setDefaultRoyalty(creator, 1001); // 10.01% - above max
 
-        RoyaltyLib.RoyaltyParams memory params = RoyaltyLib.createRoyaltyParams(
-            address(mockNFT),
-            9,
-            NFT_PRICE,
-            1000
-        ); // max 10%
+        RoyaltyLib.RoyaltyParams memory params = RoyaltyLib.createRoyaltyParams(address(mockNFT), 9, NFT_PRICE, 1000); // max 10%
 
         RoyaltyLib.RoyaltyInfo memory info = RoyaltyLib.getRoyaltyInfo(params);
 
@@ -478,21 +403,14 @@ contract RoyaltyIntegrationTest is Test {
             exchange.listNFT(address(mockNFT), tokenIds[i], NFT_PRICE, 7 days);
             vm.stopPrank();
 
-            bytes32 listingId = exchange.getGeneratedListingId(
-                address(mockNFT),
-                tokenIds[i],
-                seller
-            );
+            bytes32 listingId = exchange.getGeneratedListingId(address(mockNFT), tokenIds[i], seller);
 
             vm.prank(buyer);
-            exchange.buyNFT{value: exchange.getBuyerSeesPrice(listingId)}(
-                listingId
-            );
+            exchange.buyNFT{value: exchange.getBuyerSeesPrice(listingId)}(listingId);
         }
 
         uint256 creatorBalanceAfter = creator.balance;
-        uint256 expectedTotalRoyalty = (NFT_PRICE * ROYALTY_5_PERCENT * 3) /
-            10000;
+        uint256 expectedTotalRoyalty = (NFT_PRICE * ROYALTY_5_PERCENT * 3) / 10000;
 
         assertApproxEqAbs(
             creatorBalanceAfter - creatorBalanceBefore,
@@ -501,10 +419,7 @@ contract RoyaltyIntegrationTest is Test {
             "Total royalties from concurrent sales incorrect"
         );
 
-        console2.log(
-            "Total royalties from 3 concurrent sales:",
-            expectedTotalRoyalty
-        );
+        console2.log("Total royalties from 3 concurrent sales:", expectedTotalRoyalty);
         console2.log("=== Concurrent Royalty Payments: SUCCESS ===\n");
     }
 }

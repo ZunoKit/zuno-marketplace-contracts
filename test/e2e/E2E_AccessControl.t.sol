@@ -24,34 +24,22 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
         // Step 1: Admin grants operator role
         vm.prank(admin);
         accessControl.grantRole(OPERATOR_ROLE, operator);
-        assertTrue(
-            accessControl.hasRole(OPERATOR_ROLE, operator),
-            "Operator role not granted"
-        );
+        assertTrue(accessControl.hasRole(OPERATOR_ROLE, operator), "Operator role not granted");
         console2.log("Step 1: Operator role granted to", operator);
 
         // Step 2: Operator performs privileged action
         // (For this test, we verify the role exists - actual privileged actions depend on contract implementation)
-        assertTrue(
-            accessControl.hasRole(OPERATOR_ROLE, operator),
-            "Operator should have role"
-        );
+        assertTrue(accessControl.hasRole(OPERATOR_ROLE, operator), "Operator should have role");
         console2.log("Step 2: Operator role verified");
 
         // Step 3: Admin revokes operator role
         vm.prank(admin);
         accessControl.revokeRole(OPERATOR_ROLE, operator);
-        assertFalse(
-            accessControl.hasRole(OPERATOR_ROLE, operator),
-            "Role should be revoked"
-        );
+        assertFalse(accessControl.hasRole(OPERATOR_ROLE, operator), "Role should be revoked");
         console2.log("Step 3: Operator role revoked");
 
         // Step 4: Former operator cannot perform privileged actions
-        assertFalse(
-            accessControl.hasRole(OPERATOR_ROLE, operator),
-            "Should not have operator role"
-        );
+        assertFalse(accessControl.hasRole(OPERATOR_ROLE, operator), "Should not have operator role");
         console2.log("Step 4: Access correctly denied after revocation");
 
         console2.log("=== Role-Based Access Complete Flow: SUCCESS ===\n");
@@ -78,36 +66,18 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
         console2.log("Step 1: Multiple roles granted to multiple users");
 
         // Step 2: Verify role assignments
-        assertTrue(
-            accessControl.hasRole(OPERATOR_ROLE, user1),
-            "User1 should have operator role"
-        );
-        assertTrue(
-            accessControl.hasRole(MODERATOR_ROLE, user2),
-            "User2 should have moderator role"
-        );
-        assertTrue(
-            accessControl.hasRole(OPERATOR_ROLE, user3),
-            "User3 should have operator role"
-        );
-        assertTrue(
-            accessControl.hasRole(MODERATOR_ROLE, user3),
-            "User3 should have moderator role"
-        );
+        assertTrue(accessControl.hasRole(OPERATOR_ROLE, user1), "User1 should have operator role");
+        assertTrue(accessControl.hasRole(MODERATOR_ROLE, user2), "User2 should have moderator role");
+        assertTrue(accessControl.hasRole(OPERATOR_ROLE, user3), "User3 should have operator role");
+        assertTrue(accessControl.hasRole(MODERATOR_ROLE, user3), "User3 should have moderator role");
         console2.log("Step 2: All role assignments verified");
 
         // Step 3: Selectively revoke roles
         vm.prank(admin);
         accessControl.revokeRole(OPERATOR_ROLE, user3);
 
-        assertTrue(
-            accessControl.hasRole(MODERATOR_ROLE, user3),
-            "User3 should still have moderator role"
-        );
-        assertFalse(
-            accessControl.hasRole(OPERATOR_ROLE, user3),
-            "User3 should not have operator role"
-        );
+        assertTrue(accessControl.hasRole(MODERATOR_ROLE, user3), "User3 should still have moderator role");
+        assertFalse(accessControl.hasRole(OPERATOR_ROLE, user3), "User3 should not have operator role");
         console2.log("Step 3: Selective role revocation successful");
 
         // Step 4: Revoke all roles
@@ -117,18 +87,9 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
         accessControl.revokeRole(MODERATOR_ROLE, user3);
         vm.stopPrank();
 
-        assertFalse(
-            accessControl.hasRole(OPERATOR_ROLE, user1),
-            "User1 should have no roles"
-        );
-        assertFalse(
-            accessControl.hasRole(MODERATOR_ROLE, user2),
-            "User2 should have no roles"
-        );
-        assertFalse(
-            accessControl.hasRole(MODERATOR_ROLE, user3),
-            "User3 should have no roles"
-        );
+        assertFalse(accessControl.hasRole(OPERATOR_ROLE, user1), "User1 should have no roles");
+        assertFalse(accessControl.hasRole(MODERATOR_ROLE, user2), "User2 should have no roles");
+        assertFalse(accessControl.hasRole(MODERATOR_ROLE, user3), "User3 should have no roles");
         console2.log("Step 4: All roles revoked");
 
         console2.log("=== Multi-Role Management: SUCCESS ===\n");
@@ -158,10 +119,7 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
         console2.log("  -> Correctly rejected");
 
         // Step 3: Verify admin still has role
-        assertTrue(
-            accessControl.hasRole(ADMIN_ROLE, admin),
-            "Admin should still have role"
-        );
+        assertTrue(accessControl.hasRole(ADMIN_ROLE, admin), "Admin should still have role");
         console2.log("Step 3: Admin role intact");
 
         // Step 4: Non-admin attempts emergency pause
@@ -185,10 +143,7 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
         console2.log("\n=== Test: Role Hierarchy ===");
 
         // Step 1: Admin is the highest role
-        assertTrue(
-            accessControl.hasRole(ADMIN_ROLE, admin),
-            "Admin should have admin role"
-        );
+        assertTrue(accessControl.hasRole(ADMIN_ROLE, admin), "Admin should have admin role");
         console2.log("Step 1: Admin role confirmed");
 
         // Step 2: Admin can grant any role
@@ -208,21 +163,12 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
         // Step 4: Admin can revoke any role
         vm.prank(admin);
         accessControl.revokeRole(OPERATOR_ROLE, alice);
-        assertFalse(
-            accessControl.hasRole(OPERATOR_ROLE, alice),
-            "Role should be revoked"
-        );
+        assertFalse(accessControl.hasRole(OPERATOR_ROLE, alice), "Role should be revoked");
         console2.log("Step 4: Admin successfully revoked role");
 
         // Step 5: Verify hierarchy maintained
-        assertTrue(
-            accessControl.hasRole(ADMIN_ROLE, admin),
-            "Admin should maintain admin role"
-        );
-        assertTrue(
-            accessControl.hasRole(MODERATOR_ROLE, bob),
-            "Bob should maintain moderator role"
-        );
+        assertTrue(accessControl.hasRole(ADMIN_ROLE, admin), "Admin should maintain admin role");
+        assertTrue(accessControl.hasRole(MODERATOR_ROLE, bob), "Bob should maintain moderator role");
         console2.log("Step 5: Role hierarchy maintained");
 
         console2.log("=== Role Hierarchy: SUCCESS ===\n");
@@ -242,10 +188,7 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
 
         // Step 2: Operator can perform operational tasks
         // In a real scenario, operator might be able to update fees, manage listings, etc.
-        assertTrue(
-            accessControl.hasRole(OPERATOR_ROLE, operator),
-            "Operator role active"
-        );
+        assertTrue(accessControl.hasRole(OPERATOR_ROLE, operator), "Operator role active");
         console2.log("Step 2: Operator can perform duties");
 
         // Step 3: Operator rotation - old operator removed, new added
@@ -257,14 +200,8 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
         console2.log("Step 3: Operator rotated");
 
         // Step 4: Verify transition
-        assertFalse(
-            accessControl.hasRole(OPERATOR_ROLE, operator),
-            "Old operator should not have role"
-        );
-        assertTrue(
-            accessControl.hasRole(OPERATOR_ROLE, newOperator),
-            "New operator should have role"
-        );
+        assertFalse(accessControl.hasRole(OPERATOR_ROLE, operator), "Old operator should not have role");
+        assertTrue(accessControl.hasRole(OPERATOR_ROLE, newOperator), "New operator should have role");
         console2.log("Step 4: Operator transition verified");
 
         console2.log("=== Operator Workflow: SUCCESS ===\n");
@@ -280,13 +217,7 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
         // Step 1: Normal operations
         vm.prank(alice);
         mockERC721.mint(alice, 1);
-        bytes32 listingId = listERC721(
-            alice,
-            address(mockERC721),
-            1,
-            NFT_PRICE,
-            LISTING_DURATION
-        );
+        bytes32 listingId = listERC721(alice, address(mockERC721), 1, NFT_PRICE, LISTING_DURATION);
         console2.log("Step 1: Normal listing created");
 
         // Step 2: Admin detects issue and pauses
@@ -320,17 +251,9 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
         // Step 1: Regular users can trade normally
         vm.prank(alice);
         mockERC721.mint(alice, 10);
-        bytes32 listingId = listERC721(
-            alice,
-            address(mockERC721),
-            10,
-            NFT_PRICE,
-            LISTING_DURATION
-        );
+        bytes32 listingId = listERC721(alice, address(mockERC721), 10, NFT_PRICE, LISTING_DURATION);
         buyERC721(bob, listingId);
-        console2.log(
-            "Step 1: Regular trading works without special permissions"
-        );
+        console2.log("Step 1: Regular trading works without special permissions");
 
         // Step 2: Admin actions require admin role
         console2.log("Step 2: Admin-only actions verified");
@@ -350,10 +273,7 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
         // Admin can unpause
         vm.prank(admin);
         emergencyManager.emergencyUnpause();
-        assertFalse(
-            emergencyManager.paused(),
-            "Admin should be able to unpause"
-        );
+        assertFalse(emergencyManager.paused(), "Admin should be able to unpause");
         console2.log("  -> Admin can unpause");
 
         console2.log("=== Permission Validation in Operations: SUCCESS ===\n");
@@ -381,10 +301,7 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
 
         // Step 2: Verify all assignments
         for (uint256 i = 0; i < 5; i++) {
-            assertTrue(
-                accessControl.hasRole(OPERATOR_ROLE, operators[i]),
-                "Operator role not granted"
-            );
+            assertTrue(accessControl.hasRole(OPERATOR_ROLE, operators[i]), "Operator role not granted");
         }
         console2.log("Step 2: All 5 operators verified");
 
@@ -396,26 +313,11 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
         console2.log("Step 3: 2 operators removed");
 
         // Step 4: Verify selective revocation
-        assertTrue(
-            accessControl.hasRole(OPERATOR_ROLE, operators[0]),
-            "Operator 0 should still have role"
-        );
-        assertFalse(
-            accessControl.hasRole(OPERATOR_ROLE, operators[1]),
-            "Operator 1 should not have role"
-        );
-        assertTrue(
-            accessControl.hasRole(OPERATOR_ROLE, operators[2]),
-            "Operator 2 should still have role"
-        );
-        assertFalse(
-            accessControl.hasRole(OPERATOR_ROLE, operators[3]),
-            "Operator 3 should not have role"
-        );
-        assertTrue(
-            accessControl.hasRole(OPERATOR_ROLE, operators[4]),
-            "Operator 4 should still have role"
-        );
+        assertTrue(accessControl.hasRole(OPERATOR_ROLE, operators[0]), "Operator 0 should still have role");
+        assertFalse(accessControl.hasRole(OPERATOR_ROLE, operators[1]), "Operator 1 should not have role");
+        assertTrue(accessControl.hasRole(OPERATOR_ROLE, operators[2]), "Operator 2 should still have role");
+        assertFalse(accessControl.hasRole(OPERATOR_ROLE, operators[3]), "Operator 3 should not have role");
+        assertTrue(accessControl.hasRole(OPERATOR_ROLE, operators[4]), "Operator 4 should still have role");
         console2.log("Step 4: Selective revocation verified");
 
         console2.log("=== Concurrent Role Operations: SUCCESS ===\n");

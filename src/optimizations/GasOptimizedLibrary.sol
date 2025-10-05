@@ -12,9 +12,7 @@ library GasOptimizedLibrary {
      * @param data The data to hash
      * @return hash The resulting hash
      */
-    function efficientHash(
-        bytes memory data
-    ) internal pure returns (bytes32 hash) {
+    function efficientHash(bytes memory data) internal pure returns (bytes32 hash) {
         assembly {
             hash := keccak256(add(data, 0x20), mload(data))
         }
@@ -27,11 +25,7 @@ library GasOptimizedLibrary {
      * @param value The uint256 value
      * @return hash The resulting hash
      */
-    function hashAddressesAndValue(
-        address addr1,
-        address addr2,
-        uint256 value
-    ) internal pure returns (bytes32 hash) {
+    function hashAddressesAndValue(address addr1, address addr2, uint256 value) internal pure returns (bytes32 hash) {
         assembly {
             let freeMemPtr := mload(0x40)
             mstore(freeMemPtr, addr1)
@@ -49,12 +43,11 @@ library GasOptimizedLibrary {
      * @param timeValue Current timestamp value
      * @return hash The resulting hash
      */
-    function generateOptimizedListingId(
-        address contractAddr,
-        uint256 tokenId,
-        address seller,
-        uint256 timeValue
-    ) internal pure returns (bytes32 hash) {
+    function generateOptimizedListingId(address contractAddr, uint256 tokenId, address seller, uint256 timeValue)
+        internal
+        pure
+        returns (bytes32 hash)
+    {
         assembly {
             let freeMemPtr := mload(0x40)
             mstore(freeMemPtr, contractAddr)
@@ -71,10 +64,7 @@ library GasOptimizedLibrary {
      * @param amount Amount to transfer
      * @return success Whether the transfer succeeded
      */
-    function efficientTransfer(
-        address recipient,
-        uint256 amount
-    ) internal returns (bool success) {
+    function efficientTransfer(address recipient, uint256 amount) internal returns (bool success) {
         assembly {
             success := call(gas(), recipient, amount, 0, 0, 0, 0)
         }
@@ -98,10 +88,7 @@ library GasOptimizedLibrary {
      * @param feeBps Fee in basis points
      * @return feeAmount The calculated fee
      */
-    function calculateFeeOptimized(
-        uint256 amount,
-        uint256 feeBps
-    ) internal pure returns (uint256 feeAmount) {
+    function calculateFeeOptimized(uint256 amount, uint256 feeBps) internal pure returns (uint256 feeAmount) {
         assembly {
             // amount * feeBps / 10000
             feeAmount := div(mul(amount, feeBps), 10000)
