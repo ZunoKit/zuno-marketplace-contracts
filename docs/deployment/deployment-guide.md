@@ -38,14 +38,14 @@ export SEPOLIA_RPC_URL="https://..."
 export PRIVATE_KEY="0x..."
 export MARKETPLACE_WALLET="0x..."
 
-# Deploy
-forge script script/deploy/01_DeployExchanges.s.sol \\
+# Deploy ALL contracts with single script
+forge script script/deploy/DeployAll.s.sol \\
   --rpc-url $SEPOLIA_RPC_URL \\
   --broadcast \\
   --verify
 
-# Verify contracts
-forge verify-contract <address> <contract> --chain sepolia
+# Output will provide MarketplaceHub address
+# Frontend only needs this ONE address
 ```
 
 ### 3. Mainnet Deployment
@@ -59,12 +59,15 @@ forge verify-contract <address> <contract> --chain sepolia
 - [ ] Multisig configured
 - [ ] Emergency procedures documented
 
-# Deploy (use Ledger/Trezor)
-forge script script/deploy/01_DeployExchanges.s.sol \\
+# Deploy ALL contracts (use Ledger/Trezor)
+forge script script/deploy/DeployAll.s.sol \\
   --rpc-url $MAINNET_RPC_URL \\
   --ledger \\
   --broadcast \\
   --verify
+
+# Save the MarketplaceHub address from output
+# This is the ONLY address frontend needs
 ```
 
 ## Post-Deployment

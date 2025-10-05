@@ -44,6 +44,57 @@ contract DutchAuction is BaseAuction {
     // ============================================================================
 
     /**
+     * @notice Creates a new Dutch auction (IAuction interface implementation)
+     * @param nftContract Address of the NFT contract
+     * @param tokenId Token ID to auction
+     * @param amount Amount to auction (1 for ERC721)
+     * @param startPrice Starting price for the auction
+     * @param reservePrice Reserve price (minimum acceptable price/ending price)
+     * @param duration Auction duration in seconds
+     * @param auctionType Type of auction (must be DUTCH)
+     * @param seller Address of the seller (NFT owner)
+     * @return auctionId Unique identifier for the created auction
+     * @dev Uses a default price drop of 5% per hour (500 basis points)
+     */
+    function createAuction(
+        address nftContract,
+        uint256 tokenId,
+        uint256 amount,
+        uint256 startPrice,
+        uint256 reservePrice,
+        uint256 duration,
+        AuctionType auctionType,
+        address seller
+    ) external override whenNotPaused nonReentrant returns (bytes32 auctionId) {
+        // Validate auction type
+        if (auctionType != AuctionType.DUTCH) {
+            revert Auction__UnsupportedAuctionType();
+        }
+
+        // Use default price drop of 5% per hour
+        uint256 defaultPriceDropPerHour = 500; // 5%
+
+        // Create the auction using base functionality
+        AuctionParams memory params = AuctionParams({
+            nftContract: nftContract,
+            tokenId: tokenId,
+            amount: amount,
+            startPrice: startPrice,
+            reservePrice: reservePrice,
+            duration: duration,
+            auctionType: AuctionType.DUTCH,
+            seller: seller
+        });
+
+        auctionId = _createAuctionInternal(params);
+
+        // Store Dutch auction specific parameters
+        priceDropPerHour[auctionId] = defaultPriceDropPerHour;
+
+        return auctionId;
+    }
+
+    /**
      * @notice Creates a new Dutch auction with price drop configuration
      * @param nftContract Address of the NFT contract
      * @param tokenId Token ID to auction
@@ -66,7 +117,10 @@ contract DutchAuction is BaseAuction {
         address seller
     ) external whenNotPaused nonReentrant returns (bytes32 auctionId) {
         // Validate price drop percentage
-        if (_priceDropPerHour < MIN_PRICE_DROP || _priceDropPerHour > MAX_PRICE_DROP) {
+        if (
+            _priceDropPerHour < MIN_PRICE_DROP ||
+            _priceDropPerHour > MAX_PRICE_DROP
+        ) {
             revert Auction__InvalidAuctionParameters();
         }
 
@@ -106,7 +160,9 @@ contract DutchAuction is BaseAuction {
      * @notice Purchases NFT in a Dutch auction at current price
      * @param auctionId Unique identifier of the auction
      */
-    function buyNow(bytes32 auctionId)
+    function buyNow(
+        bytes32 auctionId
+    )
         external
         payable
         override
@@ -136,7 +192,10 @@ contract DutchAuction is BaseAuction {
      * @param auctionId Unique identifier of the auction
      * @param buyer Address of the actual buyer
      */
-    function buyNowFor(bytes32 auctionId, address buyer)
+    function buyNowFor(
+        bytes32 auctionId,
+        address buyer
+    )
         external
         payable
         override
@@ -162,7 +221,9 @@ contract DutchAuction is BaseAuction {
      * @notice Settles a completed Dutch auction (if unsold)
      * @param auctionId Unique identifier of the auction to settle
      */
-    function settleAuction(bytes32 auctionId) external override nonReentrant whenNotPaused auctionExists(auctionId) {
+    function settleAuction(
+        bytes32 auctionId
+    ) external override nonReentrant whenNotPaused auctionExists(auctionId) {
         Auction storage auction = auctions[auctionId];
 
         // Validate auction can be settled
@@ -194,7 +255,9 @@ contract DutchAuction is BaseAuction {
      * @param auctionId Unique identifier of the auction
      * @return currentPrice Current price of the Dutch auction
      */
-    function getCurrentPrice(bytes32 auctionId) external view override returns (uint256 currentPrice) {
+    function getCurrentPrice(
+        bytes32 auctionId
+    ) external view override returns (uint256 currentPrice) {
         Auction memory auction = auctions[auctionId];
 
         if (auction.auctionType != AuctionType.DUTCH) {
@@ -225,7 +288,10 @@ contract DutchAuction is BaseAuction {
      * @param timestamp Timestamp to calculate price for
      * @return price Price at the specified timestamp
      */
-    function getPriceAtTime(bytes32 auctionId, uint256 timestamp) external view returns (uint256 price) {
+    function getPriceAtTime(
+        bytes32 auctionId,
+        uint256 timestamp
+    ) external view returns (uint256 price) {
         Auction memory auction = auctions[auctionId];
 
         if (auction.auctionType != AuctionType.DUTCH) {
@@ -248,7 +314,9 @@ contract DutchAuction is BaseAuction {
      * @param auctionId Unique identifier of the auction
      * @return dropPerHour Price drop percentage per hour (in basis points)
      */
-    function getPriceDropPerHour(bytes32 auctionId) external view returns (uint256 dropPerHour) {
+    function getPriceDropPerHour(
+        bytes32 auctionId
+    ) external view returns (uint256 dropPerHour) {
         return priceDropPerHour[auctionId];
     }
 
@@ -257,15 +325,21 @@ contract DutchAuction is BaseAuction {
      * @param auctionId Unique identifier of the auction
      * @return timeToReserve Time in seconds until reserve price is reached
      */
-    function getTimeToReservePrice(bytes32 auctionId) external view returns (uint256 timeToReserve) {
+    function getTimeToReservePrice(
+        bytes32 auctionId
+    ) external view returns (uint256 timeToReserve) {
         Auction memory auction = auctions[auctionId];
 
-        if (auction.reservePrice == 0 || auction.reservePrice >= auction.startPrice) {
+        if (
+            auction.reservePrice == 0 ||
+            auction.reservePrice >= auction.startPrice
+        ) {
             return 0;
         }
 
         uint256 totalDrop = auction.startPrice - auction.reservePrice;
-        uint256 dropPerSecond = (auction.startPrice * priceDropPerHour[auctionId]) / (BPS_DENOMINATOR * 3600);
+        uint256 dropPerSecond = (auction.startPrice *
+            priceDropPerHour[auctionId]) / (BPS_DENOMINATOR * 3600);
 
         if (dropPerSecond == 0) {
             return type(uint256).max;
@@ -284,7 +358,11 @@ contract DutchAuction is BaseAuction {
      * @param buyer The buyer address
      * @param paymentAmount The payment amount
      */
-    function _buyNowInternal(bytes32 auctionId, address buyer, uint256 paymentAmount) internal {
+    function _buyNowInternal(
+        bytes32 auctionId,
+        address buyer,
+        uint256 paymentAmount
+    ) internal {
         Auction storage auction = auctions[auctionId];
 
         // Ensure this is a Dutch auction
@@ -341,10 +419,14 @@ contract DutchAuction is BaseAuction {
      * @param paymentAmount The payment amount
      * @param currentPrice The current price
      */
-    function _handleExcessRefund(address buyer, uint256 paymentAmount, uint256 currentPrice) internal {
+    function _handleExcessRefund(
+        address buyer,
+        uint256 paymentAmount,
+        uint256 currentPrice
+    ) internal {
         uint256 excess = paymentAmount - currentPrice;
         if (excess > 0) {
-            (bool success,) = buyer.call{value: excess}("");
+            (bool success, ) = buyer.call{value: excess}("");
             if (!success) revert Auction__RefundFailed();
         }
     }
@@ -354,7 +436,9 @@ contract DutchAuction is BaseAuction {
      * @param auctionId The auction ID
      * @return currentPrice Current calculated price
      */
-    function _calculateCurrentPrice(bytes32 auctionId) internal view returns (uint256 currentPrice) {
+    function _calculateCurrentPrice(
+        bytes32 auctionId
+    ) internal view returns (uint256 currentPrice) {
         return _calculatePriceAtTime(auctionId, block.timestamp);
     }
 
@@ -364,7 +448,10 @@ contract DutchAuction is BaseAuction {
      * @param timestamp The timestamp to calculate price for
      * @return price Price at the specified timestamp
      */
-    function _calculatePriceAtTime(bytes32 auctionId, uint256 timestamp) internal view returns (uint256 price) {
+    function _calculatePriceAtTime(
+        bytes32 auctionId,
+        uint256 timestamp
+    ) internal view returns (uint256 price) {
         Auction memory auction = auctions[auctionId];
 
         if (timestamp <= auction.startTime) {
@@ -376,12 +463,15 @@ contract DutchAuction is BaseAuction {
         uint256 remainingSeconds = timeElapsed % 3600;
 
         // Calculate price drop for complete hours
-        uint256 totalDrop = (auction.startPrice * priceDropPerHour[auctionId] * hoursElapsed) / BPS_DENOMINATOR;
+        uint256 totalDrop = (auction.startPrice *
+            priceDropPerHour[auctionId] *
+            hoursElapsed) / BPS_DENOMINATOR;
 
         // Calculate partial hour drop
         if (remainingSeconds > 0) {
-            uint256 partialDrop =
-                (auction.startPrice * priceDropPerHour[auctionId] * remainingSeconds) / (BPS_DENOMINATOR * 3600);
+            uint256 partialDrop = (auction.startPrice *
+                priceDropPerHour[auctionId] *
+                remainingSeconds) / (BPS_DENOMINATOR * 3600);
             totalDrop += partialDrop;
         }
 
@@ -409,7 +499,10 @@ contract DutchAuction is BaseAuction {
      * @param auctionId Unique identifier of the auction
      * @param seller Address of the seller
      */
-    function cancelAuctionFor(bytes32 auctionId, address seller)
+    function cancelAuctionFor(
+        bytes32 auctionId,
+        address seller
+    )
         external
         override
         nonReentrant
@@ -437,7 +530,11 @@ contract DutchAuction is BaseAuction {
         _removeFromActiveAuctions(auctionId);
 
         // Notify validator about auction cancellation
-        _notifyValidatorAuctionCancelled(auction.nftContract, auction.tokenId, auction.seller);
+        _notifyValidatorAuctionCancelled(
+            auction.nftContract,
+            auction.tokenId,
+            auction.seller
+        );
 
         emit AuctionCancelled(auctionId, seller, "Cancelled by seller");
     }
@@ -448,12 +545,10 @@ contract DutchAuction is BaseAuction {
      * @param bidder Address of the bidder
      * @return refundAmount Amount available for refund (always 0 for Dutch auctions)
      */
-    function getPendingRefund(bytes32 auctionId, address bidder)
-        external
-        view
-        override
-        returns (uint256 refundAmount)
-    {
+    function getPendingRefund(
+        bytes32 auctionId,
+        address bidder
+    ) external view override returns (uint256 refundAmount) {
         // Dutch auctions don't have bidding, so no refunds
         return 0;
     }

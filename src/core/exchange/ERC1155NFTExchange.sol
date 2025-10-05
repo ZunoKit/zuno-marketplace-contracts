@@ -25,7 +25,10 @@ contract ERC1155NFTExchange is BaseNFTExchange {
      * @param m_marketplaceWallet The marketplace wallet address
      * @param m_owner The owner of the contract
      */
-    function initialize(address m_marketplaceWallet, address m_owner) external initializer {
+    function initialize(
+        address m_marketplaceWallet,
+        address m_owner
+    ) external initializer {
         __BaseNFTExchange_init(m_marketplaceWallet, m_owner);
     }
 
@@ -53,22 +56,46 @@ contract ERC1155NFTExchange is BaseNFTExchange {
         }
 
         // Use NFTValidationLib for comprehensive validation
-        NFTValidationLib.ValidationParams memory validationParams =
-            NFTValidationLib.createValidationParams(m_contractAddress, m_tokenId, m_amount, msg.sender, address(this));
+        NFTValidationLib.ValidationParams
+            memory validationParams = NFTValidationLib.createValidationParams(
+                m_contractAddress,
+                m_tokenId,
+                m_amount,
+                msg.sender,
+                address(this)
+            );
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC1155(validationParams);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib
+            .validateERC1155(validationParams);
         if (!result.isValid) {
-            if (keccak256(bytes(result.errorMessage)) == keccak256(bytes("Insufficient balance"))) {
+            if (
+                keccak256(bytes(result.errorMessage)) ==
+                keccak256(bytes("Insufficient balance"))
+            ) {
                 revert NFTExchange__InsufficientBalance();
-            } else if (keccak256(bytes(result.errorMessage)) == keccak256(bytes("Not approved"))) {
+            } else if (
+                keccak256(bytes(result.errorMessage)) ==
+                keccak256(bytes("Not approved"))
+            ) {
                 revert NFTExchange__MarketplaceNotApproved();
             } else {
                 revert NFTExchange__InsufficientBalance(); // Default fallback
             }
         }
 
-        bytes32 m_listingId = _generateListingId(m_contractAddress, m_tokenId, msg.sender);
-        _createListing(m_contractAddress, m_tokenId, m_price, m_listingDuration, m_amount, m_listingId);
+        bytes32 m_listingId = _generateListingId(
+            m_contractAddress,
+            m_tokenId,
+            msg.sender
+        );
+        _createListing(
+            m_contractAddress,
+            m_tokenId,
+            m_price,
+            m_listingDuration,
+            m_amount,
+            m_listingId
+        );
     }
 
     // Function to batch list ERC-1155 NFTs (same collection)
@@ -79,44 +106,80 @@ contract ERC1155NFTExchange is BaseNFTExchange {
         uint256[] memory m_prices,
         uint256 m_listingDuration
     ) public {
-        BatchOperationsLib.BatchListingParams memory params = BatchOperationsLib.BatchListingParams({
-            nftContract: m_contractAddress,
-            tokenIds: m_tokenIds,
-            amounts: m_amounts,
-            prices: m_prices,
-            listingDuration: m_listingDuration,
-            seller: msg.sender,
-            spender: address(this)
-        });
-        (bool isValid, string memory errorMessage) = BatchOperationsLib.validateBatchListing(params);
+        BatchOperationsLib.BatchListingParams memory params = BatchOperationsLib
+            .BatchListingParams({
+                nftContract: m_contractAddress,
+                tokenIds: m_tokenIds,
+                amounts: m_amounts,
+                prices: m_prices,
+                listingDuration: m_listingDuration,
+                seller: msg.sender,
+                spender: address(this)
+            });
+        (bool isValid, string memory errorMessage) = BatchOperationsLib
+            .validateBatchListing(params);
         if (!isValid) {
-            if (keccak256(bytes(errorMessage)) == keccak256(bytes("Array length mismatch"))) {
+            if (
+                keccak256(bytes(errorMessage)) ==
+                keccak256(bytes("Array length mismatch"))
+            ) {
                 revert NFTExchange__ArrayLengthMismatch();
-            } else if (keccak256(bytes(errorMessage)) == keccak256(bytes("Invalid listing duration"))) {
+            } else if (
+                keccak256(bytes(errorMessage)) ==
+                keccak256(bytes("Invalid listing duration"))
+            ) {
                 revert NFTExchange__DurationMustBeGreaterThanZero();
-            } else if (keccak256(bytes(errorMessage)) == keccak256(bytes("Zero price not allowed"))) {
+            } else if (
+                keccak256(bytes(errorMessage)) ==
+                keccak256(bytes("Zero price not allowed"))
+            ) {
                 revert NFTExchange__PriceMustBeGreaterThanZero();
-            } else if (keccak256(bytes(errorMessage)) == keccak256(bytes("Zero amount not allowed"))) {
+            } else if (
+                keccak256(bytes(errorMessage)) ==
+                keccak256(bytes("Zero amount not allowed"))
+            ) {
                 revert NFTExchange__AmountMustBeGreaterThanZero();
             } else {
                 revert NFTExchange__InsufficientBalance();
             }
         }
         for (uint256 i = 0; i < m_tokenIds.length; i++) {
-            bytes32 listingId = _generateListingId(m_contractAddress, m_tokenIds[i], msg.sender);
-            _createListing(m_contractAddress, m_tokenIds[i], m_prices[i], m_listingDuration, m_amounts[i], listingId);
-            emit NFTListed(listingId, m_contractAddress, m_tokenIds[i], msg.sender, m_prices[i]);
+            bytes32 listingId = _generateListingId(
+                m_contractAddress,
+                m_tokenIds[i],
+                msg.sender
+            );
+            _createListing(
+                m_contractAddress,
+                m_tokenIds[i],
+                m_prices[i],
+                m_listingDuration,
+                m_amounts[i],
+                listingId
+            );
+            emit NFTListed(
+                listingId,
+                m_contractAddress,
+                m_tokenIds[i],
+                msg.sender,
+                m_prices[i]
+            );
         }
     }
 
     // Function to buy an ERC-1155 NFT (entire listing)
-    function buyNFT(bytes32 m_listingId) public payable onlyActiveListing(m_listingId) {
+    function buyNFT(
+        bytes32 m_listingId
+    ) public payable onlyActiveListing(m_listingId) {
         Listing storage s_listing = s_listings[m_listingId];
         _executePurchase(m_listingId, s_listing.amount);
     }
 
     // Function to buy a partial amount of ERC-1155 NFT
-    function buyNFT(bytes32 m_listingId, uint256 m_amount) public payable onlyActiveListing(m_listingId) {
+    function buyNFT(
+        bytes32 m_listingId,
+        uint256 m_amount
+    ) public payable onlyActiveListing(m_listingId) {
         if (m_amount == 0) {
             revert NFTExchange__AmountMustBeGreaterThanZero();
         }
@@ -130,15 +193,23 @@ contract ERC1155NFTExchange is BaseNFTExchange {
     }
 
     // Internal function to execute purchase logic
-    function _executePurchase(bytes32 m_listingId, uint256 m_purchaseAmount) internal {
+    function _executePurchase(
+        bytes32 m_listingId,
+        uint256 m_purchaseAmount
+    ) internal {
         Listing storage s_listing = s_listings[m_listingId];
 
         // Calculate proportional price
-        uint256 m_proportionalPrice = (s_listing.price * m_purchaseAmount) / s_listing.amount;
+        uint256 m_proportionalPrice = (s_listing.price * m_purchaseAmount) /
+            s_listing.amount;
 
-        (address m_royaltyReceiver, uint256 m_royalty) =
-            getRoyaltyInfo(s_listing.contractAddress, s_listing.tokenId, m_proportionalPrice);
-        uint256 m_takerFee = (m_proportionalPrice * s_takerFee) / BPS_DENOMINATOR;
+        (address m_royaltyReceiver, uint256 m_royalty) = getRoyaltyInfo(
+            s_listing.contractAddress,
+            s_listing.tokenId,
+            m_proportionalPrice
+        );
+        uint256 m_takerFee = (m_proportionalPrice * s_takerFee) /
+            BPS_DENOMINATOR;
         uint256 m_realityPrice = m_proportionalPrice + m_royalty + m_takerFee;
 
         if (msg.value < m_realityPrice) {
@@ -146,11 +217,17 @@ contract ERC1155NFTExchange is BaseNFTExchange {
         }
 
         // Transfer NFT using NFTTransferLib
-        NFTTransferLib.TransferParams memory transferParams = NFTTransferLib.createTransferParams(
-            s_listing.contractAddress, s_listing.tokenId, m_purchaseAmount, s_listing.seller, msg.sender
-        );
+        NFTTransferLib.TransferParams memory transferParams = NFTTransferLib
+            .createTransferParams(
+                s_listing.contractAddress,
+                s_listing.tokenId,
+                m_purchaseAmount,
+                s_listing.seller,
+                msg.sender
+            );
 
-        NFTTransferLib.TransferResult memory transferResult = NFTTransferLib.transferERC1155(transferParams);
+        NFTTransferLib.TransferResult memory transferResult = NFTTransferLib
+            .transferERC1155(transferParams);
         if (!transferResult.success) {
             revert NFTExchange__TransferToSellerFailed();
         }
@@ -171,7 +248,11 @@ contract ERC1155NFTExchange is BaseNFTExchange {
 
         // If all tokens are sold, finalize the listing
         if (s_listing.amount == 0) {
-            _finalizeListing(m_listingId, s_listing.contractAddress, s_listing.seller);
+            _finalizeListing(
+                m_listingId,
+                s_listing.contractAddress,
+                s_listing.seller
+            );
         } else {
             // Emit event for partial sale
             emit NFTSold(
@@ -198,7 +279,10 @@ contract ERC1155NFTExchange is BaseNFTExchange {
         if (m_listingIds.length == 0) revert NFTExchange__ArrayLengthMismatch();
 
         address contractAddress = s_listings[m_listingIds[0]].contractAddress;
-        uint256 totalPrice = _validateAndCalculateBatchPrice(m_listingIds, contractAddress);
+        uint256 totalPrice = _validateAndCalculateBatchPrice(
+            m_listingIds,
+            contractAddress
+        );
 
         if (msg.value < totalPrice) revert NFTExchange__InsufficientPayment();
 
@@ -206,18 +290,20 @@ contract ERC1155NFTExchange is BaseNFTExchange {
     }
 
     // Internal function to validate listings and calculate total price
-    function _validateAndCalculateBatchPrice(bytes32[] memory listingIds, address contractAddress)
-        internal
-        view
-        returns (uint256 totalPrice)
-    {
+    function _validateAndCalculateBatchPrice(
+        bytes32[] memory listingIds,
+        address contractAddress
+    ) internal view returns (uint256 totalPrice) {
         for (uint256 i = 0; i < listingIds.length; i++) {
             Listing storage listing = s_listings[listingIds[i]];
 
             if (listing.status != ListingStatus.Active) {
                 revert NFTExchange__NFTNotActive();
             }
-            if (block.timestamp >= listing.listingStart + listing.listingDuration) revert NFTExchange__ListingExpired();
+            if (
+                block.timestamp >=
+                listing.listingStart + listing.listingDuration
+            ) revert NFTExchange__ListingExpired();
             if (listing.contractAddress != contractAddress) {
                 revert NFTExchange__ArrayLengthMismatch();
             }
@@ -228,30 +314,48 @@ contract ERC1155NFTExchange is BaseNFTExchange {
     }
 
     // Internal function to calculate purchase data for a listing
-    function _calculatePurchaseData(Listing storage listing) internal view returns (BatchPurchaseData memory data) {
-        (data.royaltyReceiver, data.royalty) = getRoyaltyInfo(listing.contractAddress, listing.tokenId, listing.price);
+    function _calculatePurchaseData(
+        Listing storage listing
+    ) internal view returns (BatchPurchaseData memory data) {
+        (data.royaltyReceiver, data.royalty) = getRoyaltyInfo(
+            listing.contractAddress,
+            listing.tokenId,
+            listing.price
+        );
         data.takerFee = (listing.price * s_takerFee) / BPS_DENOMINATOR;
         data.realityPrice = listing.price + data.royalty + data.takerFee;
     }
 
     // Internal function to execute batch purchase
-    function _executeBatchPurchase(bytes32[] memory listingIds, address contractAddress) internal {
+    function _executeBatchPurchase(
+        bytes32[] memory listingIds,
+        address contractAddress
+    ) internal {
         for (uint256 i = 0; i < listingIds.length; i++) {
             _executeSinglePurchase(listingIds[i], contractAddress);
         }
     }
 
     // Internal function to execute a single purchase within batch
-    function _executeSinglePurchase(bytes32 listingId, address contractAddress) internal {
+    function _executeSinglePurchase(
+        bytes32 listingId,
+        address contractAddress
+    ) internal {
         Listing storage listing = s_listings[listingId];
         BatchPurchaseData memory data = _calculatePurchaseData(listing);
 
         // Transfer NFT using NFTTransferLib
-        NFTTransferLib.TransferParams memory transferParams = NFTTransferLib.createTransferParams(
-            contractAddress, listing.tokenId, listing.amount, listing.seller, msg.sender
-        );
+        NFTTransferLib.TransferParams memory transferParams = NFTTransferLib
+            .createTransferParams(
+                contractAddress,
+                listing.tokenId,
+                listing.amount,
+                listing.seller,
+                msg.sender
+            );
 
-        NFTTransferLib.TransferResult memory transferResult = NFTTransferLib.transferERC1155(transferParams);
+        NFTTransferLib.TransferResult memory transferResult = NFTTransferLib
+            .transferERC1155(transferParams);
         if (!transferResult.success) {
             revert NFTExchange__TransferToSellerFailed();
         }
@@ -273,17 +377,32 @@ contract ERC1155NFTExchange is BaseNFTExchange {
     }
 
     // Function to cancel listing
-    function cancelListing(bytes32 m_listingId) public onlyActiveListing(m_listingId) {
+    function cancelListing(
+        bytes32 m_listingId
+    ) public onlyActiveListing(m_listingId) {
         Listing storage s_listing = s_listings[m_listingId];
         if (s_listing.seller != msg.sender) revert NFTExchange__NotTheOwner();
         s_listings[m_listingId].status = ListingStatus.Cancelled;
-        _removeListingFromArray(s_listingsByCollection[s_listing.contractAddress], m_listingId);
-        _removeListingFromArray(s_listingsBySeller[s_listing.seller], m_listingId);
+        _removeListingFromArray(
+            s_listingsByCollection[s_listing.contractAddress],
+            m_listingId
+        );
+        _removeListingFromArray(
+            s_listingsBySeller[s_listing.seller],
+            m_listingId
+        );
 
         // Remove from active listings
-        s_activeListings[s_listing.contractAddress][s_listing.tokenId][s_listing.seller] = bytes32(0);
+        s_activeListings[s_listing.contractAddress][s_listing.tokenId][
+            s_listing.seller
+        ] = bytes32(0);
 
-        emit ListingCancelled(m_listingId, s_listing.contractAddress, s_listing.tokenId, s_listing.seller);
+        emit ListingCancelled(
+            m_listingId,
+            s_listing.contractAddress,
+            s_listing.tokenId,
+            s_listing.seller
+        );
     }
 
     // Function to batch cancel listings
@@ -308,11 +427,18 @@ contract ERC1155NFTExchange is BaseNFTExchange {
         _removeCancelledListing(listingId, listing);
 
         // Emit cancellation event
-        emit ListingCancelled(listingId, listing.contractAddress, listing.tokenId, listing.seller);
+        emit ListingCancelled(
+            listingId,
+            listing.contractAddress,
+            listing.tokenId,
+            listing.seller
+        );
     }
 
     // Internal function to validate listing cancellation
-    function _validateListingCancellation(Listing storage listing) internal view {
+    function _validateListingCancellation(
+        Listing storage listing
+    ) internal view {
         if (listing.status != ListingStatus.Active) {
             revert NFTExchange__NFTNotActive();
         }
@@ -325,11 +451,19 @@ contract ERC1155NFTExchange is BaseNFTExchange {
     }
 
     // Internal function to remove cancelled listing from arrays
-    function _removeCancelledListing(bytes32 listingId, Listing storage listing) internal {
-        _removeListingFromArray(s_listingsByCollection[listing.contractAddress], listingId);
+    function _removeCancelledListing(
+        bytes32 listingId,
+        Listing storage listing
+    ) internal {
+        _removeListingFromArray(
+            s_listingsByCollection[listing.contractAddress],
+            listingId
+        );
         _removeListingFromArray(s_listingsBySeller[listing.seller], listingId);
 
         // Remove from active listings
-        s_activeListings[listing.contractAddress][listing.tokenId][listing.seller] = bytes32(0);
+        s_activeListings[listing.contractAddress][listing.tokenId][
+            listing.seller
+        ] = bytes32(0);
     }
 }

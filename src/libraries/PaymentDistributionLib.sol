@@ -98,26 +98,31 @@ library PaymentDistributionLib {
         address marketplaceWallet
     ) internal pure returns (PaymentData memory data) {
         // Calculate marketplace fee
-        uint256 marketplaceFee = (params.salePrice * params.marketplaceFeeRate) / params.bpsDenominator;
+        uint256 marketplaceFee = (params.salePrice *
+            params.marketplaceFeeRate) / params.bpsDenominator;
 
         // Calculate royalty
-        uint256 royaltyAmount = (params.salePrice * params.royaltyRate) / params.bpsDenominator;
+        uint256 royaltyAmount = (params.salePrice * params.royaltyRate) /
+            params.bpsDenominator;
 
         // Calculate seller amount (remaining after fees)
-        uint256 sellerAmount = params.salePrice - marketplaceFee - royaltyAmount;
+        uint256 sellerAmount = params.salePrice -
+            marketplaceFee -
+            royaltyAmount;
 
         // Total amount should equal sale price
         uint256 totalAmount = params.salePrice;
 
-        return PaymentData({
-            seller: seller,
-            royaltyReceiver: royaltyReceiver,
-            marketplaceWallet: marketplaceWallet,
-            totalAmount: totalAmount,
-            sellerAmount: sellerAmount,
-            marketplaceFee: marketplaceFee,
-            royaltyAmount: royaltyAmount
-        });
+        return
+            PaymentData({
+                seller: seller,
+                royaltyReceiver: royaltyReceiver,
+                marketplaceWallet: marketplaceWallet,
+                totalAmount: totalAmount,
+                sellerAmount: sellerAmount,
+                marketplaceFee: marketplaceFee,
+                royaltyAmount: royaltyAmount
+            });
     }
 
     /**
@@ -128,11 +133,12 @@ library PaymentDistributionLib {
      * @param bpsDenominator Basis points denominator
      * @return totalPrice Total price buyer needs to pay
      */
-    function calculateBuyerPrice(uint256 basePrice, uint256 takerFeeRate, uint256 royaltyRate, uint256 bpsDenominator)
-        internal
-        pure
-        returns (uint256 totalPrice)
-    {
+    function calculateBuyerPrice(
+        uint256 basePrice,
+        uint256 takerFeeRate,
+        uint256 royaltyRate,
+        uint256 bpsDenominator
+    ) internal pure returns (uint256 totalPrice) {
         uint256 takerFee = (basePrice * takerFeeRate) / bpsDenominator;
         uint256 royalty = (basePrice * royaltyRate) / bpsDenominator;
         return basePrice + takerFee + royalty;
@@ -147,13 +153,18 @@ library PaymentDistributionLib {
      * @param data Payment data to validate
      */
     function _validatePaymentData(PaymentData memory data) private pure {
-        if (data.seller == address(0)) revert PaymentDistribution__ZeroAddress();
-        if (data.marketplaceWallet == address(0)) revert PaymentDistribution__ZeroAddress();
+        if (data.seller == address(0))
+            revert PaymentDistribution__ZeroAddress();
+        if (data.marketplaceWallet == address(0))
+            revert PaymentDistribution__ZeroAddress();
         if (data.totalAmount == 0) revert PaymentDistribution__InvalidAmount();
 
         // Ensure amounts add up correctly
-        uint256 calculatedTotal = data.sellerAmount + data.marketplaceFee + data.royaltyAmount;
-        if (calculatedTotal != data.totalAmount) {
+        // The totalAmount should equal the sum of all payments
+        uint256 totalCalculated = data.sellerAmount +
+            data.marketplaceFee +
+            data.royaltyAmount;
+        if (totalCalculated != data.totalAmount) {
             revert PaymentDistribution__InvalidAmount();
         }
     }
@@ -168,7 +179,7 @@ library PaymentDistributionLib {
             revert PaymentDistribution__InsufficientBalance();
         }
 
-        (bool success,) = payable(to).call{value: amount}("");
+        (bool success, ) = payable(to).call{value: amount}("");
         if (!success) {
             revert PaymentDistribution__TransferFailed();
         }
@@ -185,11 +196,11 @@ library PaymentDistributionLib {
      * @param denominator Basis points denominator
      * @return result Calculated percentage amount
      */
-    function calculatePercentage(uint256 amount, uint256 percentage, uint256 denominator)
-        internal
-        pure
-        returns (uint256 result)
-    {
+    function calculatePercentage(
+        uint256 amount,
+        uint256 percentage,
+        uint256 denominator
+    ) internal pure returns (uint256 result) {
         return (amount * percentage) / denominator;
     }
 
@@ -198,7 +209,10 @@ library PaymentDistributionLib {
      * @param feeRate Fee rate to validate
      * @param maxFeeRate Maximum allowed fee rate
      */
-    function validateFeeRate(uint256 feeRate, uint256 maxFeeRate) internal pure {
+    function validateFeeRate(
+        uint256 feeRate,
+        uint256 maxFeeRate
+    ) internal pure {
         if (feeRate > maxFeeRate) {
             revert PaymentDistribution__InvalidAmount();
         }

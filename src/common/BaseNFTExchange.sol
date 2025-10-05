@@ -50,7 +50,8 @@ contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
 
     // Track active listings for each NFT to prevent duplicate listings
     // contractAddress => tokenId => seller => listingId
-    mapping(address => mapping(uint256 => mapping(address => bytes32))) public s_activeListings;
+    mapping(address => mapping(uint256 => mapping(address => bytes32)))
+        public s_activeListings;
 
     address public s_marketplaceWallet; // Wallet for taker fees
 
@@ -69,7 +70,10 @@ contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
      * @param m_marketplaceWallet The marketplace wallet address
      * @param m_owner The owner of the contract
      */
-    function __BaseNFTExchange_init(address m_marketplaceWallet, address m_owner) internal onlyInitializing {
+    function __BaseNFTExchange_init(
+        address m_marketplaceWallet,
+        address m_owner
+    ) internal onlyInitializing {
         if (m_marketplaceWallet == address(0)) {
             revert NFTExchange__InvalidMarketplaceWallet();
         }
@@ -88,7 +92,9 @@ contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
      * @notice Updates the marketplace wallet address
      * @param m_newMarketplaceWallet The new marketplace wallet address
      */
-    function updateMarketplaceWallet(address m_newMarketplaceWallet) external onlyOwner {
+    function updateMarketplaceWallet(
+        address m_newMarketplaceWallet
+    ) external onlyOwner {
         if (m_newMarketplaceWallet == address(0)) {
             revert NFTExchange__InvalidMarketplaceWallet();
         }
@@ -115,24 +121,39 @@ contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
         if (s_listings[m_listingId].status != ListingStatus.Active) {
             revert NFTExchange__NFTNotActive();
         }
-        if (block.timestamp >= s_listings[m_listingId].listingStart + s_listings[m_listingId].listingDuration) {
+        if (
+            block.timestamp >=
+            s_listings[m_listingId].listingStart +
+                s_listings[m_listingId].listingDuration
+        ) {
             revert NFTExchange__ListingExpired();
         }
         _;
     }
 
     // Internal function to remove listing from array
-    function _removeListingFromArray(bytes32[] storage s_array, bytes32 m_listingId) internal {
+    function _removeListingFromArray(
+        bytes32[] storage s_array,
+        bytes32 m_listingId
+    ) internal {
         ArrayUtilsLib.removeBytes32Element(s_array, m_listingId);
     }
 
     // Internal function to generate listing ID
-    function _generateListingId(address m_contractAddress, uint256 m_tokenId, address m_sender)
-        internal
-        view
-        returns (bytes32)
-    {
-        return keccak256(abi.encodePacked(m_contractAddress, m_tokenId, m_sender, block.timestamp));
+    function _generateListingId(
+        address m_contractAddress,
+        uint256 m_tokenId,
+        address m_sender
+    ) internal view returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    m_contractAddress,
+                    m_tokenId,
+                    m_sender,
+                    block.timestamp
+                )
+            );
     }
 
     // Internal function to create a single listing
@@ -145,13 +166,16 @@ contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
         bytes32 m_listingId
     ) internal {
         // Check if NFT is already listed by this seller
-        bytes32 existingListingId = s_activeListings[m_contractAddress][m_tokenId][msg.sender];
+        bytes32 existingListingId = s_activeListings[m_contractAddress][
+            m_tokenId
+        ][msg.sender];
         if (existingListingId != bytes32(0)) {
             // Check if existing listing is still active
             Listing storage existingListing = s_listings[existingListingId];
             if (
-                existingListing.status == ListingStatus.Active
-                    && block.timestamp < existingListing.listingStart + existingListing.listingDuration
+                existingListing.status == ListingStatus.Active &&
+                block.timestamp <
+                existingListing.listingStart + existingListing.listingDuration
             ) {
                 revert NFTExchange__NFTAlreadyListed();
             }
@@ -172,9 +196,17 @@ contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
         s_listingsBySeller[msg.sender].push(m_listingId);
 
         // Track this active listing
-        s_activeListings[m_contractAddress][m_tokenId][msg.sender] = m_listingId;
+        s_activeListings[m_contractAddress][m_tokenId][
+            msg.sender
+        ] = m_listingId;
 
-        emit NFTListed(m_listingId, m_contractAddress, m_tokenId, msg.sender, m_price);
+        emit NFTListed(
+            m_listingId,
+            m_contractAddress,
+            m_tokenId,
+            msg.sender,
+            m_price
+        );
     }
 
     // Struct to reduce stack depth in payment distribution
@@ -189,22 +221,30 @@ contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
 
     // Internal function to distribute payments
     function _distributePayments(PaymentDistribution memory payment) internal {
+        // Calculate seller amount (listing price minus royalty)
+        uint256 sellerAmount = payment.price - payment.royalty;
+
         // Convert to PaymentDistributionLib format
-        PaymentDistributionLib.PaymentData memory paymentData = PaymentDistributionLib.PaymentData({
-            seller: payment.seller,
-            royaltyReceiver: payment.royaltyReceiver,
-            marketplaceWallet: s_marketplaceWallet,
-            totalAmount: payment.realityPrice,
-            sellerAmount: payment.price,
-            marketplaceFee: payment.takerFee,
-            royaltyAmount: payment.royalty
-        });
+        PaymentDistributionLib.PaymentData
+            memory paymentData = PaymentDistributionLib.PaymentData({
+                seller: payment.seller,
+                royaltyReceiver: payment.royaltyReceiver,
+                marketplaceWallet: s_marketplaceWallet,
+                totalAmount: sellerAmount + payment.takerFee + payment.royalty, // Sum of all payments
+                sellerAmount: sellerAmount,
+                marketplaceFee: payment.takerFee,
+                royaltyAmount: payment.royalty
+            });
 
         PaymentDistributionLib.distributePayment(paymentData);
     }
 
     // Internal function to finalize listing
-    function _finalizeListing(bytes32 m_listingId, address m_contractAddress, address m_seller) internal {
+    function _finalizeListing(
+        bytes32 m_listingId,
+        address m_contractAddress,
+        address m_seller
+    ) internal {
         // Update listing status
         s_listings[m_listingId].status = ListingStatus.Sold;
 
@@ -214,7 +254,10 @@ contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
         ][m_seller];
 
         // Remove from collection and seller listings
-        _removeListingFromArray(s_listingsByCollection[m_contractAddress], m_listingId);
+        _removeListingFromArray(
+            s_listingsByCollection[m_contractAddress],
+            m_listingId
+        );
         _removeListingFromArray(s_listingsBySeller[m_seller], m_listingId);
 
         // Emit event
@@ -229,46 +272,55 @@ contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
     }
 
     // View function to get floor price (placeholder, needs oracle)
-    function getFloorPrice(address /* m_contractAddress */ ) public view virtual returns (uint256) {
+    function getFloorPrice(
+        address /* m_contractAddress */
+    ) public view virtual returns (uint256) {
         // Placeholder: Use an oracle (e.g., Chainlink) for real floor price
         return 1 ether; // Example: 1 ETH
     }
 
     // View function to get top trait price (placeholder, needs oracle)
-    function getTopTraitPrice(address m_contractAddress, uint256 /* m_tokenId */ )
-        public
-        view
-        virtual
-        returns (uint256)
-    {
+    function getTopTraitPrice(
+        address m_contractAddress,
+        uint256 /* m_tokenId */
+    ) public view virtual returns (uint256) {
         // Placeholder: Use oracle or off-chain data for trait-based pricing
         return (getFloorPrice(m_contractAddress) * 120) / 100; // Example: 20% above floor
     }
 
     // View function to get ladder price (placeholder, needs oracle)
-    function getLadderPrice(address m_contractAddress, uint256 /* m_tokenId */ )
-        public
-        view
-        virtual
-        returns (uint256)
-    {
+    function getLadderPrice(
+        address m_contractAddress,
+        uint256 /* m_tokenId */
+    ) public view virtual returns (uint256) {
         // Placeholder: Use a tiered pricing strategy from off-chain data
         return (getFloorPrice(m_contractAddress) * 110) / 100; // Example: 10% above floor
     }
 
     // View function to get royalty info
-    function getRoyaltyInfo(address m_contractAddress, uint256 m_tokenId, uint256 m_salePrice)
-        public
-        view
-        returns (address receiver, uint256 royaltyAmount)
-    {
-        return RoyaltyLib.calculateRoyalty(m_contractAddress, m_tokenId, m_salePrice);
+    function getRoyaltyInfo(
+        address m_contractAddress,
+        uint256 m_tokenId,
+        uint256 m_salePrice
+    ) public view returns (address receiver, uint256 royaltyAmount) {
+        return
+            RoyaltyLib.calculateRoyalty(
+                m_contractAddress,
+                m_tokenId,
+                m_salePrice
+            );
     }
 
     // View function to get buyer-sees price (reality price)
-    function getBuyerSeesPrice(bytes32 m_listingId) public view returns (uint256) {
+    function getBuyerSeesPrice(
+        bytes32 m_listingId
+    ) public view returns (uint256) {
         Listing storage s_listing = s_listings[m_listingId];
-        (, uint256 m_royalty) = getRoyaltyInfo(s_listing.contractAddress, s_listing.tokenId, s_listing.price);
+        (, uint256 m_royalty) = getRoyaltyInfo(
+            s_listing.contractAddress,
+            s_listing.tokenId,
+            s_listing.price
+        );
         uint256 m_takerFee = (s_listing.price * s_takerFee) / BPS_DENOMINATOR;
         return s_listing.price + m_royalty + m_takerFee;
     }
@@ -281,26 +333,32 @@ contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
     }
 
     // View function to get 24-hour volume (placeholder, needs oracle)
-    function get24hVolume(address /* m_contractAddress */ ) public view virtual returns (uint256) {
+    function get24hVolume(
+        address /* m_contractAddress */
+    ) public view virtual returns (uint256) {
         // Placeholder: Use oracle or off-chain data for 24h trading volume
         return 10 ether; // Example: 10 ETH
     }
 
     // View function to get listings by collection
-    function getListingsByCollection(address m_contractAddress) public view returns (bytes32[] memory) {
+    function getListingsByCollection(
+        address m_contractAddress
+    ) public view returns (bytes32[] memory) {
         return s_listingsByCollection[m_contractAddress];
     }
 
     // View function to get listings by seller
-    function getListingsBySeller(address m_seller) public view returns (bytes32[] memory) {
+    function getListingsBySeller(
+        address m_seller
+    ) public view returns (bytes32[] memory) {
         return s_listingsBySeller[m_seller];
     }
 
-    function getGeneratedListingId(address m_contractAddress, uint256 m_tokenId, address m_sender)
-        public
-        view
-        returns (bytes32)
-    {
+    function getGeneratedListingId(
+        address m_contractAddress,
+        uint256 m_tokenId,
+        address m_sender
+    ) public view returns (bytes32) {
         return _generateListingId(m_contractAddress, m_tokenId, m_sender);
     }
 
@@ -323,7 +381,13 @@ contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
      * @notice Returns the type of marketplace contract
      * @return contractType The contract type identifier
      */
-    function contractType() public pure virtual override returns (string memory) {
+    function contractType()
+        public
+        pure
+        virtual
+        override
+        returns (string memory)
+    {
         return "NFTExchange";
     }
 
@@ -342,7 +406,13 @@ contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
      * @return standard The NFT standard (ERC721 or ERC1155)
      * @dev Must be overridden by child contracts
      */
-    function supportedStandard() public pure virtual override returns (string memory) {
+    function supportedStandard()
+        public
+        pure
+        virtual
+        override
+        returns (string memory)
+    {
         return "UNKNOWN"; // Must be overridden
     }
 
@@ -350,7 +420,13 @@ contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
      * @notice Returns the marketplace wallet address
      * @return wallet The marketplace wallet address
      */
-    function marketplaceWallet() public view virtual override returns (address) {
+    function marketplaceWallet()
+        public
+        view
+        virtual
+        override
+        returns (address)
+    {
         return s_marketplaceWallet;
     }
 
@@ -362,8 +438,12 @@ contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
      * @param interfaceId The interface identifier, as specified in ERC-165
      * @return bool True if the contract implements interfaceId
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(IERC165).interfaceId || interfaceId == type(IExchangeCore).interfaceId
-            || super.supportsInterface(interfaceId);
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override returns (bool) {
+        return
+            interfaceId == type(IERC165).interfaceId ||
+            interfaceId == type(IExchangeCore).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 }
