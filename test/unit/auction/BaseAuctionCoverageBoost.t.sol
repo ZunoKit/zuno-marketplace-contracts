@@ -5,7 +5,7 @@ import {Test, console2} from "forge-std/Test.sol";
 import {BaseAuction} from "src/core/auction/BaseAuction.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
 import {IMarketplaceValidator} from "src/interfaces/IMarketplaceValidator.sol";
-import {AuctionTestHelpers} from "../utils/AuctionTestHelpers.sol";
+import {AuctionTestHelpers} from "../../utils/auction/AuctionTestHelpers.sol";
 import {MarketplaceValidator} from "src/core/validation/MarketplaceValidator.sol";
 import "src/errors/AuctionErrors.sol";
 

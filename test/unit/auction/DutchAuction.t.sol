@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {Test, console2} from "forge-std/Test.sol";
 import {DutchAuction} from "src/core/auction/DutchAuction.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
-import {AuctionTestHelpers} from "../utils/AuctionTestHelpers.sol";
+import {AuctionTestHelpers} from "../../utils/auction/AuctionTestHelpers.sol";
 import "src/errors/AuctionErrors.sol";
 
 /**

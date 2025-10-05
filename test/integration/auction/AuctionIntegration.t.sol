@@ -6,7 +6,7 @@ import {AuctionFactory} from "src/core/auction/AuctionFactory.sol";
 import {EnglishAuction} from "src/core/auction/EnglishAuction.sol";
 import {DutchAuction} from "src/core/auction/DutchAuction.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
-import {AuctionTestHelpers} from "../utils/AuctionTestHelpers.sol";
+import {AuctionTestHelpers} from "../../utils/auction/AuctionTestHelpers.sol";
 
 /**
  * @title AuctionIntegrationTest
