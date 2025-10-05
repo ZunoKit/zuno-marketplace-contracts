@@ -2,21 +2,21 @@
 pragma solidity ^0.8.30;
 
 import {CollectionParams} from "src/types/ListingTypes.sol";
-import {ERC1155CollectionCreated} from "src/events/CollectionEvents.sol";
+import {ERC721CollectionCreated} from "src/events/CollectionEvents.sol";
 import {ICollectionFactory} from "src/interfaces/IMarketplaceCore.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-import {ERC1155CollectionImplementation} from "./ERC1155CollectionImplementation.sol";
+import {ERC721CollectionImplementation} from "../proxy/ERC721CollectionImplementation.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
 /**
- * @title ERC1155CollectionFactory
- * @notice Factory contract for creating ERC1155 collections only
+ * @title ERC721CollectionFactory
+ * @notice Factory contract for creating ERC721 collections only
  * @dev Split from original CollectionFactory to reduce contract size
  */
-contract ERC1155CollectionFactory is ERC165, ICollectionFactory {
+contract ERC721CollectionFactory is ERC165, ICollectionFactory {
     // Implementation contract for minimal proxies
-    address public immutable erc1155CollectionImplementation;
+    address public immutable erc721CollectionImplementation;
 
     // Track created collections
     mapping(address => bool) private s_validCollections;
@@ -29,16 +29,16 @@ contract ERC1155CollectionFactory is ERC165, ICollectionFactory {
      * @notice Constructor deploys the implementation contract
      */
     constructor() {
-        erc1155CollectionImplementation = address(new ERC1155CollectionImplementation());
-        emit ImplementationDeployed(erc1155CollectionImplementation);
+        erc721CollectionImplementation = address(new ERC721CollectionImplementation());
+        emit ImplementationDeployed(erc721CollectionImplementation);
     }
 
     /**
-     * @notice Creates a new ERC1155 collection using proxy pattern
+     * @notice Creates a new ERC721 collection using proxy pattern
      * @param params Collection parameters
      * @return The address of the created collection
      */
-    function createERC1155Collection(CollectionParams memory params) external returns (address) {
+    function createERC721Collection(CollectionParams memory params) external returns (address) {
         return _createCollectionInternal(params);
     }
 
@@ -79,7 +79,7 @@ contract ERC1155CollectionFactory is ERC165, ICollectionFactory {
      * @return proxyAddress Address of deployed proxy
      */
     function _deployCollectionProxy() internal returns (address proxyAddress) {
-        proxyAddress = Clones.clone(erc1155CollectionImplementation);
+        proxyAddress = Clones.clone(erc721CollectionImplementation);
     }
 
     /**
@@ -88,7 +88,7 @@ contract ERC1155CollectionFactory is ERC165, ICollectionFactory {
      * @param params Collection parameters
      */
     function _initializeCollection(address collectionAddr, CollectionParams memory params) internal {
-        ERC1155CollectionImplementation(collectionAddr).initialize(params);
+        ERC721CollectionImplementation(collectionAddr).initialize(params);
     }
 
     /**
@@ -98,7 +98,7 @@ contract ERC1155CollectionFactory is ERC165, ICollectionFactory {
     function _registerCollection(address collectionAddr) internal {
         s_validCollections[collectionAddr] = true;
         s_totalCollections++;
-        emit ERC1155CollectionCreated(collectionAddr, msg.sender);
+        emit ERC721CollectionCreated(collectionAddr, msg.sender);
     }
 
     // ============ IMarketplaceCore Implementation ============
@@ -108,7 +108,7 @@ contract ERC1155CollectionFactory is ERC165, ICollectionFactory {
     }
 
     function contractType() public pure override returns (string memory) {
-        return "ERC1155CollectionFactory";
+        return "ERC721CollectionFactory";
     }
 
     function isActive() public pure override returns (bool) {
@@ -127,7 +127,7 @@ contract ERC1155CollectionFactory is ERC165, ICollectionFactory {
 
     function getSupportedStandards() external pure override returns (string[] memory) {
         string[] memory standards = new string[](1);
-        standards[0] = "ERC1155";
+        standards[0] = "ERC721";
         return standards;
     }
 

@@ -4,8 +4,8 @@ pragma solidity ^0.8.30;
 import {Script, console2} from "forge-std/Script.sol";
 import {ERC721NFTExchange} from "src/core/exchange/ERC721NFTExchange.sol";
 import {ERC1155NFTExchange} from "src/core/exchange/ERC1155NFTExchange.sol";
-import {ERC721CollectionFactory} from "src/core/collection/ERC721CollectionFactory.sol";
-import {ERC1155CollectionFactory} from "src/core/collection/ERC1155CollectionFactory.sol";
+import {ERC721CollectionFactory} from "src/core/factory/ERC721CollectionFactory.sol";
+import {ERC1155CollectionFactory} from "src/core/factory/ERC1155CollectionFactory.sol";
 
 contract DeployAll is Script {
     struct AllContracts {

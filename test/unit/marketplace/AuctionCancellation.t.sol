@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import "forge-std/Test.sol";
 import "src/core/auction/EnglishAuction.sol";
 import "src/core/auction/DutchAuction.sol";
-import "src/core/auction/AuctionFactory.sol";
+import "src/core/factory/AuctionFactory.sol";
 import "src/interfaces/IAuction.sol";
 import "src/errors/AuctionErrors.sol";
 import "../../mocks/MockERC721.sol";

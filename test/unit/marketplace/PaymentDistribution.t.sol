@@ -6,7 +6,7 @@ import "src/core/exchange/ERC721NFTExchange.sol";
 import "src/core/exchange/ERC1155NFTExchange.sol";
 import "src/core/auction/EnglishAuction.sol";
 import "src/core/auction/DutchAuction.sol";
-import "src/core/auction/AuctionFactory.sol";
+import "src/core/factory/AuctionFactory.sol";
 import "src/common/Fee.sol";
 import "../../mocks/MockERC721.sol";
 import "../../mocks/MockERC1155.sol";
