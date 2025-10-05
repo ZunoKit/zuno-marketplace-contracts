@@ -2,9 +2,9 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
-import "src/contracts/core/offers/OfferManager.sol";
-import "src/contracts/core/access/MarketplaceAccessControl.sol";
-import "src/contracts/core/fees/AdvancedFeeManager.sol";
+import "src/core/offers/OfferManager.sol";
+import "src/core/access/MarketplaceAccessControl.sol";
+import "src/core/fees/AdvancedFeeManager.sol";
 import "../../utils/TestHelpers.sol";
 import "../../mocks/MockERC20.sol";
 

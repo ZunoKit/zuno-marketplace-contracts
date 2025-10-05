@@ -2,10 +2,10 @@
 pragma solidity ^0.8.30;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {EmergencyManager} from "src/contracts/core/security/EmergencyManager.sol";
-import {MarketplaceValidator} from "src/contracts/core/validation/MarketplaceValidator.sol";
-import "src/contracts/errors/EmergencyManagerErrors.sol";
-import "src/contracts/events/EmergencyManagerEvents.sol";
+import {EmergencyManager} from "src/core/security/EmergencyManager.sol";
+import {MarketplaceValidator} from "src/core/validation/MarketplaceValidator.sol";
+import "src/errors/EmergencyManagerErrors.sol";
+import "src/events/EmergencyManagerEvents.sol";
 
 /**
  * @title EmergencyManagerTest

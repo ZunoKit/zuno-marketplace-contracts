@@ -13,7 +13,22 @@
       "Bash(git reset:*)",
       "Bash(forge test:*)",
       "Bash(rm:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git checkout:*)",
+      "Bash(git tag:*)",
+      "Bash(find:*)",
+      "Bash(forge build:*)",
+      "Bash(mv:*)",
+      "Bash([ -d \"test/unit/exchange/unit\" ])",
+      "Bash(rmdir:*)",
+      "Bash([ -d \"test/unit/auction/unit\" ])",
+      "Bash([ -d \"test/unit/auction/integration\" ])",
+      "Bash(mkdir:*)",
+      "Bash([ -d \"test/unit/auction/utils\" ])",
+      "Bash([ -d \"test/unit/collection/unit\" ])",
+      "Bash(touch:*)",
+      "Bash(bash:*)",
+      "Bash(forge clean:*)"
     ],
     "deny": [],
     "ask": []

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
-import "src/contracts/common/Constants.sol";
+import "src/common/Constants.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/interfaces/IERC2981.sol";

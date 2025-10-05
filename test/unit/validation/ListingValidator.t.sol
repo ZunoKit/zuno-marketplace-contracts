@@ -3,9 +3,9 @@ pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
-import "src/contracts/core/validation/ListingValidator.sol";
-import "src/contracts/core/access/MarketplaceAccessControl.sol";
-import {Listing, ListingType, ListingStatus} from "src/contracts/types/ListingTypes.sol";
+import "src/core/validation/ListingValidator.sol";
+import "src/core/access/MarketplaceAccessControl.sol";
+import {Listing, ListingType, ListingStatus} from "src/types/ListingTypes.sol";
 import "test/mocks/MockERC721.sol";
 import "test/mocks/MockERC1155.sol";
 import "test/utils/TestHelpers.sol";

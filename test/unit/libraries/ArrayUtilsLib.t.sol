@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
-import "src/contracts/libraries/ArrayUtilsLib.sol";
+import "src/libraries/ArrayUtilsLib.sol";
 
 /**
  * @title ArrayStorageTest

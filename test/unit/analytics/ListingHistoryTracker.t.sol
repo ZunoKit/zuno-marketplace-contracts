@@ -2,8 +2,8 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
-import "src/contracts/core/analytics/ListingHistoryTracker.sol";
-import "src/contracts/core/access/MarketplaceAccessControl.sol";
+import "src/core/analytics/ListingHistoryTracker.sol";
+import "src/core/access/MarketplaceAccessControl.sol";
 import "test/mocks/MockERC721.sol";
 import "test/mocks/MockERC1155.sol";
 import "test/utils/TestHelpers.sol";
