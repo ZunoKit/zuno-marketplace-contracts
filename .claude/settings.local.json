@@ -27,7 +27,8 @@
       "Bash([ -d \"test/unit/auction/utils\" ])",
       "Bash([ -d \"test/unit/collection/unit\" ])",
       "Bash(touch:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(forge clean:*)"
     ],
     "deny": [],
     "ask": []
