@@ -175,13 +175,8 @@ contract MarketplaceTimelock is Ownable, ReentrancyGuard {
         uint256 executeTime = block.timestamp + customTimelockDuration;
         scheduledActions[actionId] = executeTime;
 
-        actionData[actionId] = ActionData({
-            target: target,
-            data: data,
-            value: value,
-            description: description,
-            proposer: msg.sender
-        });
+        actionData[actionId] =
+            ActionData({target: target, data: data, value: value, description: description, proposer: msg.sender});
 
         emit ActionScheduled(actionId, target, data, value, executeTime, description, msg.sender);
 

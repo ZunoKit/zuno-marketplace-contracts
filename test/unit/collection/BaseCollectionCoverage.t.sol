@@ -6,7 +6,7 @@ import {BaseCollection} from "src/common/BaseCollection.sol";
 import {CollectionParams} from "src/types/ListingTypes.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 import {MockERC1155} from "test/mocks/MockERC1155.sol";
-import "src/errors/CollectionErrors.sol";
+import {Collection__InvalidAmount} from "src/errors/CollectionErrors.sol";
 
 /**
  * @title BaseCollectionCoverageTest
@@ -65,7 +65,9 @@ contract BaseCollectionCoverageTest is Test {
         });
 
         vm.prank(CREATOR);
-        CoverageTestableBaseCollection collection = new CoverageTestableBaseCollection(params);
+        CoverageTestableBaseCollection collection = new CoverageTestableBaseCollection(
+                params
+            );
 
         assertEq(collection.s_feeContract().getRoyaltyFee(), 0);
     }
@@ -88,7 +90,9 @@ contract BaseCollectionCoverageTest is Test {
         });
 
         vm.prank(CREATOR);
-        CoverageTestableBaseCollection collection = new CoverageTestableBaseCollection(params);
+        CoverageTestableBaseCollection collection = new CoverageTestableBaseCollection(
+                params
+            );
 
         assertEq(collection.s_feeContract().getRoyaltyFee(), 1000);
     }
@@ -196,10 +200,10 @@ contract BaseCollectionCoverageTest is Test {
         address[] memory addresses = new address[](0);
 
         vm.prank(CREATOR);
+        vm.expectRevert(
+            abi.encodeWithSelector(Collection__InvalidAmount.selector)
+        );
         testableCollection.addToAllowlist(addresses);
-
-        // Should not revert with empty array
-        assertTrue(true);
     }
 
     // ============================================================================
@@ -244,9 +248,10 @@ contract BaseCollectionCoverageTest is Test {
         addresses[0] = address(0);
 
         vm.prank(CREATOR);
+        vm.expectRevert(
+            abi.encodeWithSelector(Collection__InvalidAmount.selector)
+        );
         testableCollection.addToAllowlist(addresses);
-
-        assertTrue(testableCollection.isInAllowlist(address(0)));
     }
 
     function test_DuplicateAddressInAllowlist() public {

@@ -751,7 +751,8 @@ contract AdvancedListingManager is Ownable, ReentrancyGuard, Pausable {
 
         // Calculate fees and royalties
         uint256 totalFees = _calculateFees(price, listing.listingType);
-        (address royaltyRecipient, uint256 royaltyAmount) = _calculateRoyalty(listing.nftContract, listing.tokenId, price);
+        (address royaltyRecipient, uint256 royaltyAmount) =
+            _calculateRoyalty(listing.nftContract, listing.tokenId, price);
 
         uint256 sellerAmount = price - totalFees - royaltyAmount;
 
@@ -772,8 +773,15 @@ contract AdvancedListingManager is Ownable, ReentrancyGuard, Pausable {
         _updatePurchaseStats(seller, buyer, price);
 
         emit NFTPurchased(
-            listingId, buyer, seller, listing.nftContract,
-            listing.tokenId, listing.quantity, price, totalFees, block.timestamp
+            listingId,
+            buyer,
+            seller,
+            listing.nftContract,
+            listing.tokenId,
+            listing.quantity,
+            price,
+            totalFees,
+            block.timestamp
         );
 
         // ============================================================================
