@@ -265,6 +265,10 @@ When working with proxy-compatible contracts:
 - Use `initialize()` functions with `initializer` modifier
 - Call parent initializers using `__ParentContract_init()` pattern
 
+
+## Foundry.toml
+Don't use `via_ir = true`
+
 ## Environment Variables
 
 Create `.env` for deployment (not tracked in git):
