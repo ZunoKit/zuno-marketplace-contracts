@@ -135,7 +135,11 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
         });
 
         // Validate NFT availability before creating auction
-        _validateNFTAvailability(params.nftContract, params.tokenId, params.seller);
+        _validateNFTAvailability(
+            params.nftContract,
+            params.tokenId,
+            params.seller
+        );
 
         return _createEnglishAuctionInternal(params);
     }
@@ -174,7 +178,11 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
         });
 
         // Validate NFT availability before creating auction
-        _validateNFTAvailability(params.baseParams.nftContract, params.baseParams.tokenId, params.baseParams.seller);
+        _validateNFTAvailability(
+            params.baseParams.nftContract,
+            params.baseParams.tokenId,
+            params.baseParams.seller
+        );
 
         return _createDutchAuctionInternal(params);
     }
@@ -187,61 +195,78 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @notice Places a bid in an English auction
      * @param auctionId Unique identifier of the auction
      */
-    function placeBid(bytes32 auctionId) external payable nonReentrant whenNotPaused {
+    function placeBid(
+        bytes32 auctionId
+    ) external payable nonReentrant whenNotPaused {
         address auctionContract = auctionToContract[auctionId];
         if (auctionContract == address(0)) {
             revert Auction__AuctionNotFound();
         }
 
-        IAuction(auctionContract).placeBidFor{value: msg.value}(auctionId, msg.sender);
+        IAuction(auctionContract).placeBidFor{value: msg.value}(
+            auctionId,
+            msg.sender
+        );
     }
 
     /**
      * @notice Purchases NFT in a Dutch auction
      * @param auctionId Unique identifier of the auction
      */
-    function buyNow(bytes32 auctionId) external payable nonReentrant whenNotPaused {
+    function buyNow(
+        bytes32 auctionId
+    ) external payable nonReentrant whenNotPaused {
         address auctionContract = auctionToContract[auctionId];
         if (auctionContract == address(0)) {
             revert Auction__AuctionNotFound();
         }
 
-        IAuction(auctionContract).buyNowFor{value: msg.value}(auctionId, msg.sender);
+        IAuction(auctionContract).buyNowFor{value: msg.value}(
+            auctionId,
+            msg.sender
+        );
     }
 
     /**
      * @notice Cancels an auction
      * @param auctionId Unique identifier of the auction
      */
-    function cancelAuction(bytes32 auctionId) external nonReentrant whenNotPaused {
+    function cancelAuction(
+        bytes32 auctionId
+    ) external nonReentrant whenNotPaused {
         address auctionContract = auctionToContract[auctionId];
         if (auctionContract == address(0)) {
             revert Auction__AuctionNotFound();
         }
 
         // Get auction details to validate seller
-        IAuction.Auction memory auction = IAuction(auctionContract).getAuction(auctionId);
+        IAuction.Auction memory auction = IAuction(auctionContract).getAuction(
+            auctionId
+        );
         if (auction.seller != msg.sender) {
             revert Auction__NotAuctionSeller();
         }
 
-        // Check if auction can be cancelled (has bids)
-        if (auction.auctionType == IAuction.AuctionType.ENGLISH && auction.bidCount > 0) {
-            revert Auction__CannotCancelWithBids();
-        }
-
-        // Use cancelAuctionFor() to bypass onlySeller modifier since we validated above
+        // Delegate cancellation to the underlying auction contract. For English auctions
+        // with existing bids, the contract will handle refunding all bidders.
+        // This bypasses the onlySeller modifier since seller was validated above.
         IAuction(auctionContract).cancelAuctionFor(auctionId, msg.sender);
 
         // Notify validator about auction cancellation
-        _notifyValidatorAuctionCancelled(auction.nftContract, auction.tokenId, auction.seller);
+        _notifyValidatorAuctionCancelled(
+            auction.nftContract,
+            auction.tokenId,
+            auction.seller
+        );
     }
 
     /**
      * @notice Settles a completed auction
      * @param auctionId Unique identifier of the auction
      */
-    function settleAuction(bytes32 auctionId) external nonReentrant whenNotPaused {
+    function settleAuction(
+        bytes32 auctionId
+    ) external nonReentrant whenNotPaused {
         address auctionContract = auctionToContract[auctionId];
         if (auctionContract == address(0)) {
             revert Auction__AuctionNotFound();
@@ -254,7 +279,9 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @notice Withdraws a refunded bid
      * @param auctionId Unique identifier of the auction
      */
-    function withdrawBid(bytes32 auctionId) external nonReentrant whenNotPaused {
+    function withdrawBid(
+        bytes32 auctionId
+    ) external nonReentrant whenNotPaused {
         address auctionContract = auctionToContract[auctionId];
         if (auctionContract == address(0)) {
             revert Auction__AuctionNotFound();
@@ -272,7 +299,9 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @param auctionId Unique identifier of the auction
      * @return auction Auction struct with all details
      */
-    function getAuction(bytes32 auctionId) external view returns (IAuction.Auction memory auction) {
+    function getAuction(
+        bytes32 auctionId
+    ) external view returns (IAuction.Auction memory auction) {
         address auctionContract = auctionToContract[auctionId];
         if (auctionContract == address(0)) {
             revert Auction__AuctionNotFound();
@@ -286,7 +315,9 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @param auctionId Unique identifier of the auction
      * @return currentPrice Current price of the auction
      */
-    function getCurrentPrice(bytes32 auctionId) external view returns (uint256 currentPrice) {
+    function getCurrentPrice(
+        bytes32 auctionId
+    ) external view returns (uint256 currentPrice) {
         address auctionContract = auctionToContract[auctionId];
         if (auctionContract == address(0)) {
             revert Auction__AuctionNotFound();
@@ -300,7 +331,9 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @param auctionId Unique identifier of the auction
      * @return isActive Whether the auction is currently active
      */
-    function isAuctionActive(bytes32 auctionId) external view returns (bool isActive) {
+    function isAuctionActive(
+        bytes32 auctionId
+    ) external view returns (bool isActive) {
         address auctionContract = auctionToContract[auctionId];
         if (auctionContract == address(0)) {
             return false;
@@ -313,7 +346,11 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @notice Gets all auction IDs
      * @return auctionIds Array of all auction IDs
      */
-    function getAllAuctions() external view returns (bytes32[] memory auctionIds) {
+    function getAllAuctions()
+        external
+        view
+        returns (bytes32[] memory auctionIds)
+    {
         return allAuctionIds;
     }
 
@@ -322,7 +359,9 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @param user Address of the user
      * @return auctionIds Array of auction IDs created by the user
      */
-    function getUserAuctions(address user) external view returns (bytes32[] memory auctionIds) {
+    function getUserAuctions(
+        address user
+    ) external view returns (bytes32[] memory auctionIds) {
         return userAuctions[user];
     }
 
@@ -331,7 +370,9 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @param auctionId Unique identifier of the auction
      * @return contractAddress Address of the auction contract
      */
-    function getAuctionContract(bytes32 auctionId) external view returns (address contractAddress) {
+    function getAuctionContract(
+        bytes32 auctionId
+    ) external view returns (address contractAddress) {
         return auctionToContract[auctionId];
     }
 
@@ -344,7 +385,11 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @dev DEPRECATED: Use englishAuctionImplementation instead
      * @return implementation English auction implementation contract
      */
-    function englishAuction() external view returns (EnglishAuctionImplementation implementation) {
+    function englishAuction()
+        external
+        view
+        returns (EnglishAuctionImplementation implementation)
+    {
         return EnglishAuctionImplementation(englishAuctionImplementation);
     }
 
@@ -353,7 +398,11 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @dev DEPRECATED: Use dutchAuctionImplementation instead
      * @return implementation Dutch auction implementation contract
      */
-    function dutchAuction() external view returns (DutchAuctionImplementation implementation) {
+    function dutchAuction()
+        external
+        view
+        returns (DutchAuctionImplementation implementation)
+    {
         return DutchAuctionImplementation(dutchAuctionImplementation);
     }
 
@@ -363,7 +412,10 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @param bidder Address of the bidder
      * @return refundAmount Amount available for refund
      */
-    function getPendingRefund(bytes32 auctionId, address bidder) external view returns (uint256 refundAmount) {
+    function getPendingRefund(
+        bytes32 auctionId,
+        address bidder
+    ) external view returns (uint256 refundAmount) {
         address auctionContract = auctionToContract[auctionId];
         if (auctionContract == address(0)) {
             return 0;
@@ -377,15 +429,20 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @param auctionId Unique identifier of the auction
      * @return timeToReserve Time in seconds until reserve price is reached
      */
-    function getTimeToReservePrice(bytes32 auctionId) external view returns (uint256) {
+    function getTimeToReservePrice(
+        bytes32 auctionId
+    ) external view returns (uint256) {
         address auctionContract = auctionToContract[auctionId];
         if (auctionContract == address(0)) {
             revert Auction__AuctionNotFound();
         }
 
         // Check if this is a Dutch auction by trying to call the method
-        try DutchAuctionImplementation(auctionContract).getTimeToReservePrice(auctionId) returns (uint256 timeToReserve)
-        {
+        try
+            DutchAuctionImplementation(auctionContract).getTimeToReservePrice(
+                auctionId
+            )
+        returns (uint256 timeToReserve) {
             return timeToReserve;
         } catch {
             revert Auction__UnsupportedAuctionType();
@@ -451,9 +508,13 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @param to Address to transfer to (buyer)
      * @dev Only callable by registered auction contracts
      */
-    function transferNFTFromSeller(address nftContract, uint256 tokenId, uint256 amount, address from, address to)
-        external
-    {
+    function transferNFTFromSeller(
+        address nftContract,
+        uint256 tokenId,
+        uint256 amount,
+        address from,
+        address to
+    ) external {
         // Verify caller is a registered auction contract
         bool isValidCaller = false;
         for (uint256 i = 0; i < allAuctionIds.length; i++) {
@@ -465,11 +526,19 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
         require(isValidCaller, "Unauthorized caller");
 
         // Auto-detect NFT standard and transfer
-        try IERC721(nftContract).supportsInterface(0x80ac58cd) returns (bool isERC721) {
+        try IERC721(nftContract).supportsInterface(0x80ac58cd) returns (
+            bool isERC721
+        ) {
             if (isERC721) {
                 IERC721(nftContract).transferFrom(from, to, tokenId);
             } else {
-                IERC1155(nftContract).safeTransferFrom(from, to, tokenId, amount, "");
+                IERC1155(nftContract).safeTransferFrom(
+                    from,
+                    to,
+                    tokenId,
+                    amount,
+                    ""
+                );
             }
         } catch {
             revert Auction__NFTTransferFailed();
@@ -485,9 +554,17 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @param params Auction creation parameters
      * @return auctionId The created auction ID
      */
-    function _createEnglishAuctionInternal(AuctionCreationParams memory params) internal returns (bytes32 auctionId) {
-        address auctionProxy = _deployAuctionProxy(IAuction.AuctionType.ENGLISH);
-        auctionId = _initializeAuction(auctionProxy, params, IAuction.AuctionType.ENGLISH);
+    function _createEnglishAuctionInternal(
+        AuctionCreationParams memory params
+    ) internal returns (bytes32 auctionId) {
+        address auctionProxy = _deployAuctionProxy(
+            IAuction.AuctionType.ENGLISH
+        );
+        auctionId = _initializeAuction(
+            auctionProxy,
+            params,
+            IAuction.AuctionType.ENGLISH
+        );
         _registerAuction(auctionId, auctionProxy, IAuction.AuctionType.ENGLISH);
         return auctionId;
     }
@@ -497,7 +574,9 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @param params Dutch auction creation parameters
      * @return auctionId The created auction ID
      */
-    function _createDutchAuctionInternal(DutchAuctionParams memory params) internal returns (bytes32 auctionId) {
+    function _createDutchAuctionInternal(
+        DutchAuctionParams memory params
+    ) internal returns (bytes32 auctionId) {
         address auctionProxy = _deployAuctionProxy(IAuction.AuctionType.DUTCH);
         auctionId = _initializeDutchAuction(auctionProxy, params);
         _registerAuction(auctionId, auctionProxy, IAuction.AuctionType.DUTCH);
@@ -509,7 +588,9 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @param auctionType Type of auction to deploy
      * @return proxyAddress Address of deployed proxy
      */
-    function _deployAuctionProxy(IAuction.AuctionType auctionType) internal returns (address proxyAddress) {
+    function _deployAuctionProxy(
+        IAuction.AuctionType auctionType
+    ) internal returns (address proxyAddress) {
         if (auctionType == IAuction.AuctionType.ENGLISH) {
             proxyAddress = Clones.clone(englishAuctionImplementation);
         } else if (auctionType == IAuction.AuctionType.DUTCH) {
@@ -531,7 +612,9 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
         AuctionCreationParams memory params,
         IAuction.AuctionType auctionType
     ) internal returns (bytes32 auctionId) {
-        EnglishAuctionImplementation(proxyAddress).initialize(marketplaceWallet);
+        EnglishAuctionImplementation(proxyAddress).initialize(
+            marketplaceWallet
+        );
 
         auctionId = IAuction(proxyAddress).createAuction(
             params.nftContract,
@@ -551,10 +634,10 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @param params Dutch auction creation parameters
      * @return auctionId The created auction ID
      */
-    function _initializeDutchAuction(address proxyAddress, DutchAuctionParams memory params)
-        internal
-        returns (bytes32 auctionId)
-    {
+    function _initializeDutchAuction(
+        address proxyAddress,
+        DutchAuctionParams memory params
+    ) internal returns (bytes32 auctionId) {
         DutchAuctionImplementation(proxyAddress).initialize(marketplaceWallet);
 
         auctionId = DutchAuctionImplementation(proxyAddress).createDutchAuction(
@@ -575,7 +658,11 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @param auctionContract The auction contract address
      * @param auctionType The type of auction
      */
-    function _registerAuction(bytes32 auctionId, address auctionContract, IAuction.AuctionType auctionType) internal {
+    function _registerAuction(
+        bytes32 auctionId,
+        address auctionContract,
+        IAuction.AuctionType auctionType
+    ) internal {
         auctionToContract[auctionId] = auctionContract;
         allAuctionIds.push(auctionId);
         userAuctions[msg.sender].push(auctionId);
@@ -583,14 +670,21 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
         // Notify validator about auction creation
         _notifyValidatorAuctionCreated(auctionId, auctionContract);
 
-        emit AuctionCreatedViaFactory(auctionId, auctionContract, msg.sender, auctionType);
+        emit AuctionCreatedViaFactory(
+            auctionId,
+            auctionContract,
+            msg.sender,
+            auctionType
+        );
     }
 
     /**
      * @notice Validates marketplace wallet address
      * @param _marketplaceWallet Address to validate
      */
-    function _validateMarketplaceWallet(address _marketplaceWallet) internal pure {
+    function _validateMarketplaceWallet(
+        address _marketplaceWallet
+    ) internal pure {
         if (_marketplaceWallet == address(0)) {
             revert Auction__ZeroAddress();
         }
@@ -601,26 +695,36 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @param _marketplaceWallet Address to receive marketplace fees
      */
     function _deployImplementations(address _marketplaceWallet) internal {
-        englishAuctionImplementation = address(new EnglishAuctionImplementation());
+        englishAuctionImplementation = address(
+            new EnglishAuctionImplementation()
+        );
         dutchAuctionImplementation = address(new DutchAuctionImplementation());
 
         emit AuctionImplementationsDeployed(
-            englishAuctionImplementation, dutchAuctionImplementation, _marketplaceWallet
+            englishAuctionImplementation,
+            dutchAuctionImplementation,
+            _marketplaceWallet
         );
     }
 
     /**
      * @notice Validates NFT availability for auction (not already listed)
      */
-    function _validateNFTAvailability(address nftContract, uint256 tokenId, address seller) internal view {
+    function _validateNFTAvailability(
+        address nftContract,
+        uint256 tokenId,
+        address seller
+    ) internal view {
         // Skip validation if validator is not set
         if (address(marketplaceValidator) == address(0)) {
             return;
         }
 
         // Check if NFT is available for auction
-        (bool isAvailable, IMarketplaceValidator.NFTStatus status) =
-            marketplaceValidator.isNFTAvailable(nftContract, tokenId, seller);
+        (
+            bool isAvailable,
+            IMarketplaceValidator.NFTStatus status
+        ) = marketplaceValidator.isNFTAvailable(nftContract, tokenId, seller);
 
         if (!isAvailable) {
             if (status == IMarketplaceValidator.NFTStatus.LISTED) {
@@ -636,13 +740,23 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
     /**
      * @notice Notifies validator about auction creation
      */
-    function _notifyValidatorAuctionCreated(bytes32 auctionId, address auctionContract) internal {
+    function _notifyValidatorAuctionCreated(
+        bytes32 auctionId,
+        address auctionContract
+    ) internal {
         if (address(marketplaceValidator) != address(0)) {
             // Get auction details to notify validator
-            IAuction.Auction memory auction = IAuction(auctionContract).getAuction(auctionId);
+            IAuction.Auction memory auction = IAuction(auctionContract)
+                .getAuction(auctionId);
 
-            try marketplaceValidator.setNFTInAuction(auction.nftContract, auction.tokenId, auction.seller, auctionId) {}
-            catch {
+            try
+                marketplaceValidator.setNFTInAuction(
+                    auction.nftContract,
+                    auction.tokenId,
+                    auction.seller,
+                    auctionId
+                )
+            {} catch {
                 // Silently fail if validator call fails
                 // This prevents auction creation from failing due to validator issues
             }
@@ -652,10 +766,19 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
     /**
      * @notice Notifies validator about auction cancellation
      */
-    function _notifyValidatorAuctionCancelled(address nftContract, uint256 tokenId, address seller) internal {
+    function _notifyValidatorAuctionCancelled(
+        address nftContract,
+        uint256 tokenId,
+        address seller
+    ) internal {
         if (address(marketplaceValidator) != address(0)) {
-            try marketplaceValidator.setNFTAvailable(nftContract, tokenId, seller) {}
-            catch {
+            try
+                marketplaceValidator.setNFTAvailable(
+                    nftContract,
+                    tokenId,
+                    seller
+                )
+            {} catch {
                 // Silently fail if validator call fails
             }
         }

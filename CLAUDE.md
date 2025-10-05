@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Zuno Marketplace is a production-ready, modular NFT marketplace built with Foundry/Solidity ^0.8.30. It supports ERC721 and ERC1155 tokens with advanced trading features including auctions, offers, bundles, and comprehensive collection management.
 
 **Tech Stack:**
+
 - Foundry for smart contract development, testing, and deployment
 - OpenZeppelin contracts for security and standards
 - Solidity ^0.8.30
@@ -92,11 +93,10 @@ make deploy-collections
 ### Deployment (Network)
 
 ```bash
-# Deploy to testnet (Sepolia)
-forge script script/deploy/01_DeployExchanges.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast --verify
+# Deploy EVERYTHING (core + hub) in one command
+forge script script/deploy/DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast --verify
 
-# Deploy all contracts
-forge script script/deploy/03_DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast --verify
+# Output will show MarketplaceHub address - that's the ONLY address frontend needs!
 ```
 
 ## Architecture Overview
@@ -104,36 +104,90 @@ forge script script/deploy/03_DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broad
 ### Core Design Patterns
 
 **1. Proxy Pattern for Gas Efficiency:**
+
 - Collection factories use minimal proxy (clone) pattern via OpenZeppelin's `Clones.sol`
 - Implementation contracts: `ERC721CollectionImplementation`, `ERC1155CollectionImplementation`, `EnglishAuctionImplementation`, `DutchAuctionImplementation`
 - Factories deploy cheap clones that delegate to implementation contracts
 - Reduces deployment gas costs significantly
 
 **2. Initializer Pattern:**
+
 - Base contracts like `BaseNFTExchange` use OpenZeppelin's `Initializable`
 - Contracts have empty constructors and separate `initialize()` functions
 - Enables proxy pattern compatibility and upgradeable designs
 
 **3. Modular Architecture:**
+
 - Core functionality split across specialized contracts (Exchange, Collection, Auction, Fees, Access)
 - Libraries handle reusable logic (NFTTransferLib, PaymentDistributionLib, RoyaltyLib, etc.)
 - Separate files for Events, Errors, Types/Structs
-- Registry pattern for managing multiple exchange/collection instances
+- **Registry + Hub Pattern** for frontend integration (see below)
 
-**4. Role-Based Access Control:**
+**4. Registry + Hub Pattern (NEW - Simplified Frontend Integration):**
+
+- **MarketplaceHub**: Single entry point contract that provides address discovery
+- **Registries**: ExchangeRegistry, CollectionRegistry, FeeRegistry, AuctionRegistry
+- **Philosophy**: Hub does NOT wrap function calls, only provides contract addresses
+- **Benefits**: Minimal gas overhead, easy maintenance, direct contract calls from frontend
+- See `docs/user-guide.md` for details
+
+**5. Role-Based Access Control:**
+
 - `MarketplaceAccessControl` manages admin, operator, and user permissions
 - `EmergencyManager` provides pause/unpause functionality for critical scenarios
 - `MarketplaceTimelock` enforces 48-hour delay on critical parameter changes to prevent rug pulls
 
+### Hub + Registry Architecture
+
+**MarketplaceHub (src/router/MarketplaceHub.sol):**
+
+- Single contract address for frontend integration
+- Provides `getAllAddresses()` to get all contract addresses in one call
+- Provides `getExchangeFor(nftContract)` to auto-detect ERC721 vs ERC1155
+- Helper functions: `calculateFees()`, `verifyCollection()`, etc.
+- **Does NOT wrap function calls** - only provides addresses and queries
+
+**Registries (src/registry/):**
+
+- `ExchangeRegistry` - Maps token standards to exchange contracts
+- `CollectionRegistry` - Maps token types to factory contracts
+- `FeeRegistry` - Unified fee calculations across platform
+- `AuctionRegistry` - Maps auction types to auction contracts
+
+**Frontend Flow:**
+
+1. Initialize with MarketplaceHub address only
+2. Call `hub.getAllAddresses()` to get all contract addresses
+3. Create contract instances for each address
+4. Call contracts directly (not through hub)
+
+See `docs/user-guide.md` for complete documentation.
+
+### Hub + Registry Quick Start
+
+1. Frontend needs only the `MarketplaceHub` address
+2. Call `hub.getAllAddresses()` once and cache returned contract addresses
+3. Auto-detect exchange via `hub.getExchangeFor(nftContract)` and call the exchange directly
+4. Use Hub helpers for queries only: `calculateFees(...)`, `verifyCollection(...)`
+
+#### Add a new token standard or module
+
+- Extend the relevant enum/interface in the registry
+- Deploy the new contract (e.g., exchange/auction)
+- Register its address in the corresponding registry (admin-only)
+- Frontend remains unchanged; Hub queries reflect the new registration
+
 ### Key Contract Relationships
 
 **Exchange Layer:**
+
 - `BaseNFTExchange` - Abstract base with common listing/trading logic
 - `ERC721NFTExchange` & `ERC1155NFTExchange` - Token-specific implementations
 - `NFTExchangeRegistry` - Tracks and manages exchange instances
 - `AdvancedListingManager` - Handles complex listing types (auctions, bundles, offers)
 
 **Collection Layer:**
+
 - `BaseCollection` - Common NFT collection functionality
 - `ERC721Collection` & `ERC1155Collection` - Standard collections
 - `ERC721CollectionImplementation` & `ERC1155CollectionImplementation` - Proxy implementations
@@ -142,22 +196,26 @@ forge script script/deploy/03_DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broad
 - `CollectionVerifier` - Validates collection addresses
 
 **Auction Layer:**
+
 - `BaseAuction` - Common auction logic
 - `EnglishAuction` & `DutchAuction` - Auction types
 - `AuctionFactory` - Creates auction instances
 
 **Trading Features:**
+
 - `OfferManager` - Handle offer-based trading
 - `BundleManager` - Multi-NFT bundle sales
 - `AdvancedListingManager` - Orchestrates advanced trading types
 
 **Management Layer:**
+
 - `AdvancedFeeManager` - Marketplace fee configuration
 - `AdvancedRoyaltyManager` - EIP-2981 royalty handling
 - `ListingValidator` - Input validation for listings
 - `ListingHistoryTracker` - Track listing history and analytics
 
 **Security Layer:**
+
 - `MarketplaceAccessControl` - Role-based permissions
 - `EmergencyManager` - Emergency pause controls
 - `MarketplaceTimelock` - 48-hour timelock for critical admin actions
@@ -166,6 +224,7 @@ forge script script/deploy/03_DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broad
 ### Data Structures
 
 Key types defined in `src/types/ListingTypes.sol`:
+
 - `Listing` - Core listing data structure
 - `ListingType` enum - FIXED_PRICE, AUCTION, DUTCH_AUCTION, BUNDLE, OFFER_BASED, etc.
 - `ListingStatus` enum - ACTIVE, SOLD, CANCELLED, EXPIRED, PAUSED, PENDING
@@ -178,6 +237,7 @@ Key types defined in `src/types/ListingTypes.sol`:
 ### Libraries
 
 Reusable logic organized in `src/libraries/`:
+
 - `NFTTransferLib` - Safe NFT transfers (ERC721/ERC1155)
 - `PaymentDistributionLib` - Payment splitting logic
 - `RoyaltyLib` - EIP-2981 royalty calculations
@@ -190,6 +250,7 @@ Reusable logic organized in `src/libraries/`:
 ### Events and Errors
 
 **Events:** Organized in `src/events/` by contract domain:
+
 - `NFTExchangeEvents.sol` - Exchange events
 - `CollectionEvents.sol` - Collection events
 - `AuctionEvents.sol` - Auction events
@@ -197,6 +258,7 @@ Reusable logic organized in `src/libraries/`:
 - `AdvancedListingEvents.sol` - Advanced listing events
 
 **Errors:** Custom errors in `src/errors/` for gas efficiency:
+
 - `NFTExchangeErrors.sol`
 - `CollectionErrors.sol`
 - `AuctionErrors.sol`
@@ -208,6 +270,7 @@ Reusable logic organized in `src/libraries/`:
 Tests organized by type in `test/`:
 
 **Unit Tests** (`test/unit/`):
+
 - `collection/` - Collection factory and NFT contract tests
 - `exchange/` - Exchange contract tests
 - `auction/` - Auction mechanism tests
@@ -218,12 +281,14 @@ Tests organized by type in `test/`:
 - `validation/` - Validator tests
 
 **Integration Tests** (`test/integration/`):
+
 - End-to-end workflows
 - Cross-contract interactions
 - Complete trading scenarios
 - Stress tests
 
 **Mock Contracts** (`test/mocks/`):
+
 - Used for isolated unit testing
 
 ## Important Patterns and Conventions
@@ -238,6 +303,7 @@ Tests organized by type in `test/`:
 ### Listing IDs
 
 Listings use deterministic `bytes32` IDs generated from:
+
 ```solidity
 keccak256(abi.encodePacked(contractAddress, tokenId, seller, block.timestamp))
 ```
@@ -261,34 +327,48 @@ keccak256(abi.encodePacked(contractAddress, tokenId, seller, block.timestamp))
 ### Initialization vs. Constructors
 
 When working with proxy-compatible contracts:
+
 - Constructors should be minimal or empty
 - Use `initialize()` functions with `initializer` modifier
 - Call parent initializers using `__ParentContract_init()` pattern
 
-
 ## Foundry.toml
+
 Don't use `via_ir = true`
 
 ## Environment Variables
 
 Create `.env` for deployment (not tracked in git):
+
 ```bash
-MARKETPLACE_WALLET=0x...
-PRIVATE_KEY=0x...
+MARKETPLACE_WALLET=0x...  # Admin address
+PRIVATE_KEY=0x...          # Deployer private key
 SEPOLIA_RPC_URL=https://...
 MAINNET_RPC_URL=https://...
 ```
 
+That's it! No other addresses needed. DeployAll.s.sol deploys everything.
+
 ## Deployment Scripts
 
 Located in `script/deploy/`:
-- `01_DeployExchanges.s.sol` - Deploy exchange contracts
-- `02_DeployCollections.s.sol` - Deploy collection factories
-- `03_DeployAll.s.sol` - Complete deployment
+
+- **`DeployAll.s.sol`** - Deploy EVERYTHING (core + hub) in one command
+
+Usage:
+```bash
+forge script script/deploy/DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast --verify
+```
+
+Output:
+- All core contracts deployed
+- MarketplaceHub deployed and configured
+- **Frontend only needs MarketplaceHub address** (shown at end of deployment)
 
 ## Commit Convention
 
 Project uses Conventional Commits:
+
 ```
 type(scope): description
 

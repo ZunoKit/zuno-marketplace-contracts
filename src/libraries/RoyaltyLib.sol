@@ -46,32 +46,48 @@ library RoyaltyLib {
      * @param params Royalty calculation parameters
      * @return info Comprehensive royalty information
      */
-    function getRoyaltyInfo(RoyaltyParams memory params) internal view returns (RoyaltyInfo memory info) {
+    function getRoyaltyInfo(
+        RoyaltyParams memory params
+    ) internal view returns (RoyaltyInfo memory info) {
         // Return no royalty for zero address
         if (params.nftContract == address(0)) {
-            return RoyaltyInfo({receiver: address(0), amount: 0, rate: 0, hasRoyalty: false, source: "None"});
+            return
+                RoyaltyInfo({
+                    receiver: address(0),
+                    amount: 0,
+                    rate: 0,
+                    hasRoyalty: false,
+                    source: "None"
+                });
         }
 
-        // Method 1: Try Fee contract approach (for MockERC721/MockERC1155 and BaseCollection)
-        info = _tryFeeContractRoyalty(params);
-        if (info.hasRoyalty) {
-            return info;
-        }
-
-        // Method 2: Try BaseCollection approach
-        info = _tryBaseCollectionRoyalty(params);
-        if (info.hasRoyalty) {
-            return info;
-        }
-
-        // Method 3: Try ERC2981 standard
+        // Method 1: Try ERC2981 standard (takes precedence)
         info = _tryERC2981Royalty(params);
         if (info.hasRoyalty) {
             return info;
         }
 
+        // Method 2: Try Fee contract approach (for MockERC721/MockERC1155 and BaseCollection)
+        info = _tryFeeContractRoyalty(params);
+        if (info.hasRoyalty) {
+            return info;
+        }
+
+        // Method 3: Try BaseCollection approach
+        info = _tryBaseCollectionRoyalty(params);
+        if (info.hasRoyalty) {
+            return info;
+        }
+
         // No royalty found
-        return RoyaltyInfo({receiver: address(0), amount: 0, rate: 0, hasRoyalty: false, source: "None"});
+        return
+            RoyaltyInfo({
+                receiver: address(0),
+                amount: 0,
+                rate: 0,
+                hasRoyalty: false,
+                source: "None"
+            });
     }
 
     /**
@@ -82,11 +98,11 @@ library RoyaltyLib {
      * @return receiver Royalty receiver address
      * @return royaltyAmount Royalty amount
      */
-    function calculateRoyalty(address nftContract, uint256 tokenId, uint256 salePrice)
-        internal
-        view
-        returns (address receiver, uint256 royaltyAmount)
-    {
+    function calculateRoyalty(
+        address nftContract,
+        uint256 tokenId,
+        uint256 salePrice
+    ) internal view returns (address receiver, uint256 royaltyAmount) {
         RoyaltyParams memory params = RoyaltyParams({
             nftContract: nftContract,
             tokenId: tokenId,
@@ -107,7 +123,9 @@ library RoyaltyLib {
      * @param params Royalty parameters
      * @return info Royalty information
      */
-    function _tryFeeContractRoyalty(RoyaltyParams memory params) private view returns (RoyaltyInfo memory info) {
+    function _tryFeeContractRoyalty(
+        RoyaltyParams memory params
+    ) private view returns (RoyaltyInfo memory info) {
         address feeContractAddress = _callGetFeeContract(params.nftContract);
         if (feeContractAddress != address(0)) {
             return _getFeeContractRoyalty(feeContractAddress, params);
@@ -122,13 +140,20 @@ library RoyaltyLib {
      * @param params Royalty parameters
      * @return info Royalty information
      */
-    function _getFeeContractRoyalty(address feeContractAddress, RoyaltyParams memory params)
-        private
-        view
-        returns (RoyaltyInfo memory info)
-    {
-        (bool hasFeeContract, uint256 royaltyFee) = _getFeeContractRoyaltyRateWithSuccess(feeContractAddress);
+    function _getFeeContractRoyalty(
+        address feeContractAddress,
+        RoyaltyParams memory params
+    ) private view returns (RoyaltyInfo memory info) {
+        (
+            bool hasFeeContract,
+            uint256 royaltyFee
+        ) = _getFeeContractRoyaltyRateWithSuccess(feeContractAddress);
         if (!hasFeeContract) {
+            return _createEmptyRoyaltyInfo();
+        }
+
+        // If Fee contract has 0% royalty, return empty to allow fallback to other methods
+        if (royaltyFee == 0) {
             return _createEmptyRoyaltyInfo();
         }
 
@@ -143,7 +168,13 @@ library RoyaltyLib {
 
         uint256 royaltyAmount = (params.salePrice * royaltyFee) / 10000;
         return
-            RoyaltyInfo({receiver: feeOwner, amount: royaltyAmount, rate: royaltyFee, hasRoyalty: true, source: "Fee"});
+            RoyaltyInfo({
+                receiver: feeOwner,
+                amount: royaltyAmount,
+                rate: royaltyFee,
+                hasRoyalty: true,
+                source: "Fee"
+            });
     }
 
     /**
@@ -151,7 +182,9 @@ library RoyaltyLib {
      * @param feeContractAddress Fee contract address
      * @return royaltyFee Royalty fee in basis points
      */
-    function _getFeeContractRoyaltyRate(address feeContractAddress) private view returns (uint256 royaltyFee) {
+    function _getFeeContractRoyaltyRate(
+        address feeContractAddress
+    ) private view returns (uint256 royaltyFee) {
         try Fee(feeContractAddress).getRoyaltyFee() returns (uint256 fee) {
             return fee;
         } catch {
@@ -165,11 +198,9 @@ library RoyaltyLib {
      * @return hasFeeContract Whether the contract is a valid Fee contract
      * @return royaltyFee Royalty fee in basis points
      */
-    function _getFeeContractRoyaltyRateWithSuccess(address feeContractAddress)
-        private
-        view
-        returns (bool hasFeeContract, uint256 royaltyFee)
-    {
+    function _getFeeContractRoyaltyRateWithSuccess(
+        address feeContractAddress
+    ) private view returns (bool hasFeeContract, uint256 royaltyFee) {
         try Fee(feeContractAddress).getRoyaltyFee() returns (uint256 fee) {
             return (true, fee);
         } catch {
@@ -182,7 +213,9 @@ library RoyaltyLib {
      * @param feeContractAddress Fee contract address
      * @return owner Owner address
      */
-    function _getFeeContractOwner(address feeContractAddress) private view returns (address owner) {
+    function _getFeeContractOwner(
+        address feeContractAddress
+    ) private view returns (address owner) {
         try Fee(feeContractAddress).owner() returns (address ownerAddr) {
             return ownerAddr;
         } catch {
@@ -195,8 +228,13 @@ library RoyaltyLib {
      * @param params Royalty parameters
      * @return info Royalty information
      */
-    function _tryBaseCollectionRoyalty(RoyaltyParams memory params) private view returns (RoyaltyInfo memory info) {
-        (bool hasBaseCollection, uint256 royaltyFee) = _getBaseCollectionRoyaltyRateWithSuccess(params.nftContract);
+    function _tryBaseCollectionRoyalty(
+        RoyaltyParams memory params
+    ) private view returns (RoyaltyInfo memory info) {
+        (
+            bool hasBaseCollection,
+            uint256 royaltyFee
+        ) = _getBaseCollectionRoyaltyRateWithSuccess(params.nftContract);
         if (!hasBaseCollection) {
             return _createEmptyRoyaltyInfo();
         }
@@ -211,13 +249,14 @@ library RoyaltyLib {
         }
 
         uint256 royaltyAmount = (params.salePrice * royaltyFee) / 10000;
-        return RoyaltyInfo({
-            receiver: owner,
-            amount: royaltyAmount,
-            rate: royaltyFee,
-            hasRoyalty: true,
-            source: "BaseCollection"
-        });
+        return
+            RoyaltyInfo({
+                receiver: owner,
+                amount: royaltyAmount,
+                rate: royaltyFee,
+                hasRoyalty: true,
+                source: "BaseCollection"
+            });
     }
 
     /**
@@ -225,7 +264,9 @@ library RoyaltyLib {
      * @param nftContract BaseCollection contract address
      * @return royaltyFee Royalty fee in basis points
      */
-    function _getBaseCollectionRoyaltyRate(address nftContract) private view returns (uint256 royaltyFee) {
+    function _getBaseCollectionRoyaltyRate(
+        address nftContract
+    ) private view returns (uint256 royaltyFee) {
         try BaseCollection(nftContract).getRoyaltyFee() returns (uint256 fee) {
             return fee;
         } catch {
@@ -239,11 +280,9 @@ library RoyaltyLib {
      * @return hasBaseCollection Whether the contract implements BaseCollection
      * @return royaltyFee Royalty fee in basis points
      */
-    function _getBaseCollectionRoyaltyRateWithSuccess(address nftContract)
-        private
-        view
-        returns (bool hasBaseCollection, uint256 royaltyFee)
-    {
+    function _getBaseCollectionRoyaltyRateWithSuccess(
+        address nftContract
+    ) private view returns (bool hasBaseCollection, uint256 royaltyFee) {
         try BaseCollection(nftContract).getRoyaltyFee() returns (uint256 fee) {
             return (true, fee);
         } catch {
@@ -256,7 +295,9 @@ library RoyaltyLib {
      * @param nftContract BaseCollection contract address
      * @return owner Owner address
      */
-    function _getBaseCollectionOwner(address nftContract) private view returns (address owner) {
+    function _getBaseCollectionOwner(
+        address nftContract
+    ) private view returns (address owner) {
         try BaseCollection(nftContract).owner() returns (address ownerAddr) {
             return ownerAddr;
         } catch {
@@ -269,9 +310,14 @@ library RoyaltyLib {
      * @param params Royalty parameters
      * @return info Royalty information
      */
-    function _tryERC2981Royalty(RoyaltyParams memory params) private view returns (RoyaltyInfo memory info) {
-        (address receiver, uint256 royaltyAmount) =
-            _getERC2981RoyaltyInfo(params.nftContract, params.tokenId, params.salePrice);
+    function _tryERC2981Royalty(
+        RoyaltyParams memory params
+    ) private view returns (RoyaltyInfo memory info) {
+        (address receiver, uint256 royaltyAmount) = _getERC2981RoyaltyInfo(
+            params.nftContract,
+            params.tokenId,
+            params.salePrice
+        );
 
         if (receiver == address(0) || royaltyAmount == 0) {
             return _createEmptyRoyaltyInfo();
@@ -282,13 +328,14 @@ library RoyaltyLib {
             return _createEmptyRoyaltyInfo();
         }
 
-        return RoyaltyInfo({
-            receiver: receiver,
-            amount: royaltyAmount,
-            rate: royaltyRate,
-            hasRoyalty: true,
-            source: "ERC2981"
-        });
+        return
+            RoyaltyInfo({
+                receiver: receiver,
+                amount: royaltyAmount,
+                rate: royaltyRate,
+                hasRoyalty: true,
+                source: "ERC2981"
+            });
     }
 
     /**
@@ -299,12 +346,15 @@ library RoyaltyLib {
      * @return receiver Royalty receiver
      * @return royaltyAmount Royalty amount
      */
-    function _getERC2981RoyaltyInfo(address nftContract, uint256 tokenId, uint256 salePrice)
-        private
-        view
-        returns (address receiver, uint256 royaltyAmount)
-    {
-        try IERC2981(nftContract).royaltyInfo(tokenId, salePrice) returns (address royaltyReceiver, uint256 amount) {
+    function _getERC2981RoyaltyInfo(
+        address nftContract,
+        uint256 tokenId,
+        uint256 salePrice
+    ) private view returns (address receiver, uint256 royaltyAmount) {
+        try IERC2981(nftContract).royaltyInfo(tokenId, salePrice) returns (
+            address royaltyReceiver,
+            uint256 amount
+        ) {
             return (royaltyReceiver, amount);
         } catch {
             return (address(0), 0);
@@ -315,8 +365,19 @@ library RoyaltyLib {
      * @notice Creates empty royalty info struct
      * @return info Empty royalty information
      */
-    function _createEmptyRoyaltyInfo() private pure returns (RoyaltyInfo memory info) {
-        return RoyaltyInfo({receiver: address(0), amount: 0, rate: 0, hasRoyalty: false, source: "None"});
+    function _createEmptyRoyaltyInfo()
+        private
+        pure
+        returns (RoyaltyInfo memory info)
+    {
+        return
+            RoyaltyInfo({
+                receiver: address(0),
+                amount: 0,
+                rate: 0,
+                hasRoyalty: false,
+                source: "None"
+            });
     }
 
     // ============================================================================
@@ -328,8 +389,12 @@ library RoyaltyLib {
      * @param contractAddress Contract address to call
      * @return feeContract Fee contract address
      */
-    function _callGetFeeContract(address contractAddress) internal view returns (address feeContract) {
-        (bool success, bytes memory data) = contractAddress.staticcall(abi.encodeWithSignature("getFeeContract()"));
+    function _callGetFeeContract(
+        address contractAddress
+    ) internal view returns (address feeContract) {
+        (bool success, bytes memory data) = contractAddress.staticcall(
+            abi.encodeWithSignature("getFeeContract()")
+        );
 
         if (success && data.length >= 32) {
             return abi.decode(data, (address));
@@ -348,7 +413,10 @@ library RoyaltyLib {
      * @param maxRate Maximum allowed rate in basis points
      * @return isValid True if rate is valid
      */
-    function validateRoyaltyRate(uint256 royaltyRate, uint256 maxRate) internal pure returns (bool isValid) {
+    function validateRoyaltyRate(
+        uint256 royaltyRate,
+        uint256 maxRate
+    ) internal pure returns (bool isValid) {
         return royaltyRate <= maxRate;
     }
 
@@ -358,11 +426,10 @@ library RoyaltyLib {
      * @param royaltyRate Royalty rate in basis points
      * @return royaltyAmount Calculated royalty amount
      */
-    function calculateRoyaltyAmount(uint256 salePrice, uint256 royaltyRate)
-        internal
-        pure
-        returns (uint256 royaltyAmount)
-    {
+    function calculateRoyaltyAmount(
+        uint256 salePrice,
+        uint256 royaltyRate
+    ) internal pure returns (uint256 royaltyAmount) {
         return (salePrice * royaltyRate) / 10000;
     }
 
@@ -374,16 +441,18 @@ library RoyaltyLib {
      * @param maxRoyaltyRate Maximum royalty rate
      * @return params Royalty parameters struct
      */
-    function createRoyaltyParams(address nftContract, uint256 tokenId, uint256 salePrice, uint256 maxRoyaltyRate)
-        internal
-        pure
-        returns (RoyaltyParams memory params)
-    {
-        return RoyaltyParams({
-            nftContract: nftContract,
-            tokenId: tokenId,
-            salePrice: salePrice,
-            maxRoyaltyRate: maxRoyaltyRate
-        });
+    function createRoyaltyParams(
+        address nftContract,
+        uint256 tokenId,
+        uint256 salePrice,
+        uint256 maxRoyaltyRate
+    ) internal pure returns (RoyaltyParams memory params) {
+        return
+            RoyaltyParams({
+                nftContract: nftContract,
+                tokenId: tokenId,
+                salePrice: salePrice,
+                maxRoyaltyRate: maxRoyaltyRate
+            });
     }
 }
