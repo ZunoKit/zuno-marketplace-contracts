@@ -743,33 +743,25 @@ contract AdvancedListingManager is Ownable, ReentrancyGuard, Pausable {
      * @param listingId The listing ID
      * @param buyer The buyer address
      * @param price The purchase price
+     * @dev Follows checks-effects-interactions pattern to prevent reentrancy
+     * @dev All state changes occur before external calls
      */
     function _processPurchase(bytes32 listingId, address buyer, uint256 price) internal {
         Listing storage listing = listings[listingId];
 
-        // Calculate fees
+        // Calculate fees and royalties
         uint256 totalFees = _calculateFees(price, listing.listingType);
-        uint256 sellerAmount = price - totalFees;
+        (address royaltyRecipient, uint256 royaltyAmount) =
+            _calculateRoyalty(listing.nftContract, listing.tokenId, price);
 
-        // Calculate royalties
-        uint256 royaltyAmount = 0;
-        address royaltyRecipient = address(0);
+        uint256 sellerAmount = price - totalFees - royaltyAmount;
 
-        try IERC2981(listing.nftContract).royaltyInfo(listing.tokenId, price) returns (
-            address recipient, uint256 amount
-        ) {
-            royaltyAmount = amount;
-            royaltyRecipient = recipient;
-            sellerAmount -= royaltyAmount;
-        } catch {
-            // No royalties supported
-        }
+        // ============================================================================
+        // EFFECTS: Update all state BEFORE external calls (reentrancy protection)
+        // ============================================================================
 
-        // Transfer NFT
-        _transferNFT(listing, buyer);
-
-        // Transfer payments
-        _transferPayments(listing.seller, sellerAmount, royaltyRecipient, royaltyAmount, totalFees);
+        // Cache seller address before state changes
+        address seller = listing.seller;
 
         // Update listing status
         listing.status = ListingStatus.SOLD;
@@ -778,12 +770,12 @@ contract AdvancedListingManager is Ownable, ReentrancyGuard, Pausable {
         delete tokenListings[listing.nftContract][listing.tokenId];
 
         // Update statistics
-        _updatePurchaseStats(listing.seller, buyer, price);
+        _updatePurchaseStats(seller, buyer, price);
 
         emit NFTPurchased(
             listingId,
             buyer,
-            listing.seller,
+            seller,
             listing.nftContract,
             listing.tokenId,
             listing.quantity,
@@ -791,6 +783,36 @@ contract AdvancedListingManager is Ownable, ReentrancyGuard, Pausable {
             totalFees,
             block.timestamp
         );
+
+        // ============================================================================
+        // INTERACTIONS: Make external calls AFTER state changes
+        // ============================================================================
+
+        // Transfer NFT
+        _transferNFT(listing, buyer);
+
+        // Transfer payments
+        _transferPayments(seller, sellerAmount, royaltyRecipient, royaltyAmount, totalFees);
+    }
+
+    /**
+     * @notice Calculates royalty information
+     * @param nftContract NFT contract address
+     * @param tokenId Token ID
+     * @param price Sale price
+     * @return recipient Royalty recipient address
+     * @return amount Royalty amount
+     */
+    function _calculateRoyalty(address nftContract, uint256 tokenId, uint256 price)
+        internal
+        view
+        returns (address recipient, uint256 amount)
+    {
+        try IERC2981(nftContract).royaltyInfo(tokenId, price) returns (address _recipient, uint256 _amount) {
+            return (_recipient, _amount);
+        } catch {
+            return (address(0), 0);
+        }
     }
 
     /**
