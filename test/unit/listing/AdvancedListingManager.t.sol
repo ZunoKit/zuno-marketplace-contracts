@@ -2,15 +2,15 @@
 pragma solidity ^0.8.30;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {AdvancedListingManager} from "src/contracts/core/listing/AdvancedListingManager.sol";
-import {MarketplaceAccessControl} from "src/contracts/core/access/MarketplaceAccessControl.sol";
-import {MarketplaceValidator} from "src/contracts/core/validation/MarketplaceValidator.sol";
+import {AdvancedListingManager} from "src/core/listing/AdvancedListingManager.sol";
+import {MarketplaceAccessControl} from "src/core/access/MarketplaceAccessControl.sol";
+import {MarketplaceValidator} from "src/core/validation/MarketplaceValidator.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 import {MockERC1155} from "test/mocks/MockERC1155.sol";
 
-import "src/contracts/types/ListingTypes.sol";
-import "src/contracts/errors/AdvancedListingErrors.sol";
-import "src/contracts/events/AdvancedListingEvents.sol";
+import "src/types/ListingTypes.sol";
+import "src/errors/AdvancedListingErrors.sol";
+import "src/events/AdvancedListingEvents.sol";
 
 /**
  * @title AdvancedListingManagerTest

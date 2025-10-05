@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
-import "src/contracts/libraries/BidManagementLib.sol";
+import "src/libraries/BidManagementLib.sol";
 
 /**
  * @title BidStorageTest

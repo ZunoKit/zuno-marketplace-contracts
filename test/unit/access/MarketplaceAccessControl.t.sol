@@ -2,9 +2,9 @@
 pragma solidity ^0.8.30;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {MarketplaceAccessControl} from "src/contracts/core/access/MarketplaceAccessControl.sol";
-import "src/contracts/errors/MarketplaceAccessControlErrors.sol";
-import "src/contracts/events/MarketplaceAccessControlEvents.sol";
+import {MarketplaceAccessControl} from "src/core/access/MarketplaceAccessControl.sol";
+import "src/errors/MarketplaceAccessControlErrors.sol";
+import "src/events/MarketplaceAccessControlEvents.sol";
 
 /**
  * @title MarketplaceAccessControlTest
