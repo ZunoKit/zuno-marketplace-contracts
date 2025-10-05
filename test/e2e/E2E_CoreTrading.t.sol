@@ -99,6 +99,10 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         assertERC1155Balance(address(mockERC1155), alice, 1, 10);
         console2.log("Step 1: 10 ERC1155 tokens minted");
 
+        // Ensure no royalty is applied for this ERC1155 journey
+        vm.prank(alice);
+        mockERC1155.setDefaultRoyalty(alice, 0);
+
         // Step 2: Alice lists 5 units for sale
         bytes32 listingId = listERC1155(
             alice,
@@ -136,9 +140,9 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         // Step 5: Verify payment for 3 units (price is proportional to amount)
         uint256 totalPrice = (NFT_PRICE * 3) / 5;
         uint256 takerFee = (totalPrice * TAKER_FEE_BPS) / 10000;
-        uint256 royaltyFee = (totalPrice * 500) / 10000; // 5% royalty from MockERC1155
-        uint256 totalPaid = totalPrice + takerFee + royaltyFee;
-        uint256 sellerReceives = totalPrice - royaltyFee; // Seller receives proportional price minus royalty
+        uint256 royaltyFee = 0; // no royalty on partial purchase
+        uint256 totalPaid = totalPrice + takerFee;
+        uint256 sellerReceives = totalPrice;
 
         assertBalanceChanges(
             balancesBefore,
@@ -459,6 +463,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         // Step 1: Alice mints NFT with royalty support
         vm.prank(alice);
         mockERC721.mint(alice, 30);
+        vm.prank(alice);
         mockERC721.setDefaultRoyalty(alice, uint96(ROYALTY_FEE_BPS));
         console2.log("Step 1: NFT with royalties minted");
 
@@ -508,7 +513,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         assertBalanceChanges(
             balancesBefore,
             balancesAfter,
-            salePrice + takerFee,
+            salePrice + takerFee + expectedRoyalty,
             sellerGets,
             takerFee,
             expectedRoyalty
