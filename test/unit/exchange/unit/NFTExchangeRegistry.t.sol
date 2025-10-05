@@ -2,15 +2,15 @@
 pragma solidity ^0.8.30;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {NFTExchangeRegistry} from "src/contracts/core/NFTExchange/NFTExchangeRegistry.sol";
-import {ERC721NFTExchange} from "src/contracts/core/NFTExchange/ERC721NFTExchange.sol";
-import {ERC1155NFTExchange} from "src/contracts/core/NFTExchange/ERC1155NFTExchange.sol";
-import {ERC721NFTExchange} from "src/contracts/core/NFTExchange/ERC721NFTExchange.sol";
-import {ERC1155NFTExchange} from "src/contracts/core/NFTExchange/ERC1155NFTExchange.sol";
-import {NFTExchangeFactory} from "src/contracts/core/NFTExchange/NFTExchangeFactory.sol";
+import {NFTExchangeRegistry} from "src/core/NFTExchange/NFTExchangeRegistry.sol";
+import {ERC721NFTExchange} from "src/core/NFTExchange/ERC721NFTExchange.sol";
+import {ERC1155NFTExchange} from "src/core/NFTExchange/ERC1155NFTExchange.sol";
+import {ERC721NFTExchange} from "src/core/NFTExchange/ERC721NFTExchange.sol";
+import {ERC1155NFTExchange} from "src/core/NFTExchange/ERC1155NFTExchange.sol";
+import {NFTExchangeFactory} from "src/core/NFTExchange/NFTExchangeFactory.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 import {MockERC1155} from "test/mocks/MockERC1155.sol";
-import "src/contracts/errors/NFTExchangeErrors.sol";
+import "src/errors/NFTExchangeErrors.sol";
 
 /**
  * @title NFTExchangeRegistryTest

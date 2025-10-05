@@ -2,16 +2,16 @@
 pragma solidity ^0.8.30;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {BaseNFTExchange} from "src/contracts/common/BaseNFTExchange.sol";
-import {BaseCollection} from "src/contracts/common/BaseCollection.sol";
-import {Fee} from "src/contracts/common/Fee.sol";
-import {CollectionParams, MintStage} from "src/contracts/types/ListingTypes.sol";
-import "src/contracts/errors/NFTExchangeErrors.sol";
-import "src/contracts/errors/CollectionErrors.sol";
+import {BaseNFTExchange} from "src/common/BaseNFTExchange.sol";
+import {BaseCollection} from "src/common/BaseCollection.sol";
+import {Fee} from "src/common/Fee.sol";
+import {CollectionParams, MintStage} from "src/types/ListingTypes.sol";
+import "src/errors/NFTExchangeErrors.sol";
+import "src/errors/CollectionErrors.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import "src/contracts/events/NFTExchangeEvents.sol";
+import "src/events/NFTExchangeEvents.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 
 // Test collection contract that inherits from BaseCollection to add minting functionality

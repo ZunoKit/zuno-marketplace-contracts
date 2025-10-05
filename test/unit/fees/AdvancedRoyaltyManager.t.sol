@@ -2,9 +2,9 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
-import "src/contracts/core/fees/AdvancedRoyaltyManager.sol";
-import "src/contracts/core/access/MarketplaceAccessControl.sol";
-import "src/contracts/common/Fee.sol";
+import "src/core/fees/AdvancedRoyaltyManager.sol";
+import "src/core/access/MarketplaceAccessControl.sol";
+import "src/common/Fee.sol";
 import "../../utils/TestHelpers.sol";
 
 contract AdvancedRoyaltyManagerTest is Test, TestHelpers {

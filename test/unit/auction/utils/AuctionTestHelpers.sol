@@ -2,13 +2,13 @@
 pragma solidity ^0.8.30;
 
 import {Test} from "forge-std/Test.sol";
-import {IAuction} from "src/contracts/interfaces/IAuction.sol";
-import {EnglishAuction} from "src/contracts/core/auction/EnglishAuction.sol";
-import {DutchAuction} from "src/contracts/core/auction/DutchAuction.sol";
-import {EnglishAuctionImplementation} from "src/contracts/core/auction/EnglishAuctionImplementation.sol";
-import {DutchAuctionImplementation} from "src/contracts/core/auction/DutchAuctionImplementation.sol";
-import {AuctionFactory} from "src/contracts/core/auction/AuctionFactory.sol";
-import {MarketplaceValidator} from "src/contracts/core/validation/MarketplaceValidator.sol";
+import {IAuction} from "src/interfaces/IAuction.sol";
+import {EnglishAuction} from "src/core/auction/EnglishAuction.sol";
+import {DutchAuction} from "src/core/auction/DutchAuction.sol";
+import {EnglishAuctionImplementation} from "src/core/auction/EnglishAuctionImplementation.sol";
+import {DutchAuctionImplementation} from "src/core/auction/DutchAuctionImplementation.sol";
+import {AuctionFactory} from "src/core/auction/AuctionFactory.sol";
+import {MarketplaceValidator} from "src/core/validation/MarketplaceValidator.sol";
 import {MockERC721} from "../../../mocks/MockERC721.sol";
 import {MockERC1155} from "../../../mocks/MockERC1155.sol";
 /**

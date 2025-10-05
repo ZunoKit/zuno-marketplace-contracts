@@ -2,10 +2,10 @@
 pragma solidity ^0.8.30;
 
 import {Test} from "forge-std/Test.sol";
-import {ERC721CollectionFactory} from "src/contracts/core/collection/ERC721CollectionFactory.sol";
-import {CollectionParams} from "src/contracts/types/ListingTypes.sol";
-import {ERC721CollectionCreated} from "src/contracts/events/CollectionEvents.sol";
-import {ICollectionFactory} from "src/contracts/interfaces/IMarketplaceCore.sol";
+import {ERC721CollectionFactory} from "src/core/collection/ERC721CollectionFactory.sol";
+import {CollectionParams} from "src/types/ListingTypes.sol";
+import {ERC721CollectionCreated} from "src/events/CollectionEvents.sol";
+import {ICollectionFactory} from "src/interfaces/IMarketplaceCore.sol";
 
 contract UnitERC721CollectionFactoryTest is Test {
     struct TestSetup {

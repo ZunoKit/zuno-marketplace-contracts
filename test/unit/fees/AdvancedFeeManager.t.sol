@@ -2,9 +2,9 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
-import "src/contracts/core/fees/AdvancedFeeManager.sol";
-import "src/contracts/core/access/MarketplaceAccessControl.sol";
-import "src/contracts/errors/FeeErrors.sol";
+import "src/core/fees/AdvancedFeeManager.sol";
+import "src/core/access/MarketplaceAccessControl.sol";
+import "src/errors/FeeErrors.sol";
 
 contract AdvancedFeeManagerTest is Test {
     AdvancedFeeManager public feeManager;

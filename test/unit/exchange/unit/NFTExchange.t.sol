@@ -2,12 +2,12 @@
 pragma solidity ^0.8.30;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {NFTExchangeFactory} from "src/contracts/core/NFTExchange/NFTExchangeFactory.sol";
-import {ERC721NFTExchange} from "src/contracts/core/NFTExchange/ERC721NFTExchange.sol";
-import {ERC1155NFTExchange} from "src/contracts/core/NFTExchange/ERC1155NFTExchange.sol";
-import {ERC721NFTExchange} from "src/contracts/core/NFTExchange/ERC721NFTExchange.sol";
-import {ERC1155NFTExchange} from "src/contracts/core/NFTExchange/ERC1155NFTExchange.sol";
-import "src/contracts/errors/NFTExchangeErrors.sol";
+import {NFTExchangeFactory} from "src/core/NFTExchange/NFTExchangeFactory.sol";
+import {ERC721NFTExchange} from "src/core/NFTExchange/ERC721NFTExchange.sol";
+import {ERC1155NFTExchange} from "src/core/NFTExchange/ERC1155NFTExchange.sol";
+import {ERC721NFTExchange} from "src/core/NFTExchange/ERC721NFTExchange.sol";
+import {ERC1155NFTExchange} from "src/core/NFTExchange/ERC1155NFTExchange.sol";
+import "src/errors/NFTExchangeErrors.sol";
 
 contract NFTExchangeTest is Test {
     NFTExchangeFactory public exchange;

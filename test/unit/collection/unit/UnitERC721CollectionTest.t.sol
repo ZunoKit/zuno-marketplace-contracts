@@ -2,11 +2,11 @@
 pragma solidity ^0.8.30;
 
 import {Test} from "forge-std/Test.sol";
-import {ERC721Collection} from "src/contracts/core/collection/ERC721Collection.sol";
-import {CollectionParams} from "src/contracts/types/ListingTypes.sol";
-import {Minted, BatchMinted} from "src/contracts/events/CollectionEvents.sol";
-import "src/contracts/errors/CollectionErrors.sol";
-import {MintStage} from "src/contracts/types/ListingTypes.sol";
+import {ERC721Collection} from "src/core/collection/ERC721Collection.sol";
+import {CollectionParams} from "src/types/ListingTypes.sol";
+import {Minted, BatchMinted} from "src/events/CollectionEvents.sol";
+import "src/errors/CollectionErrors.sol";
+import {MintStage} from "src/types/ListingTypes.sol";
 
 contract UnitERC721CollectionTest is Test {
     struct TestSetup {

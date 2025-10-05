@@ -2,11 +2,11 @@
 pragma solidity ^0.8.30;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {BaseCollection} from "src/contracts/common/BaseCollection.sol";
-import {CollectionParams} from "src/contracts/types/ListingTypes.sol";
+import {BaseCollection} from "src/common/BaseCollection.sol";
+import {CollectionParams} from "src/types/ListingTypes.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 import {MockERC1155} from "test/mocks/MockERC1155.sol";
-import "src/contracts/errors/CollectionErrors.sol";
+import "src/errors/CollectionErrors.sol";
 
 /**
  * @title BaseCollectionCoverageTest
