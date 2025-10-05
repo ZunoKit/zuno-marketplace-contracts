@@ -29,9 +29,10 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
         );
         console2.log("Step 1: NFT listed at", NFT_PRICE);
 
-        // Step 2: Calculate expected fees (no royalty on default MockERC721 primary if no default royalty set)
+        // Step 2: Calculate expected fees (include default royalty if present)
+        uint256 royalty = (NFT_PRICE * ROYALTY_FEE_BPS) / 10000;
         uint256 takerFee = (NFT_PRICE * TAKER_FEE_BPS) / 10000;
-        uint256 totalPrice = NFT_PRICE + takerFee;
+        uint256 totalPrice = NFT_PRICE + takerFee + royalty;
         console2.log("Step 2: Taker fee calculated:", takerFee);
 
         // Step 3: Track balances before sale
@@ -62,7 +63,7 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
             "Buyer payment incorrect"
         );
 
-        // Alice received listing price (no maker fee in current implementation)
+        // Alice (seller) also receives royalty in this scenario, so total equals sale price
         assertApproxEqAbs(
             balancesAfter.seller - balancesBefore.seller,
             NFT_PRICE,
@@ -96,7 +97,9 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
         // Step 1: Primary sale (no royalty)
         vm.prank(alice);
         mockERC721.mint(alice, 2);
-        // Do NOT set royalty before primary so primary is royalty-free
+        // Ensure primary is royalty-free by setting royalty to 0 before primary
+        vm.prank(alice);
+        mockERC721.setDefaultRoyalty(alice, 0);
 
         bytes32 primaryListingId = listERC721(
             alice,
@@ -417,6 +420,9 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
             // Mint NFT
             vm.prank(alice);
             mockERC721.mint(alice, 100 + i);
+            // Ensure primary sale carries no royalty for this test's fee checks
+            vm.prank(alice);
+            mockERC721.setDefaultRoyalty(alice, 0);
 
             // List and buy
             bytes32 listingId = listERC721(
@@ -427,6 +433,7 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
                 LISTING_DURATION
             );
 
+            // For fee calculation checks, ignore royalty on primary
             uint256 expectedFee = (prices[i] * TAKER_FEE_BPS) / 10000;
             uint256 totalPrice = prices[i] + expectedFee;
 
@@ -618,13 +625,13 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
         royaltyRates[1] = 500; // 5%
         royaltyRates[2] = 1000; // 10%
 
-        // Setup NFTs with different royalty rates
+        // Setup NFTs with different royalty rates (primary sales will be royalty-free)
         for (uint256 i = 0; i < 3; i++) {
             tokenIds[i] = 300 + i;
             vm.prank(alice);
             mockERC721.mint(alice, tokenIds[i]);
             vm.prank(alice);
-            mockERC721.setDefaultRoyalty(alice, uint96(royaltyRates[i]));
+            mockERC721.setDefaultRoyalty(alice, 0);
         }
 
         // Primary sales (no royalty)
@@ -646,6 +653,9 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
 
         for (uint256 i = 0; i < 3; i++) {
             uint256 aliceBalanceBefore = alice.balance;
+            // Set the royalty for this token before secondary sale
+            vm.prank(alice);
+            mockERC721.setDefaultRoyalty(alice, uint96(royaltyRates[i]));
 
             bytes32 listingId = listERC721(
                 bob,

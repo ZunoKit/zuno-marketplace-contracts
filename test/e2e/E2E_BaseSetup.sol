@@ -126,7 +126,7 @@ abstract contract E2E_BaseSetup is Test {
     // TEST CONSTANTS
     // ============================================================================
 
-    uint256 public constant INITIAL_BALANCE = 100 ether;
+    uint256 public constant INITIAL_BALANCE = 1_000 ether;
     uint256 public constant NFT_PRICE = 1 ether;
     uint256 public constant LISTING_DURATION = 7 days;
     uint256 public constant AUCTION_DURATION = 3 days;
@@ -570,11 +570,15 @@ abstract contract E2E_BaseSetup is Test {
         uint256 amount
     ) internal {
         uint256 fullLotPrice = erc1155Exchange.getBuyerSeesPrice(listingId);
-        uint256 listedAmount = _listedAmountById[listingId];
-        uint256 totalPrice = (fullLotPrice * amount) / listedAmount;
+        uint256 remainingAmount = _listedAmountById[listingId];
+        // Scale payment proportionally to the current remaining amount
+        uint256 totalPrice = (fullLotPrice * amount) / remainingAmount;
 
         vm.prank(buyer);
         erc1155Exchange.buyNFT{value: totalPrice}(listingId, amount);
+
+        // Update our tracked remaining amount to reflect the purchase
+        _listedAmountById[listingId] = remainingAmount - amount;
 
         console2.log("Buyer", buyer, "purchased");
         console2.log("  amount:", amount, "totalPrice:", totalPrice);
