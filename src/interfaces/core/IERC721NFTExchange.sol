@@ -21,12 +21,15 @@ interface IERC721NFTExchange {
 
     function updateListingPrice(bytes32 listingId, uint256 newPrice) external;
 
-    function getListing(bytes32 listingId) external view returns (
-        address seller,
-        address contractAddress,
-        uint256 tokenId,
-        uint256 price,
-        uint256 expirationTime,
-        bool isActive
-    );
+    function getListing(bytes32 listingId)
+        external
+        view
+        returns (
+            address seller,
+            address contractAddress,
+            uint256 tokenId,
+            uint256 price,
+            uint256 expirationTime,
+            bool isActive
+        );
 }

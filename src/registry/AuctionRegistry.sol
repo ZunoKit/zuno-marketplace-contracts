@@ -54,11 +54,7 @@ contract AuctionRegistry is IAuctionRegistry, AccessControl {
     /**
      * @inheritdoc IAuctionRegistry
      */
-    function registerAuction(AuctionType auctionType, address auctionContract)
-        external
-        override
-        onlyRole(ADMIN_ROLE)
-    {
+    function registerAuction(AuctionType auctionType, address auctionContract) external override onlyRole(ADMIN_ROLE) {
         if (auctionContract == address(0)) revert AuctionRegistry__ZeroAddress();
         if (s_auctionContracts[auctionType] != address(0)) revert AuctionRegistry__AuctionAlreadyRegistered();
 

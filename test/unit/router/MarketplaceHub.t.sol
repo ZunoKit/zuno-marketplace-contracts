@@ -106,6 +106,8 @@ contract MarketplaceHubTest is Test {
 
     function test_RevertIf_ZeroAddressInConstructor() public {
         vm.expectRevert(MarketplaceHub.MarketplaceHub__ZeroAddress.selector);
-        new MarketplaceHub(admin, address(0), address(collectionRegistry), address(feeRegistry), address(auctionRegistry));
+        new MarketplaceHub(
+            admin, address(0), address(collectionRegistry), address(feeRegistry), address(auctionRegistry)
+        );
     }
 }

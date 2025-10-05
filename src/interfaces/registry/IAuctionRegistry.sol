@@ -11,9 +11,10 @@ interface IAuctionRegistry {
      * @notice Auction types supported by the marketplace
      */
     enum AuctionType {
-        ENGLISH,    // Traditional ascending bid auction
-        DUTCH,      // Descending price auction
-        SEALED_BID  // Future: sealed bid auction
+        ENGLISH, // Traditional ascending bid auction
+        DUTCH, // Descending price auction
+        SEALED_BID // Future: sealed bid auction
+
     }
 
     /**

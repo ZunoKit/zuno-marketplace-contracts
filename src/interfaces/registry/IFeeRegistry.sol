@@ -11,11 +11,11 @@ interface IFeeRegistry {
      * @notice Fee breakdown structure
      */
     struct FeeBreakdown {
-        uint256 platformFee;        // Marketplace platform fee
-        uint256 royaltyFee;         // Creator royalty fee
-        address royaltyRecipient;   // Recipient of royalty
-        uint256 totalFees;          // Total fees (platform + royalty)
-        uint256 sellerProceeds;     // Amount seller receives
+        uint256 platformFee; // Marketplace platform fee
+        uint256 royaltyFee; // Creator royalty fee
+        address royaltyRecipient; // Recipient of royalty
+        uint256 totalFees; // Total fees (platform + royalty)
+        uint256 sellerProceeds; // Amount seller receives
     }
 
     /**
@@ -30,11 +30,10 @@ interface IFeeRegistry {
      * @param salePrice The sale price
      * @return breakdown Complete fee breakdown
      */
-    function calculateAllFees(
-        address nftContract,
-        uint256 tokenId,
-        uint256 salePrice
-    ) external view returns (FeeBreakdown memory breakdown);
+    function calculateAllFees(address nftContract, uint256 tokenId, uint256 salePrice)
+        external
+        view
+        returns (FeeBreakdown memory breakdown);
 
     /**
      * @notice Calculate platform fee only
@@ -51,11 +50,10 @@ interface IFeeRegistry {
      * @return recipient Royalty recipient address
      * @return amount Royalty amount
      */
-    function calculateRoyalty(
-        address nftContract,
-        uint256 tokenId,
-        uint256 salePrice
-    ) external view returns (address recipient, uint256 amount);
+    function calculateRoyalty(address nftContract, uint256 tokenId, uint256 salePrice)
+        external
+        view
+        returns (address recipient, uint256 amount);
 
     /**
      * @notice Get current platform fee percentage
@@ -87,9 +85,5 @@ interface IFeeRegistry {
      * @param feeManager New fee manager contract address
      * @param royaltyManager New royalty manager contract address
      */
-    function updateFeeContracts(
-        address baseFee,
-        address feeManager,
-        address royaltyManager
-    ) external;
+    function updateFeeContracts(address baseFee, address feeManager, address royaltyManager) external;
 }

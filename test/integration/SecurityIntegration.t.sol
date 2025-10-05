@@ -113,17 +113,10 @@ contract SecurityIntegrationTest is Test {
         exchange.listNFT(address(mockNFT), 1, NFT_PRICE, 7 days);
         vm.stopPrank();
 
-        bytes32 listingId = exchange.getGeneratedListingId(
-            address(mockNFT),
-            1,
-            user1
-        );
+        bytes32 listingId = exchange.getGeneratedListingId(address(mockNFT), 1, user1);
 
         // Deploy malicious contract that attempts reentrancy
-        MaliciousReentrant malicious = new MaliciousReentrant(
-            address(exchange),
-            listingId
-        );
+        MaliciousReentrant malicious = new MaliciousReentrant(address(exchange), listingId);
         vm.deal(address(malicious), 10 ether);
 
         // Attempt reentrancy attack
@@ -152,9 +145,7 @@ contract SecurityIntegrationTest is Test {
         vm.prank(attacker);
         vm.expectRevert();
         accessControl.grantRole(OPERATOR_ROLE, attacker);
-        console2.log(
-            "Layer 1 (Access Control): Unauthorized role grant prevented"
-        );
+        console2.log("Layer 1 (Access Control): Unauthorized role grant prevented");
 
         // Layer 2: Emergency pause stops all operations
         vm.prank(admin);
@@ -162,9 +153,7 @@ contract SecurityIntegrationTest is Test {
         console2.log("Layer 2 (Emergency): Marketplace paused");
 
         // Layer 3: Future timelock implementation will prevent immediate critical changes
-        console2.log(
-            "Layer 3 (Future Timelock): Critical changes will require delay"
-        );
+        console2.log("Layer 3 (Future Timelock): Critical changes will require delay");
 
         // Resume operations
         vm.prank(admin);
@@ -191,11 +180,7 @@ contract SecurityIntegrationTest is Test {
         vm.stopPrank();
         console2.log("Active listings created");
 
-        bytes32 listing1 = exchange.getGeneratedListingId(
-            address(mockNFT),
-            10,
-            user1
-        );
+        bytes32 listing1 = exchange.getGeneratedListingId(address(mockNFT), 10, user1);
 
         // User2 attempts to buy
         vm.prank(user2);
@@ -215,11 +200,7 @@ contract SecurityIntegrationTest is Test {
         emergencyManager.emergencyUnpause();
         console2.log("Trading resumed");
 
-        bytes32 listing2 = exchange.getGeneratedListingId(
-            address(mockNFT),
-            11,
-            user1
-        );
+        bytes32 listing2 = exchange.getGeneratedListingId(address(mockNFT), 11, user1);
         vm.prank(user2);
         exchange.buyNFT{value: exchange.getBuyerSeesPrice(listing2)}(listing2);
         console2.log("Post-pause trading successful");
@@ -243,11 +224,7 @@ contract SecurityIntegrationTest is Test {
         exchange.listNFT(address(mockNFT), 20, 1 ether, 7 days);
         vm.stopPrank();
 
-        bytes32 listingId = exchange.getGeneratedListingId(
-            address(mockNFT),
-            20,
-            user1
-        );
+        bytes32 listingId = exchange.getGeneratedListingId(address(mockNFT), 20, user1);
 
         // Honest buyer submits transaction
         uint256 price = exchange.getBuyerSeesPrice(listingId);
@@ -289,18 +266,9 @@ contract SecurityIntegrationTest is Test {
         console2.log("Operator escalation to admin prevented");
 
         // Verify role hierarchy maintained
-        assertTrue(
-            accessControl.hasRole(ADMIN_ROLE, admin),
-            "Admin should have admin role"
-        );
-        assertTrue(
-            accessControl.hasRole(OPERATOR_ROLE, operator),
-            "Operator should have operator role"
-        );
-        assertFalse(
-            accessControl.hasRole(OPERATOR_ROLE, attacker),
-            "Attacker should have no roles"
-        );
+        assertTrue(accessControl.hasRole(ADMIN_ROLE, admin), "Admin should have admin role");
+        assertTrue(accessControl.hasRole(OPERATOR_ROLE, operator), "Operator should have operator role");
+        assertFalse(accessControl.hasRole(OPERATOR_ROLE, attacker), "Attacker should have no roles");
         console2.log("Role hierarchy integrity verified");
 
         console2.log("=== Permission Escalation Prevention: SUCCESS ===\n");
@@ -316,14 +284,8 @@ contract SecurityIntegrationTest is Test {
         console2.log("\n=== Test: Comprehensive Security Audit ===");
 
         // Test 1: Access Control
-        assertTrue(
-            accessControl.hasRole(ADMIN_ROLE, admin),
-            "Admin role exists"
-        );
-        assertTrue(
-            accessControl.hasRole(OPERATOR_ROLE, operator),
-            "Operator role exists"
-        );
+        assertTrue(accessControl.hasRole(ADMIN_ROLE, admin), "Admin role exists");
+        assertTrue(accessControl.hasRole(OPERATOR_ROLE, operator), "Operator role exists");
         console2.log("[PASS] Access Control functional");
 
         // Test 2: Emergency Manager

@@ -32,11 +32,7 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
         console2.log("Step 1: Minted", batchSize, "NFTs");
 
         // Step 2: Batch approve
-        setApprovalForAllERC721(
-            address(mockERC721),
-            alice,
-            address(erc721Exchange)
-        );
+        setApprovalForAllERC721(address(mockERC721), alice, address(erc721Exchange));
         console2.log("Step 2: Batch approval set");
 
         // Step 3: Create multiple listings
@@ -44,12 +40,7 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
 
         for (uint256 i = 0; i < batchSize; i++) {
             vm.prank(alice);
-            erc721Exchange.listNFT(
-                address(mockERC721),
-                tokenIds[i],
-                prices[i],
-                LISTING_DURATION
-            );
+            erc721Exchange.listNFT(address(mockERC721), tokenIds[i], prices[i], LISTING_DURATION);
         }
 
         uint256 gasUsed = gasStart - gasleft();
@@ -61,11 +52,7 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
 
         // Step 4: Verify all listings created
         for (uint256 i = 0; i < batchSize; i++) {
-            bytes32 listingId = erc721Exchange.getGeneratedListingId(
-                address(mockERC721),
-                tokenIds[i],
-                alice
-            );
+            bytes32 listingId = erc721Exchange.getGeneratedListingId(address(mockERC721), tokenIds[i], alice);
             // In real implementation, would verify listing exists
             console2.log("  Listing", i + 1, "verified");
         }
@@ -88,26 +75,13 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
             mockERC721.mint(alice, 100 + i);
         }
 
-        setApprovalForAllERC721(
-            address(mockERC721),
-            alice,
-            address(erc721Exchange)
-        );
+        setApprovalForAllERC721(address(mockERC721), alice, address(erc721Exchange));
 
         bytes32[] memory listingIds = new bytes32[](batchSize);
         for (uint256 i = 0; i < batchSize; i++) {
             vm.prank(alice);
-            erc721Exchange.listNFT(
-                address(mockERC721),
-                100 + i,
-                1 ether,
-                LISTING_DURATION
-            );
-            listingIds[i] = erc721Exchange.getGeneratedListingId(
-                address(mockERC721),
-                100 + i,
-                alice
-            );
+            erc721Exchange.listNFT(address(mockERC721), 100 + i, 1 ether, LISTING_DURATION);
+            listingIds[i] = erc721Exchange.getGeneratedListingId(address(mockERC721), 100 + i, alice);
         }
         console2.log("Setup:", batchSize, "listings created");
 
@@ -158,26 +132,13 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
             mockERC721.mint(alice, 200 + i);
         }
 
-        setApprovalForAllERC721(
-            address(mockERC721),
-            alice,
-            address(erc721Exchange)
-        );
+        setApprovalForAllERC721(address(mockERC721), alice, address(erc721Exchange));
 
         bytes32[] memory listingIds = new bytes32[](batchSize);
         for (uint256 i = 0; i < batchSize; i++) {
             vm.prank(alice);
-            erc721Exchange.listNFT(
-                address(mockERC721),
-                200 + i,
-                1 ether,
-                LISTING_DURATION
-            );
-            listingIds[i] = erc721Exchange.getGeneratedListingId(
-                address(mockERC721),
-                200 + i,
-                alice
-            );
+            erc721Exchange.listNFT(address(mockERC721), 200 + i, 1 ether, LISTING_DURATION);
+            listingIds[i] = erc721Exchange.getGeneratedListingId(address(mockERC721), 200 + i, alice);
         }
         console2.log("Setup:", batchSize, "listings created");
 
@@ -222,20 +183,11 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
             mockERC721.mint(alice, 300 + i);
         }
 
-        setApprovalForAllERC721(
-            address(mockERC721),
-            alice,
-            address(erc721Exchange)
-        );
+        setApprovalForAllERC721(address(mockERC721), alice, address(erc721Exchange));
 
         for (uint256 i = 0; i < largeBatchSize; i++) {
             vm.prank(alice);
-            erc721Exchange.listNFT(
-                address(mockERC721),
-                300 + i,
-                1 ether,
-                LISTING_DURATION
-            );
+            erc721Exchange.listNFT(address(mockERC721), 300 + i, 1 ether, LISTING_DURATION);
         }
         console2.log("  Created", largeBatchSize, "listings");
 
@@ -244,11 +196,7 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
 
         // Bob buys first 10
         for (uint256 i = 0; i < 10; i++) {
-            bytes32 listingId = erc721Exchange.getGeneratedListingId(
-                address(mockERC721),
-                300 + i,
-                alice
-            );
+            bytes32 listingId = erc721Exchange.getGeneratedListingId(address(mockERC721), 300 + i, alice);
             uint256 price = erc721Exchange.getBuyerSeesPrice(listingId);
             vm.prank(bob);
             erc721Exchange.buyNFT{value: price}(listingId);
@@ -257,11 +205,7 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
 
         // Charlie buys next 10
         for (uint256 i = 10; i < 20; i++) {
-            bytes32 listingId = erc721Exchange.getGeneratedListingId(
-                address(mockERC721),
-                300 + i,
-                alice
-            );
+            bytes32 listingId = erc721Exchange.getGeneratedListingId(address(mockERC721), 300 + i, alice);
             uint256 price = erc721Exchange.getBuyerSeesPrice(listingId);
             vm.prank(charlie);
             erc721Exchange.buyNFT{value: price}(listingId);
@@ -297,35 +241,19 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
         console2.log("Step 1: Minted", batchSize, "token types (100 each)");
 
         // Batch list
-        setApprovalForAllERC1155(
-            address(mockERC1155),
-            alice,
-            address(erc1155Exchange)
-        );
+        setApprovalForAllERC1155(address(mockERC1155), alice, address(erc1155Exchange));
 
         bytes32[] memory listingIds = new bytes32[](batchSize);
         for (uint256 i = 0; i < batchSize; i++) {
             vm.prank(alice);
-            erc1155Exchange.listNFT(
-                address(mockERC1155),
-                i + 1,
-                50,
-                0.1 ether,
-                LISTING_DURATION
-            ); // List 50 of each
-            listingIds[i] = erc1155Exchange.getGeneratedListingId(
-                address(mockERC1155),
-                i + 1,
-                alice
-            );
+            erc1155Exchange.listNFT(address(mockERC1155), i + 1, 50, 0.1 ether, LISTING_DURATION); // List 50 of each
+            listingIds[i] = erc1155Exchange.getGeneratedListingId(address(mockERC1155), i + 1, alice);
         }
         console2.log("Step 2: Listed 50 units of each token type");
 
         // Batch purchase (buy 10 of each)
         for (uint256 i = 0; i < batchSize; i++) {
-            uint256 totalPrice = erc1155Exchange.getBuyerSeesPrice(
-                listingIds[i]
-            ) * 10;
+            uint256 totalPrice = erc1155Exchange.getBuyerSeesPrice(listingIds[i]) * 10;
             vm.prank(bob);
             erc1155Exchange.buyNFT{value: totalPrice}(listingIds[i], 10);
         }
@@ -336,11 +264,7 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
             assertERC1155Balance(address(mockERC1155), bob, i + 1, 10);
             assertERC1155Balance(address(mockERC1155), alice, i + 1, 90); // 100 - 10 = 90
         }
-        console2.log(
-            "Step 4: Balances verified for all",
-            batchSize,
-            "token types"
-        );
+        console2.log("Step 4: Balances verified for all", batchSize, "token types");
 
         console2.log("=== Batch ERC1155 Operations: SUCCESS ===\n");
     }
@@ -350,9 +274,7 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
     // ============================================================================
 
     function test_E2E_MixedBatchOperations() public {
-        console2.log(
-            "\n=== Test: Mixed Batch Operations (ERC721 + ERC1155) ==="
-        );
+        console2.log("\n=== Test: Mixed Batch Operations (ERC721 + ERC1155) ===");
 
         // Setup ERC721 tokens
         for (uint256 i = 0; i < 5; i++) {
@@ -369,49 +291,22 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
         console2.log("Setup: 5 ERC1155 token types minted");
 
         // List ERC721
-        setApprovalForAllERC721(
-            address(mockERC721),
-            alice,
-            address(erc721Exchange)
-        );
+        setApprovalForAllERC721(address(mockERC721), alice, address(erc721Exchange));
         bytes32[] memory erc721Listings = new bytes32[](5);
         for (uint256 i = 0; i < 5; i++) {
             vm.prank(alice);
-            erc721Exchange.listNFT(
-                address(mockERC721),
-                400 + i,
-                1 ether,
-                LISTING_DURATION
-            );
-            erc721Listings[i] = erc721Exchange.getGeneratedListingId(
-                address(mockERC721),
-                400 + i,
-                alice
-            );
+            erc721Exchange.listNFT(address(mockERC721), 400 + i, 1 ether, LISTING_DURATION);
+            erc721Listings[i] = erc721Exchange.getGeneratedListingId(address(mockERC721), 400 + i, alice);
         }
         console2.log("Listed 5 ERC721 NFTs");
 
         // List ERC1155
-        setApprovalForAllERC1155(
-            address(mockERC1155),
-            alice,
-            address(erc1155Exchange)
-        );
+        setApprovalForAllERC1155(address(mockERC1155), alice, address(erc1155Exchange));
         bytes32[] memory erc1155Listings = new bytes32[](5);
         for (uint256 i = 0; i < 5; i++) {
             vm.prank(alice);
-            erc1155Exchange.listNFT(
-                address(mockERC1155),
-                10 + i,
-                25,
-                0.5 ether,
-                LISTING_DURATION
-            );
-            erc1155Listings[i] = erc1155Exchange.getGeneratedListingId(
-                address(mockERC1155),
-                10 + i,
-                alice
-            );
+            erc1155Exchange.listNFT(address(mockERC1155), 10 + i, 25, 0.5 ether, LISTING_DURATION);
+            erc1155Listings[i] = erc1155Exchange.getGeneratedListingId(address(mockERC1155), 10 + i, alice);
         }
         console2.log("Listed 5 ERC1155 token types");
 
@@ -425,9 +320,7 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
 
         // Buy all ERC1155 (10 units each)
         for (uint256 i = 0; i < 5; i++) {
-            uint256 totalPrice = erc1155Exchange.getBuyerSeesPrice(
-                erc1155Listings[i]
-            ) * 10;
+            uint256 totalPrice = erc1155Exchange.getBuyerSeesPrice(erc1155Listings[i]) * 10;
             vm.prank(charlie);
             erc1155Exchange.buyNFT{value: totalPrice}(erc1155Listings[i], 10);
         }
@@ -470,23 +363,14 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
                 mockERC721.mint(seller, 500 + (b * 100) + i);
             }
 
-            setApprovalForAllERC721(
-                address(mockERC721),
-                seller,
-                address(erc721Exchange)
-            );
+            setApprovalForAllERC721(address(mockERC721), seller, address(erc721Exchange));
 
             // Measure listing gas
             uint256 gasStart = gasleft();
 
             for (uint256 i = 0; i < batchSize; i++) {
                 vm.prank(seller);
-                erc721Exchange.listNFT(
-                    address(mockERC721),
-                    500 + (b * 100) + i,
-                    1 ether,
-                    LISTING_DURATION
-                );
+                erc721Exchange.listNFT(address(mockERC721), 500 + (b * 100) + i, 1 ether, LISTING_DURATION);
             }
 
             uint256 listingGasUsed = gasStart - gasleft();
@@ -506,9 +390,7 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
     // ============================================================================
 
     function test_E2E_StressTestSequentialBatchOperations() public {
-        console2.log(
-            "\n=== Test: Stress Test - Sequential Batch Operations ==="
-        );
+        console2.log("\n=== Test: Stress Test - Sequential Batch Operations ===");
 
         uint256 numBatches = 3;
         uint256 batchSize = 10;
@@ -529,22 +411,13 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
         }
 
         // Phase 2: Batch listing
-        setApprovalForAllERC721(
-            address(mockERC721),
-            alice,
-            address(erc721Exchange)
-        );
+        setApprovalForAllERC721(address(mockERC721), alice, address(erc721Exchange));
 
         for (uint256 batch = 0; batch < numBatches; batch++) {
             for (uint256 i = 0; i < batchSize; i++) {
                 uint256 tokenId = 600 + (batch * batchSize) + i;
                 vm.prank(alice);
-                erc721Exchange.listNFT(
-                    address(mockERC721),
-                    tokenId,
-                    (batch + 1) * 1 ether,
-                    LISTING_DURATION
-                );
+                erc721Exchange.listNFT(address(mockERC721), tokenId, (batch + 1) * 1 ether, LISTING_DURATION);
             }
             console2.log("  Batch", batch + 1, "listed");
         }
@@ -559,11 +432,7 @@ contract E2E_BatchOperationsTest is E2E_BaseSetup {
         for (uint256 batch = 0; batch < numBatches; batch++) {
             for (uint256 i = 0; i < batchSize; i++) {
                 uint256 tokenId = 600 + (batch * batchSize) + i;
-                bytes32 listingId = erc721Exchange.getGeneratedListingId(
-                    address(mockERC721),
-                    tokenId,
-                    alice
-                );
+                bytes32 listingId = erc721Exchange.getGeneratedListingId(address(mockERC721), tokenId, alice);
                 uint256 price = erc721Exchange.getBuyerSeesPrice(listingId);
 
                 vm.prank(buyers[batch]);

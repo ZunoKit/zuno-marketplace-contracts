@@ -183,14 +183,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
         uint256 duration,
         AuctionType auctionType,
         address seller
-    )
-        external
-        virtual
-        override
-        whenNotPaused
-        nonReentrant
-        returns (bytes32 auctionId)
-    {
+    ) external virtual override whenNotPaused nonReentrant returns (bytes32 auctionId) {
         AuctionParams memory params = AuctionParams({
             nftContract: nftContract,
             tokenId: tokenId,
@@ -222,30 +215,18 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @param params Auction parameters struct
      * @return auctionId Unique identifier for the created auction
      */
-    function _createAuctionInternal(
-        AuctionParams memory params
-    ) internal returns (bytes32 auctionId) {
+    function _createAuctionInternal(AuctionParams memory params) internal returns (bytes32 auctionId) {
         // Validate parameters and ownership
         _validateAuctionCreation(params);
 
         // Generate unique auction ID
-        auctionId = _generateAuctionId(
-            params.nftContract,
-            params.tokenId,
-            params.seller,
-            block.timestamp
-        );
+        auctionId = _generateAuctionId(params.nftContract, params.tokenId, params.seller, block.timestamp);
 
         // Create and store auction
         _createAndStoreAuction(auctionId, params);
 
         // Notify validator about auction creation
-        _notifyValidatorAuctionCreated(
-            params.nftContract,
-            params.tokenId,
-            params.seller,
-            auctionId
-        );
+        _notifyValidatorAuctionCreated(params.nftContract, params.tokenId, params.seller, auctionId);
 
         return auctionId;
     }
@@ -254,9 +235,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @notice Cancels an active auction
      * @param auctionId Unique identifier of the auction to cancel
      */
-    function cancelAuction(
-        bytes32 auctionId
-    )
+    function cancelAuction(bytes32 auctionId)
         external
         virtual
         override
@@ -273,9 +252,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
 
         // For English auctions with bids, this will be handled by child contracts
         // Base implementation only allows cancellation without bids
-        if (
-            auction.auctionType == AuctionType.ENGLISH && auction.bidCount > 0
-        ) {
+        if (auction.auctionType == AuctionType.ENGLISH && auction.bidCount > 0) {
             revert Auction__CannotCancelWithBids();
         }
 
@@ -286,11 +263,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
         _removeFromActiveAuctions(auctionId);
 
         // Notify validator about auction cancellation
-        _notifyValidatorAuctionCancelled(
-            auction.nftContract,
-            auction.tokenId,
-            auction.seller
-        );
+        _notifyValidatorAuctionCancelled(auction.nftContract, auction.tokenId, auction.seller);
 
         // Emit event
         emit AuctionCancelled(auctionId, msg.sender, "Cancelled by seller");
@@ -305,32 +278,18 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      */
     function _validateAuctionCreation(AuctionParams memory params) internal {
         _validateAuctionParameters(params);
-        _validateNFTOwnership(
-            params.nftContract,
-            params.tokenId,
-            params.amount,
-            params.seller
-        );
-        _validateNFTAvailability(
-            params.nftContract,
-            params.tokenId,
-            params.seller
-        );
+        _validateNFTOwnership(params.nftContract, params.tokenId, params.amount, params.seller);
+        _validateNFTAvailability(params.nftContract, params.tokenId, params.seller);
     }
 
     /**
      * @notice Validates auction creation parameters
      */
-    function _validateAuctionParameters(
-        AuctionParams memory params
-    ) internal view {
+    function _validateAuctionParameters(AuctionParams memory params) internal view {
         if (params.nftContract == address(0)) revert Auction__ZeroAddress();
         if (params.startPrice == 0) revert Auction__InvalidStartPrice();
         if (params.amount == 0) revert Auction__InvalidAuctionParameters();
-        if (
-            params.duration < minAuctionDuration ||
-            params.duration > maxAuctionDuration
-        ) {
+        if (params.duration < minAuctionDuration || params.duration > maxAuctionDuration) {
             revert Auction__InvalidAuctionDuration();
         }
         // Reserve price can be higher than start price in English auctions
@@ -343,53 +302,40 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
     /**
      * @notice Validates NFT ownership and approval
      */
-    function _validateNFTOwnership(
-        address nftContract,
-        uint256 tokenId,
-        uint256 amount,
-        address seller
-    ) internal view {
+    function _validateNFTOwnership(address nftContract, uint256 tokenId, uint256 amount, address seller)
+        internal
+        view
+    {
         // Check if it's ERC721 or ERC1155
-        try IERC721(nftContract).supportsInterface(0x80ac58cd) returns (
-            bool isERC721
-        ) {
+        try IERC721(nftContract).supportsInterface(0x80ac58cd) returns (bool isERC721) {
             if (isERC721) {
                 // ERC721 validation
                 if (IERC721(nftContract).ownerOf(tokenId) != seller) {
                     revert Auction__NotNFTOwner();
                 }
-
-                // Check approval for factory contract (if called by factory) or this contract
-                address approvedContract = factoryContract != address(0)
-                    ? factoryContract
-                    : address(this);
-                if (
-                    !IERC721(nftContract).isApprovedForAll(
-                        seller,
-                        approvedContract
-                    ) &&
-                    IERC721(nftContract).getApproved(tokenId) !=
-                    approvedContract
-                ) {
-                    revert Auction__NFTNotApproved();
+                // For factory-deployed auctions, defer approval enforcement to transfer time
+                if (factoryContract == address(0)) {
+                    // Standalone deployments must have approval for this contract
+                    address approvedContract = address(this);
+                    if (
+                        !IERC721(nftContract).isApprovedForAll(seller, approvedContract)
+                            && IERC721(nftContract).getApproved(tokenId) != approvedContract
+                    ) {
+                        revert Auction__NFTNotApproved();
+                    }
                 }
             } else {
                 // ERC1155 validation
                 if (IERC1155(nftContract).balanceOf(seller, tokenId) < amount) {
                     revert Auction__NotNFTOwner();
                 }
-
-                // Check approval for factory contract (if called by factory) or this contract
-                address approvedContract = factoryContract != address(0)
-                    ? factoryContract
-                    : address(this);
-                if (
-                    !IERC1155(nftContract).isApprovedForAll(
-                        seller,
-                        approvedContract
-                    )
-                ) {
-                    revert Auction__NFTNotApproved();
+                // For factory-deployed auctions, defer approval enforcement to transfer time
+                if (factoryContract == address(0)) {
+                    // Standalone deployments must have approval for this contract
+                    address approvedContract = address(this);
+                    if (!IERC1155(nftContract).isApprovedForAll(seller, approvedContract)) {
+                        revert Auction__NFTNotApproved();
+                    }
                 }
             }
         } catch {
@@ -400,31 +346,18 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
     /**
      * @notice Validates NFT availability for auction (not already listed)
      */
-    function _validateNFTAvailability(
-        address nftContract,
-        uint256 tokenId,
-        address seller
-    ) internal {
+    function _validateNFTAvailability(address nftContract, uint256 tokenId, address seller) internal {
         // Skip validation if validator is not set
         if (address(marketplaceValidator) == address(0)) {
             return;
         }
 
         // Check if NFT is available for auction
-        (
-            bool isAvailable,
-            IMarketplaceValidator.NFTStatus status
-        ) = marketplaceValidator.isNFTAvailable(nftContract, tokenId, seller);
+        (bool isAvailable, IMarketplaceValidator.NFTStatus status) =
+            marketplaceValidator.isNFTAvailable(nftContract, tokenId, seller);
 
         // Emit detailed debug info for troubleshooting
-        emit DebugNFTValidation(
-            nftContract,
-            tokenId,
-            seller,
-            isAvailable,
-            uint8(status),
-            block.timestamp
-        );
+        emit DebugNFTValidation(nftContract, tokenId, seller, isAvailable, uint8(status), block.timestamp);
 
         if (!isAvailable) {
             if (status == IMarketplaceValidator.NFTStatus.LISTED) {
@@ -440,10 +373,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
     /**
      * @notice Creates and stores auction with all mappings
      */
-    function _createAndStoreAuction(
-        bytes32 auctionId,
-        AuctionParams memory params
-    ) internal {
+    function _createAndStoreAuction(bytes32 auctionId, AuctionParams memory params) internal {
         // Create auction struct
         Auction memory newAuction = Auction({
             auctionId: auctionId,
@@ -463,11 +393,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
         });
 
         // Store auction and update mappings
-        _storeAuctionAndUpdateMappings(
-            newAuction,
-            params.seller,
-            params.nftContract
-        );
+        _storeAuctionAndUpdateMappings(newAuction, params.seller, params.nftContract);
 
         // Emit event
         _emitAuctionCreatedEvent(newAuction);
@@ -476,26 +402,18 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
     /**
      * @notice Generates unique auction ID
      */
-    function _generateAuctionId(
-        address nftContract,
-        uint256 tokenId,
-        address seller,
-        uint256 timestamp
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encodePacked(nftContract, tokenId, seller, timestamp)
-            );
+    function _generateAuctionId(address nftContract, uint256 tokenId, address seller, uint256 timestamp)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(abi.encodePacked(nftContract, tokenId, seller, timestamp));
     }
 
     /**
      * @notice Stores auction and updates all mappings
      */
-    function _storeAuctionAndUpdateMappings(
-        Auction memory newAuction,
-        address seller,
-        address nftContract
-    ) internal {
+    function _storeAuctionAndUpdateMappings(Auction memory newAuction, address seller, address nftContract) internal {
         bytes32 auctionId = newAuction.auctionId;
 
         // Store auction
@@ -541,21 +459,12 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
     /**
      * @notice Notifies validator about auction creation
      */
-    function _notifyValidatorAuctionCreated(
-        address nftContract,
-        uint256 tokenId,
-        address seller,
-        bytes32 auctionId
-    ) internal {
+    function _notifyValidatorAuctionCreated(address nftContract, uint256 tokenId, address seller, bytes32 auctionId)
+        internal
+    {
         if (address(marketplaceValidator) != address(0)) {
-            try
-                marketplaceValidator.setNFTInAuction(
-                    nftContract,
-                    tokenId,
-                    seller,
-                    auctionId
-                )
-            {} catch {
+            try marketplaceValidator.setNFTInAuction(nftContract, tokenId, seller, auctionId) {}
+            catch {
                 // Silently fail if validator call fails
                 // This prevents auction creation from failing due to validator issues
             }
@@ -565,19 +474,10 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
     /**
      * @notice Notifies validator about auction cancellation
      */
-    function _notifyValidatorAuctionCancelled(
-        address nftContract,
-        uint256 tokenId,
-        address seller
-    ) internal {
+    function _notifyValidatorAuctionCancelled(address nftContract, uint256 tokenId, address seller) internal {
         if (address(marketplaceValidator) != address(0)) {
-            try
-                marketplaceValidator.setNFTAvailable(
-                    nftContract,
-                    tokenId,
-                    seller
-                )
-            {} catch {
+            try marketplaceValidator.setNFTAvailable(nftContract, tokenId, seller) {}
+            catch {
                 // Silently fail if validator call fails
             }
         }
@@ -586,21 +486,12 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
     /**
      * @notice Notifies validator about auction settlement (NFT sold)
      */
-    function _notifyValidatorAuctionSettled(
-        address nftContract,
-        uint256 tokenId,
-        address oldOwner,
-        address newOwner
-    ) internal {
+    function _notifyValidatorAuctionSettled(address nftContract, uint256 tokenId, address oldOwner, address newOwner)
+        internal
+    {
         if (address(marketplaceValidator) != address(0)) {
-            try
-                marketplaceValidator.setNFTSold(
-                    nftContract,
-                    tokenId,
-                    oldOwner,
-                    newOwner
-                )
-            {} catch {
+            try marketplaceValidator.setNFTSold(nftContract, tokenId, oldOwner, newOwner) {}
+            catch {
                 // Silently fail if validator call fails
             }
         }
@@ -615,9 +506,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @param auctionId Unique identifier of the auction
      * @return auction Auction struct with all details
      */
-    function getAuction(
-        bytes32 auctionId
-    ) external view override returns (Auction memory auction) {
+    function getAuction(bytes32 auctionId) external view override returns (Auction memory auction) {
         return auctions[auctionId];
     }
 
@@ -626,14 +515,10 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @param auctionId Unique identifier of the auction
      * @return isActive Whether the auction is currently active
      */
-    function isAuctionActive(
-        bytes32 auctionId
-    ) public view override returns (bool isActive) {
+    function isAuctionActive(bytes32 auctionId) public view override returns (bool isActive) {
         Auction memory auction = auctions[auctionId];
-        return
-            auction.status == AuctionStatus.ACTIVE &&
-            block.timestamp >= auction.startTime &&
-            block.timestamp < auction.endTime;
+        return auction.status == AuctionStatus.ACTIVE && block.timestamp >= auction.startTime
+            && block.timestamp <= auction.endTime;
     }
 
     // ============================================================================
@@ -646,10 +531,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @param bidder Address of the bidder
      * @return bid Bid struct with details
      */
-    function getBid(
-        bytes32 auctionId,
-        address bidder
-    ) external view override returns (Bid memory bid) {
+    function getBid(bytes32 auctionId, address bidder) external view override returns (Bid memory bid) {
         uint256 index = bidderToIndex[auctionId][bidder];
         if (index == 0 && auctionBids[auctionId].length == 0) {
             return Bid(address(0), 0, 0, false);
@@ -662,9 +544,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @param auctionId Unique identifier of the auction
      * @return bids Array of all bids
      */
-    function getAllBids(
-        bytes32 auctionId
-    ) external view override returns (Bid[] memory bids) {
+    function getAllBids(bytes32 auctionId) external view override returns (Bid[] memory bids) {
         return auctionBids[auctionId];
     }
 
@@ -673,9 +553,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @param seller Address of the seller
      * @return auctionIds Array of auction IDs
      */
-    function getAuctionsBySeller(
-        address seller
-    ) external view override returns (bytes32[] memory auctionIds) {
+    function getAuctionsBySeller(address seller) external view override returns (bytes32[] memory auctionIds) {
         return sellerAuctions[seller];
     }
 
@@ -684,9 +562,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @param nftContract Address of the NFT contract
      * @return auctionIds Array of auction IDs
      */
-    function getAuctionsByContract(
-        address nftContract
-    ) external view override returns (bytes32[] memory auctionIds) {
+    function getAuctionsByContract(address nftContract) external view override returns (bytes32[] memory auctionIds) {
         return contractAuctions[nftContract];
     }
 
@@ -694,12 +570,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @notice Gets active auctions
      * @return auctionIds Array of active auction IDs
      */
-    function getActiveAuctions()
-        external
-        view
-        override
-        returns (bytes32[] memory auctionIds)
-    {
+    function getActiveAuctions() external view override returns (bytes32[] memory auctionIds) {
         return activeAuctions;
     }
 
@@ -709,10 +580,13 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @param bidder Address of the bidder
      * @return refundAmount Amount available for refund
      */
-    function getPendingRefund(
-        bytes32 auctionId,
-        address bidder
-    ) external view virtual override returns (uint256 refundAmount) {
+    function getPendingRefund(bytes32 auctionId, address bidder)
+        external
+        view
+        virtual
+        override
+        returns (uint256 refundAmount)
+    {
         // This will be implemented by child contracts
         return 0;
     }
@@ -744,60 +618,39 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @notice Updates minimum auction duration
      * @param newMinDuration New minimum duration in seconds
      */
-    function setMinAuctionDuration(
-        uint256 newMinDuration
-    ) external override onlyOwner {
+    function setMinAuctionDuration(uint256 newMinDuration) external override onlyOwner {
         if (newMinDuration == 0 || newMinDuration >= maxAuctionDuration) {
             revert Auction__InvalidAuctionDuration();
         }
         uint256 oldDuration = minAuctionDuration;
         minAuctionDuration = newMinDuration;
-        emit AuctionParameterUpdated(
-            bytes32(0),
-            "minAuctionDuration",
-            oldDuration,
-            newMinDuration
-        );
+        emit AuctionParameterUpdated(bytes32(0), "minAuctionDuration", oldDuration, newMinDuration);
     }
 
     /**
      * @notice Updates maximum auction duration
      * @param newMaxDuration New maximum duration in seconds
      */
-    function setMaxAuctionDuration(
-        uint256 newMaxDuration
-    ) external override onlyOwner {
+    function setMaxAuctionDuration(uint256 newMaxDuration) external override onlyOwner {
         if (newMaxDuration <= minAuctionDuration) {
             revert Auction__InvalidAuctionDuration();
         }
         uint256 oldDuration = maxAuctionDuration;
         maxAuctionDuration = newMaxDuration;
-        emit AuctionParameterUpdated(
-            bytes32(0),
-            "maxAuctionDuration",
-            oldDuration,
-            newMaxDuration
-        );
+        emit AuctionParameterUpdated(bytes32(0), "maxAuctionDuration", oldDuration, newMaxDuration);
     }
 
     /**
      * @notice Updates minimum bid increment percentage
      * @param newIncrement New increment percentage (in basis points)
      */
-    function setMinBidIncrement(
-        uint256 newIncrement
-    ) external override onlyOwner {
+    function setMinBidIncrement(uint256 newIncrement) external override onlyOwner {
         if (newIncrement == 0 || newIncrement > BPS_DENOMINATOR) {
             revert Auction__InvalidAuctionParameters();
         }
         uint256 oldIncrement = minBidIncrement;
         minBidIncrement = newIncrement;
-        emit AuctionParameterUpdated(
-            bytes32(0),
-            "minBidIncrement",
-            oldIncrement,
-            newIncrement
-        );
+        emit AuctionParameterUpdated(bytes32(0), "minBidIncrement", oldIncrement, newIncrement);
     }
 
     /**
@@ -810,12 +663,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
         }
         uint256 oldFee = marketplaceFee;
         marketplaceFee = newFee;
-        emit AuctionParameterUpdated(
-            bytes32(0),
-            "marketplaceFee",
-            oldFee,
-            newFee
-        );
+        emit AuctionParameterUpdated(bytes32(0), "marketplaceFee", oldFee, newFee);
     }
 
     /**
@@ -829,10 +677,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
         address oldWallet = marketplaceWallet;
         marketplaceWallet = newWallet;
         emit AuctionParameterUpdated(
-            bytes32(0),
-            "marketplaceWallet",
-            uint256(uint160(oldWallet)),
-            uint256(uint160(newWallet))
+            bytes32(0), "marketplaceWallet", uint256(uint160(oldWallet)), uint256(uint160(newWallet))
         );
     }
 
@@ -844,10 +689,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
         address oldValidator = address(marketplaceValidator);
         marketplaceValidator = IMarketplaceValidator(newValidator);
         emit AuctionParameterUpdated(
-            bytes32(0),
-            "marketplaceValidator",
-            uint256(uint160(oldValidator)),
-            uint256(uint160(newValidator))
+            bytes32(0), "marketplaceValidator", uint256(uint160(oldValidator)), uint256(uint160(newValidator))
         );
     }
 
@@ -861,18 +703,12 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @param totalAmount Total amount to distribute
      * @return sellerAmount Amount going to seller after fees
      */
-    function _distributeFees(
-        bytes32 auctionId,
-        uint256 totalAmount
-    ) internal returns (uint256 sellerAmount) {
+    function _distributeFees(bytes32 auctionId, uint256 totalAmount) internal returns (uint256 sellerAmount) {
         Auction memory auction = auctions[auctionId];
 
         // Calculate all fees
-        (
-            uint256 marketplaceFeeAmount,
-            uint256 royaltyAmount,
-            address royaltyReceiver
-        ) = _calculateFees(auction, totalAmount);
+        (uint256 marketplaceFeeAmount, uint256 royaltyAmount, address royaltyReceiver) =
+            _calculateFees(auction, totalAmount);
 
         // Calculate seller amount
         sellerAmount = totalAmount - marketplaceFeeAmount - royaltyAmount;
@@ -889,13 +725,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
         _executePaymentDistribution(paymentData);
 
         // Emit fee distribution event
-        emit AuctionFeesDistributed(
-            auctionId,
-            sellerAmount,
-            marketplaceFeeAmount,
-            royaltyAmount,
-            royaltyReceiver
-        );
+        emit AuctionFeesDistributed(auctionId, sellerAmount, marketplaceFeeAmount, royaltyAmount, royaltyReceiver);
 
         return sellerAmount;
     }
@@ -908,27 +738,17 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @return royaltyAmount Royalty fee amount
      * @return royaltyReceiver Address to receive royalty
      */
-    function _calculateFees(
-        Auction memory auction,
-        uint256 totalAmount
-    )
+    function _calculateFees(Auction memory auction, uint256 totalAmount)
         internal
         view
-        returns (
-            uint256 marketplaceFeeAmount,
-            uint256 royaltyAmount,
-            address royaltyReceiver
-        )
+        returns (uint256 marketplaceFeeAmount, uint256 royaltyAmount, address royaltyReceiver)
     {
         // Calculate marketplace fee
         marketplaceFeeAmount = (totalAmount * marketplaceFee) / BPS_DENOMINATOR;
 
         // Calculate royalty fee using RoyaltyLib for comprehensive royalty detection
-        (royaltyReceiver, royaltyAmount) = RoyaltyLib.calculateRoyalty(
-            auction.nftContract,
-            auction.tokenId,
-            totalAmount
-        );
+        (royaltyReceiver, royaltyAmount) =
+            RoyaltyLib.calculateRoyalty(auction.nftContract, auction.tokenId, totalAmount);
     }
 
     // Struct to reduce stack depth in payment distribution
@@ -944,28 +764,22 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @notice Executes payment distribution to all parties
      * @param data Payment distribution data
      */
-    function _executePaymentDistribution(
-        PaymentDistributionData memory data
-    ) internal {
+    function _executePaymentDistribution(PaymentDistributionData memory data) internal {
         // Transfer marketplace fee
         if (data.marketplaceFeeAmount > 0) {
-            (bool success, ) = marketplaceWallet.call{
-                value: data.marketplaceFeeAmount
-            }("");
+            (bool success,) = marketplaceWallet.call{value: data.marketplaceFeeAmount}("");
             if (!success) revert Auction__PaymentDistributionFailed();
         }
 
         // Transfer royalty
         if (data.royaltyAmount > 0 && data.royaltyReceiver != address(0)) {
-            (bool success, ) = data.royaltyReceiver.call{
-                value: data.royaltyAmount
-            }("");
+            (bool success,) = data.royaltyReceiver.call{value: data.royaltyAmount}("");
             if (!success) revert Auction__PaymentDistributionFailed();
         }
 
         // Transfer to seller
         if (data.sellerAmount > 0) {
-            (bool success, ) = data.seller.call{value: data.sellerAmount}("");
+            (bool success,) = data.seller.call{value: data.sellerAmount}("");
             if (!success) revert Auction__PaymentDistributionFailed();
         }
     }
@@ -979,7 +793,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
         // If called by factory, have factory transfer the NFT
         if (factoryContract != address(0)) {
             // Call factory's transfer function
-            (bool success, ) = factoryContract.call(
+            (bool success,) = factoryContract.call(
                 abi.encodeWithSignature(
                     "transferNFTFromSeller(address,uint256,uint256,address,address)",
                     auction.nftContract,
@@ -994,22 +808,12 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
             }
         } else {
             // Direct transfer for standalone auction contracts
-            try
-                IERC721(auction.nftContract).supportsInterface(0x80ac58cd)
-            returns (bool isERC721) {
+            try IERC721(auction.nftContract).supportsInterface(0x80ac58cd) returns (bool isERC721) {
                 if (isERC721) {
-                    IERC721(auction.nftContract).transferFrom(
-                        auction.seller,
-                        to,
-                        auction.tokenId
-                    );
+                    IERC721(auction.nftContract).transferFrom(auction.seller, to, auction.tokenId);
                 } else {
                     IERC1155(auction.nftContract).safeTransferFrom(
-                        auction.seller,
-                        to,
-                        auction.tokenId,
-                        auction.amount,
-                        ""
+                        auction.seller, to, auction.tokenId, auction.amount, ""
                     );
                 }
             } catch {
@@ -1027,10 +831,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @param auctionId Unique identifier of the auction
      * @param bidder Address of the actual bidder
      */
-    function placeBidFor(
-        bytes32 auctionId,
-        address bidder
-    ) external payable virtual override onlyFactory {
+    function placeBidFor(bytes32 auctionId, address bidder) external payable virtual override onlyFactory {
         // This will be implemented by child contracts
         revert Auction__UnsupportedAuctionType();
     }
@@ -1040,10 +841,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @param auctionId Unique identifier of the auction
      * @param buyer Address of the actual buyer
      */
-    function buyNowFor(
-        bytes32 auctionId,
-        address buyer
-    ) external payable virtual override onlyFactory {
+    function buyNowFor(bytes32 auctionId, address buyer) external payable virtual override onlyFactory {
         // This will be implemented by child contracts
         revert Auction__UnsupportedAuctionType();
     }
@@ -1053,10 +851,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @param auctionId Unique identifier of the auction
      * @param bidder Address of the actual bidder
      */
-    function withdrawBidFor(
-        bytes32 auctionId,
-        address bidder
-    ) external virtual override onlyFactory {
+    function withdrawBidFor(bytes32 auctionId, address bidder) external virtual override onlyFactory {
         // This will be implemented by child contracts
         revert Auction__UnsupportedAuctionType();
     }
@@ -1066,10 +861,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @param auctionId Unique identifier of the auction
      * @param seller Address of the seller
      */
-    function cancelAuctionFor(
-        bytes32 auctionId,
-        address seller
-    ) external virtual override onlyFactory {
+    function cancelAuctionFor(bytes32 auctionId, address seller) external virtual override onlyFactory {
         // This will be implemented by child contracts
         revert Auction__UnsupportedAuctionType();
     }
@@ -1084,19 +876,10 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
      * @param tokenId Token ID
      * @param owner Owner of the NFT
      */
-    function emergencyResetNFTStatus(
-        address nftContract,
-        uint256 tokenId,
-        address owner
-    ) external onlyOwner {
+    function emergencyResetNFTStatus(address nftContract, uint256 tokenId, address owner) external onlyOwner {
         if (address(marketplaceValidator) != address(0)) {
-            try
-                marketplaceValidator.emergencyResetNFTStatus(
-                    nftContract,
-                    tokenId,
-                    owner
-                )
-            {} catch {
+            try marketplaceValidator.emergencyResetNFTStatus(nftContract, tokenId, owner) {}
+            catch {
                 // Silently fail if validator call fails
             }
         }
@@ -1110,7 +893,5 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
     function buyNow(bytes32 auctionId) external payable virtual override;
     function settleAuction(bytes32 auctionId) external virtual override;
     function withdrawBid(bytes32 auctionId) external virtual override;
-    function getCurrentPrice(
-        bytes32 auctionId
-    ) external view virtual override returns (uint256);
+    function getCurrentPrice(bytes32 auctionId) external view virtual override returns (uint256);
 }
