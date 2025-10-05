@@ -28,7 +28,13 @@
       "Bash([ -d \"test/unit/collection/unit\" ])",
       "Bash(touch:*)",
       "Bash(bash:*)",
-      "Bash(forge clean:*)"
+      "Bash(forge clean:*)",
+      "Bash(forge install:*)",
+      "Bash(for dir in src/*/)",
+      "Bash(do echo \"=== $dir ===\")",
+      "Bash(ls:*)",
+      "Bash(done)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []

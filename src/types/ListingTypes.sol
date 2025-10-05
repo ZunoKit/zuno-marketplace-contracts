@@ -258,8 +258,8 @@ struct BuyerStats {
 // CONSTANTS
 // ============================================================================
 
-// Maximum royalty fee
-uint256 constant MAX_ROYALTY_FEE = 10000;
+// Maximum royalty fee (10% = 1000 basis points)
+uint256 constant MAX_ROYALTY_FEE = 1000;
 
 // Maximum number of items in a bundle
 uint256 constant MAX_BUNDLE_ITEMS = 50;

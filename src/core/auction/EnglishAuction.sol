@@ -95,7 +95,9 @@ contract EnglishAuction is BaseAuction {
      * @notice Places a bid in an English auction
      * @param auctionId Unique identifier of the auction
      */
-    function placeBid(bytes32 auctionId)
+    function placeBid(
+        bytes32 auctionId
+    )
         external
         payable
         override
@@ -120,7 +122,9 @@ contract EnglishAuction is BaseAuction {
      * @notice Withdraws a refunded bid
      * @param auctionId Unique identifier of the auction
      */
-    function withdrawBid(bytes32 auctionId) external override nonReentrant auctionExists(auctionId) {
+    function withdrawBid(
+        bytes32 auctionId
+    ) external override nonReentrant auctionExists(auctionId) {
         uint256 refundAmount = pendingRefunds[auctionId][msg.sender];
 
         if (refundAmount == 0) {
@@ -131,7 +135,7 @@ contract EnglishAuction is BaseAuction {
         pendingRefunds[auctionId][msg.sender] = 0;
 
         // Transfer refund
-        (bool success,) = msg.sender.call{value: refundAmount}("");
+        (bool success, ) = msg.sender.call{value: refundAmount}("");
         if (!success) {
             // Restore the refund amount if transfer fails
             pendingRefunds[auctionId][msg.sender] = refundAmount;
@@ -155,7 +159,9 @@ contract EnglishAuction is BaseAuction {
      * @notice Settles a completed English auction
      * @param auctionId Unique identifier of the auction to settle
      */
-    function settleAuction(bytes32 auctionId) external override nonReentrant whenNotPaused auctionExists(auctionId) {
+    function settleAuction(
+        bytes32 auctionId
+    ) external override nonReentrant whenNotPaused auctionExists(auctionId) {
         Auction storage auction = auctions[auctionId];
 
         // Validate auction can be settled
@@ -181,9 +187,13 @@ contract EnglishAuction is BaseAuction {
         }
 
         // Check reserve price
-        if (auction.reservePrice > 0 && auction.highestBid < auction.reservePrice) {
+        if (
+            auction.reservePrice > 0 &&
+            auction.highestBid < auction.reservePrice
+        ) {
             // Reserve not met - refund highest bidder and end auction
-            pendingRefunds[auctionId][auction.highestBidder] += auction.highestBid;
+            pendingRefunds[auctionId][auction.highestBidder] += auction
+                .highestBid;
             auction.status = AuctionStatus.ENDED;
             _removeFromActiveAuctions(auctionId);
             emit AuctionSettled(auctionId, address(0), 0, auction.seller);
@@ -216,7 +226,9 @@ contract EnglishAuction is BaseAuction {
      * @param auctionId Unique identifier of the auction
      * @return currentPrice Current highest bid or starting price if no bids
      */
-    function getCurrentPrice(bytes32 auctionId) external view override returns (uint256 currentPrice) {
+    function getCurrentPrice(
+        bytes32 auctionId
+    ) external view override returns (uint256 currentPrice) {
         Auction memory auction = auctions[auctionId];
 
         if (auction.auctionType != AuctionType.ENGLISH) {
@@ -233,14 +245,17 @@ contract EnglishAuction is BaseAuction {
      * @param auctionId Unique identifier of the auction
      * @return minBid Minimum amount for next bid
      */
-    function getMinNextBid(bytes32 auctionId) external view returns (uint256 minBid) {
+    function getMinNextBid(
+        bytes32 auctionId
+    ) external view returns (uint256 minBid) {
         Auction memory auction = auctions[auctionId];
 
         if (auction.highestBid == 0) {
             return auction.startPrice;
         }
 
-        uint256 increment = (auction.highestBid * minBidIncrement) / BPS_DENOMINATOR;
+        uint256 increment = (auction.highestBid * minBidIncrement) /
+            BPS_DENOMINATOR;
         return auction.highestBid + increment;
     }
 
@@ -254,7 +269,11 @@ contract EnglishAuction is BaseAuction {
      * @param bidder The bidder address
      * @param bidAmount The bid amount
      */
-    function _placeBidInternal(bytes32 auctionId, address bidder, uint256 bidAmount) internal {
+    function _placeBidInternal(
+        bytes32 auctionId,
+        address bidder,
+        uint256 bidAmount
+    ) internal {
         Auction storage auction = auctions[auctionId];
 
         // Ensure this is an English auction
@@ -282,10 +301,16 @@ contract EnglishAuction is BaseAuction {
      * @param bidder The bidder address
      * @param bidAmount The bid amount
      */
-    function _processBid(bytes32 auctionId, Auction storage auction, address bidder, uint256 bidAmount) internal {
+    function _processBid(
+        bytes32 auctionId,
+        Auction storage auction,
+        address bidder,
+        uint256 bidAmount
+    ) internal {
         // Handle previous highest bidder refund
         if (auction.highestBidder != address(0)) {
-            pendingRefunds[auctionId][auction.highestBidder] += auction.highestBid;
+            pendingRefunds[auctionId][auction.highestBidder] += auction
+                .highestBid;
         }
 
         // Clear any existing pending refunds for the new highest bidder
@@ -309,8 +334,17 @@ contract EnglishAuction is BaseAuction {
      * @param bidder The bidder address
      * @param bidAmount The bid amount
      */
-    function _storeBidDetails(bytes32 auctionId, address bidder, uint256 bidAmount) internal {
-        Bid memory newBid = Bid({bidder: bidder, amount: bidAmount, timestamp: block.timestamp, refunded: false});
+    function _storeBidDetails(
+        bytes32 auctionId,
+        address bidder,
+        uint256 bidAmount
+    ) internal {
+        Bid memory newBid = Bid({
+            bidder: bidder,
+            amount: bidAmount,
+            timestamp: block.timestamp,
+            refunded: false
+        });
 
         auctionBids[auctionId].push(newBid);
         bidderToIndex[auctionId][bidder] = auctionBids[auctionId].length - 1;
@@ -335,7 +369,8 @@ contract EnglishAuction is BaseAuction {
             }
         } else {
             // Subsequent bids must meet minimum increment
-            uint256 minBid = auction.highestBid + ((auction.highestBid * minBidIncrement) / BPS_DENOMINATOR);
+            uint256 minBid = auction.highestBid +
+                ((auction.highestBid * minBidIncrement) / BPS_DENOMINATOR);
 
             if (bidAmount < minBid) {
                 revert Auction__InsufficientBidIncrement();
@@ -355,7 +390,12 @@ contract EnglishAuction is BaseAuction {
             uint256 oldEndTime = auction.endTime;
             auction.endTime = block.timestamp + BID_EXTENSION_TIME;
 
-            emit AuctionExtended(auctionId, oldEndTime, auction.endTime, "Last minute bid extension");
+            emit AuctionExtended(
+                auctionId,
+                oldEndTime,
+                auction.endTime,
+                "Last minute bid extension"
+            );
         }
     }
 
@@ -368,7 +408,10 @@ contract EnglishAuction is BaseAuction {
      * @param auctionId Unique identifier of the auction
      * @param bidder Address of the actual bidder
      */
-    function placeBidFor(bytes32 auctionId, address bidder)
+    function placeBidFor(
+        bytes32 auctionId,
+        address bidder
+    )
         external
         payable
         override
@@ -391,7 +434,10 @@ contract EnglishAuction is BaseAuction {
      * @param auctionId Unique identifier of the auction
      * @param bidder Address of the actual bidder
      */
-    function withdrawBidFor(bytes32 auctionId, address bidder)
+    function withdrawBidFor(
+        bytes32 auctionId,
+        address bidder
+    )
         external
         override
         nonReentrant
@@ -409,7 +455,7 @@ contract EnglishAuction is BaseAuction {
         pendingRefunds[auctionId][bidder] = 0;
 
         // Transfer refund
-        (bool success,) = bidder.call{value: refundAmount}("");
+        (bool success, ) = bidder.call{value: refundAmount}("");
         if (!success) {
             // Restore the refund amount if transfer fails
             pendingRefunds[auctionId][bidder] = refundAmount;
@@ -430,7 +476,10 @@ contract EnglishAuction is BaseAuction {
      * @param auctionId Unique identifier of the auction
      * @param seller Address of the seller
      */
-    function cancelAuctionFor(bytes32 auctionId, address seller)
+    function cancelAuctionFor(
+        bytes32 auctionId,
+        address seller
+    )
         external
         override
         nonReentrant
@@ -453,9 +502,9 @@ contract EnglishAuction is BaseAuction {
             revert Auction__UnsupportedAuctionType();
         }
 
-        // If there are bids, refund all bidders
+        // If there are bids, cancellation is not allowed for English auctions
         if (auction.bidCount > 0) {
-            _refundAllBidders(auctionId);
+            revert Auction__CannotCancelWithBids();
         }
 
         // Cancel the auction
@@ -463,7 +512,11 @@ contract EnglishAuction is BaseAuction {
         _removeFromActiveAuctions(auctionId);
 
         // Notify validator about auction cancellation
-        _notifyValidatorAuctionCancelled(auction.nftContract, auction.tokenId, auction.seller);
+        _notifyValidatorAuctionCancelled(
+            auction.nftContract,
+            auction.tokenId,
+            auction.seller
+        );
 
         emit AuctionCancelled(auctionId, seller, "Cancelled by seller");
     }
@@ -475,10 +528,7 @@ contract EnglishAuction is BaseAuction {
     function _refundAllBidders(bytes32 auctionId) internal {
         Auction storage auction = auctions[auctionId];
 
-        // Add current highest bidder to pending refunds if exists
-        if (auction.highestBidder != address(0)) {
-            pendingRefunds[auctionId][auction.highestBidder] += auction.highestBid;
-        }
+        // Highest bidder is handled directly in cancelAuctionFor; ensure others are marked refunded
 
         // Mark all bids as refunded in the bids array
         Bid[] storage bids = auctionBids[auctionId];
@@ -497,12 +547,10 @@ contract EnglishAuction is BaseAuction {
      * @param bidder Address of the bidder
      * @return refundAmount Amount available for refund
      */
-    function getPendingRefund(bytes32 auctionId, address bidder)
-        external
-        view
-        override
-        returns (uint256 refundAmount)
-    {
+    function getPendingRefund(
+        bytes32 auctionId,
+        address bidder
+    ) external view override returns (uint256 refundAmount) {
         return pendingRefunds[auctionId][bidder];
     }
 }

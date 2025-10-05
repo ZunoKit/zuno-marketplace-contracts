@@ -147,13 +147,18 @@ library PaymentDistributionLib {
      * @param data Payment data to validate
      */
     function _validatePaymentData(PaymentData memory data) private pure {
-        if (data.seller == address(0)) revert PaymentDistribution__ZeroAddress();
-        if (data.marketplaceWallet == address(0)) revert PaymentDistribution__ZeroAddress();
+        if (data.seller == address(0)) {
+            revert PaymentDistribution__ZeroAddress();
+        }
+        if (data.marketplaceWallet == address(0)) {
+            revert PaymentDistribution__ZeroAddress();
+        }
         if (data.totalAmount == 0) revert PaymentDistribution__InvalidAmount();
 
         // Ensure amounts add up correctly
-        uint256 calculatedTotal = data.sellerAmount + data.marketplaceFee + data.royaltyAmount;
-        if (calculatedTotal != data.totalAmount) {
+        // The totalAmount should equal the sum of all payments
+        uint256 totalCalculated = data.sellerAmount + data.marketplaceFee + data.royaltyAmount;
+        if (totalCalculated != data.totalAmount) {
             revert PaymentDistribution__InvalidAmount();
         }
     }

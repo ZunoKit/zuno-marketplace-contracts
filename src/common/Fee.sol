@@ -6,7 +6,7 @@ import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC16
 import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import {MAX_ROYALTY_FEE} from "src/types/ListingTypes.sol";
 import {FeeUpdated} from "src/events/FeeEvents.sol";
-import "src/errors/FeeErrors.sol";
+import {Fee__InvalidRoyaltyFee} from "src/errors/FeeErrors.sol";
 
 contract Fee is Ownable, ERC165, IERC2981 {
     uint256 public s_royaltyFee; // Royalty fee (in basis points, e.g., 500 = 5%)

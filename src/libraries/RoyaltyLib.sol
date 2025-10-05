@@ -52,20 +52,20 @@ library RoyaltyLib {
             return RoyaltyInfo({receiver: address(0), amount: 0, rate: 0, hasRoyalty: false, source: "None"});
         }
 
-        // Method 1: Try Fee contract approach (for MockERC721/MockERC1155 and BaseCollection)
+        // Method 1: Try ERC2981 standard (takes precedence)
+        info = _tryERC2981Royalty(params);
+        if (info.hasRoyalty) {
+            return info;
+        }
+
+        // Method 2: Try Fee contract approach (for MockERC721/MockERC1155 and BaseCollection)
         info = _tryFeeContractRoyalty(params);
         if (info.hasRoyalty) {
             return info;
         }
 
-        // Method 2: Try BaseCollection approach
+        // Method 3: Try BaseCollection approach
         info = _tryBaseCollectionRoyalty(params);
-        if (info.hasRoyalty) {
-            return info;
-        }
-
-        // Method 3: Try ERC2981 standard
-        info = _tryERC2981Royalty(params);
         if (info.hasRoyalty) {
             return info;
         }
@@ -129,6 +129,11 @@ library RoyaltyLib {
     {
         (bool hasFeeContract, uint256 royaltyFee) = _getFeeContractRoyaltyRateWithSuccess(feeContractAddress);
         if (!hasFeeContract) {
+            return _createEmptyRoyaltyInfo();
+        }
+
+        // If Fee contract has 0% royalty, return empty to allow fallback to other methods
+        if (royaltyFee == 0) {
             return _createEmptyRoyaltyInfo();
         }
 
