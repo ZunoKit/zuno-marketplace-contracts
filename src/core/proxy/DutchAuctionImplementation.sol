@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {EnglishAuction} from "./EnglishAuction.sol";
+import {DutchAuction} from "../auction/DutchAuction.sol";
 
 /**
- * @title EnglishAuctionImplementation
- * @notice Implementation contract for English auctions using proxy pattern
- * @dev This contract is deployed once and used as implementation for all English auction proxies
+ * @title DutchAuctionImplementation
+ * @notice Implementation contract for Dutch auctions using proxy pattern
+ * @dev This contract is deployed once and used as implementation for all Dutch auction proxies
  * @author NFT Marketplace Team
  */
-contract EnglishAuctionImplementation is EnglishAuction {
+contract DutchAuctionImplementation is DutchAuction {
     /// @notice Flag to track if contract has been initialized
     bool private _initialized;
 
@@ -17,12 +17,12 @@ contract EnglishAuctionImplementation is EnglishAuction {
      * @notice Constructor that prevents direct usage
      * @dev This ensures the implementation contract cannot be used directly
      */
-    constructor() EnglishAuction(address(0xdead)) {
+    constructor() DutchAuction(address(0xdead)) {
         _initialized = true; // Prevent initialization of implementation
     }
 
     /**
-     * @notice Initializes the English auction implementation
+     * @notice Initializes the Dutch auction implementation
      * @param _marketplaceWallet Address to receive marketplace fees
      * @dev This function replaces the constructor for proxy pattern
      */

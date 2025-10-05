@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {Test} from "forge-std/Test.sol";
-import {ERC1155CollectionFactory} from "src/core/collection/ERC1155CollectionFactory.sol";
+import {ERC1155CollectionFactory} from "src/core/factory/ERC1155CollectionFactory.sol";
 import {CollectionParams} from "src/types/ListingTypes.sol";
 import {ERC1155CollectionCreated} from "src/events/CollectionEvents.sol";
 import {ICollectionFactory} from "src/interfaces/IMarketplaceCore.sol";

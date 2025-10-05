@@ -3,8 +3,8 @@ pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
 import "src/core/validation/MarketplaceValidator.sol";
-import "src/core/auction/AuctionFactory.sol";
-import {NFTExchangeFactory} from "src/core/exchange/NFTExchangeFactory.sol";
+import "src/core/factory/AuctionFactory.sol";
+import {NFTExchangeFactory} from "src/core/factory/NFTExchangeFactory.sol";
 import "src/errors/MarketplaceValidatorErrors.sol";
 import "src/errors/AuctionErrors.sol";
 import "../mocks/MockERC721.sol";

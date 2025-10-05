@@ -6,11 +6,11 @@ import "forge-std/console2.sol";
 
 // Core contracts
 import {MarketplaceValidator} from "src/core/validation/MarketplaceValidator.sol";
-import {NFTExchangeFactory} from "src/core/exchange/NFTExchangeFactory.sol";
+import {NFTExchangeFactory} from "src/core/factory/NFTExchangeFactory.sol";
 import {NFTExchangeRegistry} from "src/core/exchange/NFTExchangeRegistry.sol";
 import {ERC721NFTExchange} from "src/core/exchange/ERC721NFTExchange.sol";
 import {ERC1155NFTExchange} from "src/core/exchange/ERC1155NFTExchange.sol";
-import {AuctionFactory} from "src/core/auction/AuctionFactory.sol";
+import {AuctionFactory} from "src/core/factory/AuctionFactory.sol";
 import {OfferManager} from "src/core/offers/OfferManager.sol";
 import {BundleManager} from "src/core/bundles/BundleManager.sol";
 import {MarketplaceAccessControl} from "src/core/access/MarketplaceAccessControl.sol";

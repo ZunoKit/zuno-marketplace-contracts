@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {EnglishAuctionImplementation} from "./EnglishAuctionImplementation.sol";
-import {DutchAuctionImplementation} from "./DutchAuctionImplementation.sol";
+import {EnglishAuctionImplementation} from "../proxy/EnglishAuctionImplementation.sol";
+import {DutchAuctionImplementation} from "../proxy/DutchAuctionImplementation.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
 import {IMarketplaceValidator} from "src/interfaces/IMarketplaceValidator.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
