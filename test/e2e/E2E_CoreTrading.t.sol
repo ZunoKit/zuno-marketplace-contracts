@@ -133,12 +133,12 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         assertERC1155Balance(address(mockERC1155), bob, 1, 3);
         console2.log("Step 4: Balances verified");
 
-        // Step 5: Verify payment for 3 units
-        uint256 totalPrice = NFT_PRICE * 3;
+        // Step 5: Verify payment for 3 units (price is proportional to amount)
+        uint256 totalPrice = (NFT_PRICE * 3) / 5;
         uint256 takerFee = (totalPrice * TAKER_FEE_BPS) / 10000;
         uint256 royaltyFee = (totalPrice * 500) / 10000; // 5% royalty from MockERC1155
         uint256 totalPaid = totalPrice + takerFee + royaltyFee;
-        uint256 sellerReceives = totalPrice - royaltyFee; // Seller receives total price minus royalty
+        uint256 sellerReceives = totalPrice - royaltyFee; // Seller receives proportional price minus royalty
 
         assertBalanceChanges(
             balancesBefore,

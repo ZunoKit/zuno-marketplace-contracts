@@ -10,10 +10,10 @@ import {Fee} from "src/common/Fee.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 interface IFee {
-    function royaltyInfo(uint256 tokenId, uint256 salePrice)
-        external
-        view
-        returns (address receiver, uint256 royaltyAmount);
+    function royaltyInfo(
+        uint256 tokenId,
+        uint256 salePrice
+    ) external view returns (address receiver, uint256 royaltyAmount);
     function owner() external view returns (address);
 }
 
@@ -48,7 +48,11 @@ contract ERC721NFTExchangeTest is Test {
         uint256 price = 1 ether;
         uint256 duration = 1 days;
 
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
         vm.expectEmit(true, true, true, true);
         emit NFTListed(listingId, address(nftContract), 1, owner, price);
         exchange.listNFT(address(nftContract), 1, price, duration);
@@ -65,8 +69,16 @@ contract ERC721NFTExchangeTest is Test {
         prices[1] = 2 ether;
         uint256 duration = 1 days;
 
-        bytes32 listingId1 = exchange.getGeneratedListingId(address(nftContract), 1, owner);
-        bytes32 listingId2 = exchange.getGeneratedListingId(address(nftContract), 2, owner);
+        bytes32 listingId1 = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
+        bytes32 listingId2 = exchange.getGeneratedListingId(
+            address(nftContract),
+            2,
+            owner
+        );
         vm.expectEmit(true, true, true, true);
         emit NFTListed(listingId1, address(nftContract), 1, owner, prices[0]);
         vm.expectEmit(true, true, true, true);
@@ -79,7 +91,11 @@ contract ERC721NFTExchangeTest is Test {
         nftContract.approve(address(exchange), 1);
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
         exchange.listNFT(address(nftContract), 1, price, duration);
 
         // Get the actual price including royalties and fees
@@ -95,7 +111,11 @@ contract ERC721NFTExchangeTest is Test {
         nftContract.approve(address(exchange), 1);
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
         exchange.listNFT(address(nftContract), 1, price, duration);
 
         // Get the actual price including royalties and fees
@@ -111,7 +131,11 @@ contract ERC721NFTExchangeTest is Test {
         nftContract.approve(address(exchange), 1);
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
         exchange.listNFT(address(nftContract), 1, price, duration);
 
         vm.warp(block.timestamp + 2 days);
@@ -129,7 +153,11 @@ contract ERC721NFTExchangeTest is Test {
         nftContract.approve(address(exchange), 1);
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
         exchange.listNFT(address(nftContract), 1, price, duration);
 
         vm.expectEmit(true, true, true, false);
@@ -142,7 +170,11 @@ contract ERC721NFTExchangeTest is Test {
         nftContract.approve(address(exchange), 1);
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
         exchange.listNFT(address(nftContract), 1, price, duration);
 
         vm.prank(buyer);
@@ -163,8 +195,16 @@ contract ERC721NFTExchangeTest is Test {
         exchange.batchListNFT(address(nftContract), tokenIds, prices, duration);
 
         bytes32[] memory listingIds = new bytes32[](2);
-        listingIds[0] = exchange.getGeneratedListingId(address(nftContract), 1, owner);
-        listingIds[1] = exchange.getGeneratedListingId(address(nftContract), 2, owner);
+        listingIds[0] = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
+        listingIds[1] = exchange.getGeneratedListingId(
+            address(nftContract),
+            2,
+            owner
+        );
 
         vm.expectEmit(true, true, true, false);
         emit ListingCancelled(listingIds[0], address(nftContract), 1, owner);
@@ -186,8 +226,16 @@ contract ERC721NFTExchangeTest is Test {
         exchange.batchListNFT(address(nftContract), tokenIds, prices, duration);
 
         bytes32[] memory listingIds = new bytes32[](2);
-        listingIds[0] = exchange.getGeneratedListingId(address(nftContract), 1, owner);
-        listingIds[1] = exchange.getGeneratedListingId(address(nftContract), 2, owner);
+        listingIds[0] = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
+        listingIds[1] = exchange.getGeneratedListingId(
+            address(nftContract),
+            2,
+            owner
+        );
 
         vm.prank(buyer);
         vm.expectRevert(NFTExchange__NotTheOwner.selector);
@@ -207,7 +255,11 @@ contract ERC721NFTExchangeTest is Test {
         exchange.batchListNFT(address(nftContract), tokenIds, prices, duration);
 
         // Buy first NFT
-        bytes32 listingId1 = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        bytes32 listingId1 = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
         uint256 realityPrice1 = exchange.getBuyerSeesPrice(listingId1);
         vm.deal(buyer, realityPrice1);
         vm.prank(buyer);
@@ -215,7 +267,11 @@ contract ERC721NFTExchangeTest is Test {
         assertEq(nftContract.ownerOf(1), buyer);
 
         // Buy second NFT
-        bytes32 listingId2 = exchange.getGeneratedListingId(address(nftContract), 2, owner);
+        bytes32 listingId2 = exchange.getGeneratedListingId(
+            address(nftContract),
+            2,
+            owner
+        );
         uint256 realityPrice2 = exchange.getBuyerSeesPrice(listingId2);
         vm.deal(buyer, realityPrice2);
         vm.prank(buyer);
@@ -236,8 +292,16 @@ contract ERC721NFTExchangeTest is Test {
         exchange.batchListNFT(address(nftContract), tokenIds, prices, duration);
 
         bytes32[] memory listingIds = new bytes32[](2);
-        listingIds[0] = exchange.getGeneratedListingId(address(nftContract), 1, owner);
-        listingIds[1] = exchange.getGeneratedListingId(address(nftContract), 2, owner);
+        listingIds[0] = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
+        listingIds[1] = exchange.getGeneratedListingId(
+            address(nftContract),
+            2,
+            owner
+        );
 
         // Calculate total price manually for each listing
         uint256 totalPrice = 0;
@@ -262,8 +326,16 @@ contract ERC721NFTExchangeTest is Test {
         nftContract.setApprovalForAll(address(exchange), true);
         nftContract2.setApprovalForAll(address(exchange), true);
 
-        bytes32 listingId1 = exchange.getGeneratedListingId(address(nftContract), 1, owner);
-        bytes32 listingId2 = exchange.getGeneratedListingId(address(nftContract2), 4, owner);
+        bytes32 listingId1 = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
+        bytes32 listingId2 = exchange.getGeneratedListingId(
+            address(nftContract2),
+            4,
+            owner
+        );
         exchange.listNFT(address(nftContract), 1, 1 ether, 1 days);
         exchange.listNFT(address(nftContract2), 4, 2 ether, 1 days);
         vm.stopPrank();
@@ -272,8 +344,12 @@ contract ERC721NFTExchangeTest is Test {
         listingIds[0] = listingId1;
         listingIds[1] = listingId2;
 
-        uint256 totalPrice = 1 ether + (1 ether * TAKER_FEE_BPS) / BPS_DENOMINATOR + 2 ether
-            + (2 ether * TAKER_FEE_BPS) / BPS_DENOMINATOR;
+        uint256 totalPrice = 1 ether +
+            (1 ether * TAKER_FEE_BPS) /
+            BPS_DENOMINATOR +
+            2 ether +
+            (2 ether * TAKER_FEE_BPS) /
+            BPS_DENOMINATOR;
         vm.deal(buyer, totalPrice);
         vm.prank(buyer);
         vm.expectRevert(NFTExchange__ArrayLengthMismatch.selector);
@@ -304,7 +380,11 @@ contract ERC721NFTExchangeTest is Test {
 
     // Test 15: Buy NFT with no active listing
     function test_BuyNFT_NoListing() public {
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
         vm.deal(buyer, 1 ether);
         vm.prank(buyer);
         vm.expectRevert(NFTExchange__NFTNotActive.selector);
@@ -317,7 +397,11 @@ contract ERC721NFTExchangeTest is Test {
         nftContract.approve(address(exchange), 1);
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
         exchange.listNFT(address(nftContract), 1, price, duration);
         exchange.cancelListing(listingId);
         vm.expectRevert(NFTExchange__NFTNotActive.selector);
@@ -345,7 +429,11 @@ contract ERC721NFTExchangeTest is Test {
         exchange.batchListNFT(address(nftContract), tokenIds, prices, 1 days);
 
         bytes32[] memory listingIds = new bytes32[](1);
-        listingIds[0] = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        listingIds[0] = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
 
         // Calculate total price manually for each listing
         uint256 totalPrice = 0;
@@ -372,10 +460,18 @@ contract ERC721NFTExchangeTest is Test {
         exchange.batchListNFT(address(nftContract), tokenIds, prices, 1 days);
 
         bytes32[] memory listingIds = new bytes32[](1);
-        listingIds[0] = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        listingIds[0] = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
 
+        // Force royalty fallback to Fee by disabling ERC2981 for this token
+        // by setting default royalty on a different address with 0 rate
+        vm.prank(owner);
+        nftContract.setDefaultRoyalty(owner, 0);
         uint256 takerFee = (prices[0] * TAKER_FEE_BPS) / BPS_DENOMINATOR;
-        uint256 royaltyAmount = prices[0] / 10; // 10% royalty
+        uint256 royaltyAmount = (prices[0] * 1000) / BPS_DENOMINATOR; // 10% royalty from mocked Fee
         uint256 totalPrice = prices[0] + takerFee + royaltyAmount;
 
         // Create a contract that will fail on receive
@@ -387,7 +483,9 @@ contract ERC721NFTExchangeTest is Test {
 
         // Mock the fee contract's owner() method to return the failing receiver
         vm.mockCall(
-            address(feeContract), abi.encodeWithSelector(Ownable.owner.selector), abi.encode(address(failingReceiver))
+            address(feeContract),
+            abi.encodeWithSelector(Ownable.owner.selector),
+            abi.encode(address(failingReceiver))
         );
 
         // Mock the fee contract's getRoyaltyFee() method to return 1000 (10%)
@@ -398,7 +496,9 @@ contract ERC721NFTExchangeTest is Test {
         );
 
         vm.prank(address(failingReceiver));
-        vm.expectRevert(bytes4(keccak256("PaymentDistribution__TransferFailed()")));
+        vm.expectRevert(
+            bytes4(keccak256("PaymentDistribution__TransferFailed()"))
+        );
         exchange.batchBuyNFT{value: totalPrice}(listingIds);
     }
 
@@ -414,7 +514,11 @@ contract ERC721NFTExchangeTest is Test {
         exchange.batchListNFT(address(nftContract), tokenIds, prices, 1 days);
 
         bytes32[] memory listingIds = new bytes32[](1);
-        listingIds[0] = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        listingIds[0] = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
 
         vm.warp(block.timestamp + 2 days);
 
@@ -434,7 +538,11 @@ contract ERC721NFTExchangeTest is Test {
         exchange.batchListNFT(address(nftContract), tokenIds, prices, 1 days);
 
         bytes32[] memory listingIds = new bytes32[](1);
-        listingIds[0] = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        listingIds[0] = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
 
         // Cancel the listing first
         exchange.cancelListing(listingIds[0]);
@@ -457,8 +565,16 @@ contract ERC721NFTExchangeTest is Test {
 
         // Get listing IDs
         bytes32[] memory listingIds = new bytes32[](2);
-        listingIds[0] = exchange.getGeneratedListingId(address(nftContract), tokenIds[0], address(this));
-        listingIds[1] = exchange.getGeneratedListingId(address(nftContract), tokenIds[1], address(this));
+        listingIds[0] = exchange.getGeneratedListingId(
+            address(nftContract),
+            tokenIds[0],
+            address(this)
+        );
+        listingIds[1] = exchange.getGeneratedListingId(
+            address(nftContract),
+            tokenIds[1],
+            address(this)
+        );
 
         // Calculate total price manually for each listing
         uint256 totalPriceWithFees = 0;
@@ -471,7 +587,10 @@ contract ERC721NFTExchangeTest is Test {
 
         // Log balances for debugging
         console.log("Exchange balance before:", address(exchange).balance);
-        console.log("Marketplace wallet balance before:", address(this).balance);
+        console.log(
+            "Marketplace wallet balance before:",
+            address(this).balance
+        );
         console.log("Buyer balance before:", buyer.balance);
 
         // Execute batch buy as buyer
@@ -495,7 +614,11 @@ contract ERC721NFTExchangeTest is Test {
         nftContract.approve(address(exchange), 1);
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
         exchange.listNFT(address(nftContract), 1, price, duration);
 
         // Get the actual price including royalties and fees
@@ -544,7 +667,11 @@ contract ERC721NFTExchangeTest is Test {
         nftContract.approve(address(exchange), 1);
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
         exchange.listNFT(address(nftContract), 1, price, duration);
 
         // First buyer buys the NFT
@@ -602,7 +729,11 @@ contract ERC721NFTExchangeTest is Test {
         nftContract.approve(address(exchange), 1);
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
         exchange.listNFT(address(nftContract), 1, price, duration);
 
         // Test getBuyerSeesPrice - should include both taker fee and royalty
@@ -613,7 +744,9 @@ contract ERC721NFTExchangeTest is Test {
         assertEq(buyerPrice, expectedPrice);
 
         // Test getListingsByCollection
-        bytes32[] memory collectionListings = exchange.getListingsByCollection(address(nftContract));
+        bytes32[] memory collectionListings = exchange.getListingsByCollection(
+            address(nftContract)
+        );
         assertEq(collectionListings.length, 1);
         assertEq(collectionListings[0], listingId);
 
@@ -733,7 +866,11 @@ contract ERC721NFTExchangeTest is Test {
         nftContract.approve(address(exchange), 1);
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
         exchange.listNFT(address(nftContract), 1, price, duration);
 
         // Get the actual price including royalties and fees
@@ -748,7 +885,10 @@ contract ERC721NFTExchangeTest is Test {
 
         uint256 marketplaceBalanceAfter = marketplaceWallet.balance;
         // Marketplace should only receive the taker fee, not the full payment
-        assertEq(marketplaceBalanceAfter - marketplaceBalanceBefore, expectedTakerFee);
+        assertEq(
+            marketplaceBalanceAfter - marketplaceBalanceBefore,
+            expectedTakerFee
+        );
     }
 }
 
@@ -758,11 +898,12 @@ contract MockFailingReceiver {
         revert("Transfer failed");
     }
 
-    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
-        external
-        pure
-        returns (bytes4)
-    {
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) external pure returns (bytes4) {
         return this.onERC721Received.selector;
     }
 }
