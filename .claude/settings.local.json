@@ -10,7 +10,10 @@
       "Bash(forge fmt:*)",
       "Bash(git add:*)",
       "Bash(git push:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(forge test:*)",
+      "Bash(rm:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
