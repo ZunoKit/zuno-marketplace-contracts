@@ -13,7 +13,11 @@
       "Bash(git reset:*)",
       "Bash(forge test:*)",
       "Bash(rm:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git checkout:*)",
+      "Bash(git tag:*)",
+      "Bash(find:*)",
+      "Bash(forge build:*)"
     ],
     "deny": [],
     "ask": []

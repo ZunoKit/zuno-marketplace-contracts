@@ -3,22 +3,22 @@ pragma solidity ^0.8.30;
 
 import {Test, console2, Vm} from "forge-std/Test.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {NFTExchangeFactory} from "src/contracts/core/NFTExchange/NFTExchangeFactory.sol";
-import {ERC721NFTExchange} from "src/contracts/core/NFTExchange/ERC721NFTExchange.sol";
-import {ERC1155NFTExchange} from "src/contracts/core/NFTExchange/ERC1155NFTExchange.sol";
-import {ERC721NFTExchange} from "src/contracts/core/NFTExchange/ERC721NFTExchange.sol";
-import {ERC1155NFTExchange} from "src/contracts/core/NFTExchange/ERC1155NFTExchange.sol";
-import {CollectionFactoryRegistry} from "src/contracts/core/collection/CollectionFactoryRegistry.sol";
-import {ERC721CollectionFactory} from "src/contracts/core/collection/ERC721CollectionFactory.sol";
-import {ERC1155CollectionFactory} from "src/contracts/core/collection/ERC1155CollectionFactory.sol";
-import {AuctionFactory} from "src/contracts/core/auction/AuctionFactory.sol";
-import {MarketplaceValidator} from "src/contracts/core/validation/MarketplaceValidator.sol";
-import {AdvancedFeeManager} from "src/contracts/core/fees/AdvancedFeeManager.sol";
-import {OfferManager} from "src/contracts/core/offers/OfferManager.sol";
-import {BundleManager} from "src/contracts/core/bundles/BundleManager.sol";
-import {CollectionVerifier} from "src/contracts/core/collection/CollectionVerifier.sol";
-import {MarketplaceAccessControl} from "src/contracts/core/access/MarketplaceAccessControl.sol";
-import {CollectionParams} from "src/contracts/types/ListingTypes.sol";
+import {NFTExchangeFactory} from "src/core/NFTExchange/NFTExchangeFactory.sol";
+import {ERC721NFTExchange} from "src/core/NFTExchange/ERC721NFTExchange.sol";
+import {ERC1155NFTExchange} from "src/core/NFTExchange/ERC1155NFTExchange.sol";
+import {ERC721NFTExchange} from "src/core/NFTExchange/ERC721NFTExchange.sol";
+import {ERC1155NFTExchange} from "src/core/NFTExchange/ERC1155NFTExchange.sol";
+import {CollectionFactoryRegistry} from "src/core/collection/CollectionFactoryRegistry.sol";
+import {ERC721CollectionFactory} from "src/core/collection/ERC721CollectionFactory.sol";
+import {ERC1155CollectionFactory} from "src/core/collection/ERC1155CollectionFactory.sol";
+import {AuctionFactory} from "src/core/auction/AuctionFactory.sol";
+import {MarketplaceValidator} from "src/core/validation/MarketplaceValidator.sol";
+import {AdvancedFeeManager} from "src/core/fees/AdvancedFeeManager.sol";
+import {OfferManager} from "src/core/offers/OfferManager.sol";
+import {BundleManager} from "src/core/bundles/BundleManager.sol";
+import {CollectionVerifier} from "src/core/collection/CollectionVerifier.sol";
+import {MarketplaceAccessControl} from "src/core/access/MarketplaceAccessControl.sol";
+import {CollectionParams} from "src/types/ListingTypes.sol";
 
 /**
  * @title EndToEndTest

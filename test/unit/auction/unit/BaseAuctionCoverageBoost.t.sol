@@ -2,12 +2,12 @@
 pragma solidity ^0.8.30;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {BaseAuction} from "src/contracts/core/auction/BaseAuction.sol";
-import {IAuction} from "src/contracts/interfaces/IAuction.sol";
-import {IMarketplaceValidator} from "src/contracts/interfaces/IMarketplaceValidator.sol";
+import {BaseAuction} from "src/core/auction/BaseAuction.sol";
+import {IAuction} from "src/interfaces/IAuction.sol";
+import {IMarketplaceValidator} from "src/interfaces/IMarketplaceValidator.sol";
 import {AuctionTestHelpers} from "../utils/AuctionTestHelpers.sol";
-import {MarketplaceValidator} from "src/contracts/core/validation/MarketplaceValidator.sol";
-import "src/contracts/errors/AuctionErrors.sol";
+import {MarketplaceValidator} from "src/core/validation/MarketplaceValidator.sol";
+import "src/errors/AuctionErrors.sol";
 
 /**
  * @title BaseAuctionCoverageBoostTest

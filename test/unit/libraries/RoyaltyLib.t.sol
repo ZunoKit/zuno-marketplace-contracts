@@ -2,9 +2,9 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
-import "src/contracts/libraries/RoyaltyLib.sol";
-import "src/contracts/common/Fee.sol";
-import "src/contracts/common/BaseCollection.sol";
+import "src/libraries/RoyaltyLib.sol";
+import "src/common/Fee.sol";
+import "src/common/BaseCollection.sol";
 import "test/mocks/MockERC721.sol";
 import "test/mocks/MockERC1155.sol";
 import "@openzeppelin/contracts/interfaces/IERC2981.sol";

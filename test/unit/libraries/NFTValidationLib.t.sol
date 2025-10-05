@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
-import "src/contracts/libraries/NFTValidationLib.sol";
+import "src/libraries/NFTValidationLib.sol";
 import "test/mocks/MockERC721.sol";
 import "test/mocks/MockERC1155.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";

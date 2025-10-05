@@ -2,9 +2,9 @@
 pragma solidity ^0.8.30;
 
 import {Test, console} from "forge-std/Test.sol";
-import {Fee} from "src/contracts/common/Fee.sol";
-import {MAX_ROYALTY_FEE} from "src/contracts/types/ListingTypes.sol";
-import "src/contracts/errors/FeeErrors.sol";
+import {Fee} from "src/common/Fee.sol";
+import {MAX_ROYALTY_FEE} from "src/types/ListingTypes.sol";
+import "src/errors/FeeErrors.sol";
 
 contract UnitFeeTest is Test {
     struct TestSetup {

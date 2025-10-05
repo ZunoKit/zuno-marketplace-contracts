@@ -2,10 +2,10 @@
 pragma solidity ^0.8.30;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {AuctionFactory} from "src/contracts/core/auction/AuctionFactory.sol";
-import {IAuction} from "src/contracts/interfaces/IAuction.sol";
+import {AuctionFactory} from "src/core/auction/AuctionFactory.sol";
+import {IAuction} from "src/interfaces/IAuction.sol";
 import {AuctionTestHelpers} from "../utils/AuctionTestHelpers.sol";
-import "src/contracts/errors/AuctionErrors.sol";
+import "src/errors/AuctionErrors.sol";
 
 // Import Pausable errors
 error EnforcedPause();

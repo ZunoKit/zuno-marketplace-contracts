@@ -2,8 +2,8 @@
 pragma solidity ^0.8.30;
 
 import {Script, console2} from "forge-std/Script.sol";
-import {ERC721CollectionFactory} from "src/contracts/core/collection/ERC721CollectionFactory.sol";
-import {ERC1155CollectionFactory} from "src/contracts/core/collection/ERC1155CollectionFactory.sol";
+import {ERC721CollectionFactory} from "src/core/collection/ERC721CollectionFactory.sol";
+import {ERC1155CollectionFactory} from "src/core/collection/ERC1155CollectionFactory.sol";
 
 contract DeployCollections is Script {
     struct CollectionsContracts {

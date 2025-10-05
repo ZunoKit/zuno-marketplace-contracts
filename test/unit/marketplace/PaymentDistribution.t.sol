@@ -2,12 +2,12 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
-import "src/contracts/core/NFTExchange/ERC721NFTExchange.sol";
-import "src/contracts/core/NFTExchange/ERC1155NFTExchange.sol";
-import "src/contracts/core/auction/EnglishAuction.sol";
-import "src/contracts/core/auction/DutchAuction.sol";
-import "src/contracts/core/auction/AuctionFactory.sol";
-import "src/contracts/common/Fee.sol";
+import "src/core/NFTExchange/ERC721NFTExchange.sol";
+import "src/core/NFTExchange/ERC1155NFTExchange.sol";
+import "src/core/auction/EnglishAuction.sol";
+import "src/core/auction/DutchAuction.sol";
+import "src/core/auction/AuctionFactory.sol";
+import "src/common/Fee.sol";
 import "../../mocks/MockERC721.sol";
 import "../../mocks/MockERC1155.sol";
 

@@ -2,10 +2,10 @@
 pragma solidity ^0.8.30;
 
 import {Test, console} from "forge-std/Test.sol";
-import {BaseCollection} from "src/contracts/common/BaseCollection.sol";
-import {CollectionParams} from "src/contracts/types/ListingTypes.sol";
-import "src/contracts/errors/CollectionErrors.sol";
-import {MintStage} from "src/contracts/types/ListingTypes.sol";
+import {BaseCollection} from "src/common/BaseCollection.sol";
+import {CollectionParams} from "src/types/ListingTypes.sol";
+import "src/errors/CollectionErrors.sol";
+import {MintStage} from "src/types/ListingTypes.sol";
 
 contract MockBaseCollection is BaseCollection {
     constructor(CollectionParams memory params) BaseCollection(params) {}

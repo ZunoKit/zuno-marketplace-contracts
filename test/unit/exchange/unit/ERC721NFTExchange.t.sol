@@ -3,10 +3,10 @@ pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
 import "test/mocks/MockERC721.sol";
-import "src/contracts/core/NFTExchange/ERC721NFTExchange.sol";
-import "src/contracts/errors/NFTExchangeErrors.sol";
-import "src/contracts/events/NFTExchangeEvents.sol";
-import {Fee} from "src/contracts/common/Fee.sol";
+import "src/core/NFTExchange/ERC721NFTExchange.sol";
+import "src/errors/NFTExchangeErrors.sol";
+import "src/events/NFTExchangeEvents.sol";
+import {Fee} from "src/common/Fee.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 interface IFee {

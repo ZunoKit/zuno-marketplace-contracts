@@ -2,11 +2,11 @@
 pragma solidity ^0.8.30;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {BaseNFTExchange} from "src/contracts/common/BaseNFTExchange.sol";
+import {BaseNFTExchange} from "src/common/BaseNFTExchange.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 import {MockERC1155} from "test/mocks/MockERC1155.sol";
-import "src/contracts/errors/NFTExchangeErrors.sol";
-import "src/contracts/events/NFTExchangeEvents.sol";
+import "src/errors/NFTExchangeErrors.sol";
+import "src/events/NFTExchangeEvents.sol";
 
 /**
  * @title BaseNFTExchangeCoverageBoostTest

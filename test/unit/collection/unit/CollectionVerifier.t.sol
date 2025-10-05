@@ -2,9 +2,9 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
-import "src/contracts/core/collection/CollectionVerifier.sol";
-import "src/contracts/core/access/MarketplaceAccessControl.sol";
-import "src/contracts/errors/CollectionErrors.sol";
+import "src/core/collection/CollectionVerifier.sol";
+import "src/core/access/MarketplaceAccessControl.sol";
+import "src/errors/CollectionErrors.sol";
 import "../../../mocks/MockERC721.sol";
 
 contract CollectionVerifierTest is Test {

@@ -2,8 +2,8 @@
 pragma solidity ^0.8.30;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {ERC721NFTExchange} from "src/contracts/core/NFTExchange/ERC721NFTExchange.sol";
-import {ERC1155NFTExchange} from "src/contracts/core/NFTExchange/ERC1155NFTExchange.sol";
+import {ERC721NFTExchange} from "src/core/NFTExchange/ERC721NFTExchange.sol";
+import {ERC1155NFTExchange} from "src/core/NFTExchange/ERC1155NFTExchange.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**

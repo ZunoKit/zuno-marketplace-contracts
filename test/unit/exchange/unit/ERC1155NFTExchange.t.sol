@@ -2,12 +2,12 @@
 pragma solidity ^0.8.30;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {ERC1155NFTExchange} from "src/contracts/core/NFTExchange/ERC1155NFTExchange.sol";
+import {ERC1155NFTExchange} from "src/core/NFTExchange/ERC1155NFTExchange.sol";
 import {MockERC1155} from "test/mocks/MockERC1155.sol";
-import "src/contracts/errors/NFTExchangeErrors.sol";
-import "src/contracts/events/NFTExchangeEvents.sol";
+import "src/errors/NFTExchangeErrors.sol";
+import "src/events/NFTExchangeEvents.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
-import {Fee} from "src/contracts/common/Fee.sol";
+import {Fee} from "src/common/Fee.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 interface IFee {
