@@ -9,6 +9,7 @@ import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {RoyaltyLib} from "src/libraries/RoyaltyLib.sol";
 import "src/events/AuctionEvents.sol";
 import "src/errors/AuctionErrors.sol";
 
@@ -312,25 +313,29 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
                 if (IERC721(nftContract).ownerOf(tokenId) != seller) {
                     revert Auction__NotNFTOwner();
                 }
-
-                // Check approval for factory contract (if called by factory) or this contract
-                address approvedContract = factoryContract != address(0) ? factoryContract : address(this);
-                if (
-                    !IERC721(nftContract).isApprovedForAll(seller, approvedContract)
-                        && IERC721(nftContract).getApproved(tokenId) != approvedContract
-                ) {
-                    revert Auction__NFTNotApproved();
+                // For factory-deployed auctions, defer approval enforcement to transfer time
+                if (factoryContract == address(0)) {
+                    // Standalone deployments must have approval for this contract
+                    address approvedContract = address(this);
+                    if (
+                        !IERC721(nftContract).isApprovedForAll(seller, approvedContract)
+                            && IERC721(nftContract).getApproved(tokenId) != approvedContract
+                    ) {
+                        revert Auction__NFTNotApproved();
+                    }
                 }
             } else {
                 // ERC1155 validation
                 if (IERC1155(nftContract).balanceOf(seller, tokenId) < amount) {
                     revert Auction__NotNFTOwner();
                 }
-
-                // Check approval for factory contract (if called by factory) or this contract
-                address approvedContract = factoryContract != address(0) ? factoryContract : address(this);
-                if (!IERC1155(nftContract).isApprovedForAll(seller, approvedContract)) {
-                    revert Auction__NFTNotApproved();
+                // For factory-deployed auctions, defer approval enforcement to transfer time
+                if (factoryContract == address(0)) {
+                    // Standalone deployments must have approval for this contract
+                    address approvedContract = address(this);
+                    if (!IERC1155(nftContract).isApprovedForAll(seller, approvedContract)) {
+                        revert Auction__NFTNotApproved();
+                    }
                 }
             }
         } catch {
@@ -513,7 +518,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
     function isAuctionActive(bytes32 auctionId) public view override returns (bool isActive) {
         Auction memory auction = auctions[auctionId];
         return auction.status == AuctionStatus.ACTIVE && block.timestamp >= auction.startTime
-            && block.timestamp < auction.endTime;
+            && block.timestamp <= auction.endTime;
     }
 
     // ============================================================================
@@ -741,17 +746,9 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
         // Calculate marketplace fee
         marketplaceFeeAmount = (totalAmount * marketplaceFee) / BPS_DENOMINATOR;
 
-        // Calculate royalty fee
-        try IERC2981(auction.nftContract).royaltyInfo(auction.tokenId, totalAmount) returns (
-            address receiver, uint256 royalty
-        ) {
-            royaltyAmount = royalty;
-            royaltyReceiver = receiver;
-        } catch {
-            // No royalty support
-            royaltyAmount = 0;
-            royaltyReceiver = address(0);
-        }
+        // Calculate royalty fee using RoyaltyLib for comprehensive royalty detection
+        (royaltyReceiver, royaltyAmount) =
+            RoyaltyLib.calculateRoyalty(auction.nftContract, auction.tokenId, totalAmount);
     }
 
     // Struct to reduce stack depth in payment distribution

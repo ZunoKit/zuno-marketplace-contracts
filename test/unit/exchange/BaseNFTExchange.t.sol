@@ -392,15 +392,14 @@ contract BaseNFTExchangeTest is Test {
     }
 
     function test_GetRoyaltyInfoWithNonBaseCollection() public {
-        // Deploy a regular ERC721 contract that doesn't inherit from BaseCollection
-        // SimpleERC721 regularNFT = new SimpleERC721("Regular", "REG");
+        // MockERC721 has ERC2981 (5% to test contract) from constructor
         MockERC721 regularNFT = new MockERC721("Regular", "REG");
 
         (address receiver, uint256 royaltyAmount) = exchange.getRoyaltyInfo(address(regularNFT), 1, 1 ether);
 
-        // Should return zero values for non-BaseCollection contracts
-        assertEq(receiver, regularNFT.getFeeContract().owner());
-        assertEq(royaltyAmount, 0);
+        // MockERC721 has ERC2981 royalty (5%) which takes precedence
+        assertEq(receiver, address(this)); // ERC2981 returns test contract as receiver
+        assertEq(royaltyAmount, 0.05 ether); // 5% of 1 ether
     }
 
     function test_DistributePaymentsWithRefund() public {

@@ -44,6 +44,57 @@ contract DutchAuction is BaseAuction {
     // ============================================================================
 
     /**
+     * @notice Creates a new Dutch auction (IAuction interface implementation)
+     * @param nftContract Address of the NFT contract
+     * @param tokenId Token ID to auction
+     * @param amount Amount to auction (1 for ERC721)
+     * @param startPrice Starting price for the auction
+     * @param reservePrice Reserve price (minimum acceptable price/ending price)
+     * @param duration Auction duration in seconds
+     * @param auctionType Type of auction (must be DUTCH)
+     * @param seller Address of the seller (NFT owner)
+     * @return auctionId Unique identifier for the created auction
+     * @dev Uses a default price drop of 5% per hour (500 basis points)
+     */
+    function createAuction(
+        address nftContract,
+        uint256 tokenId,
+        uint256 amount,
+        uint256 startPrice,
+        uint256 reservePrice,
+        uint256 duration,
+        AuctionType auctionType,
+        address seller
+    ) external override whenNotPaused nonReentrant returns (bytes32 auctionId) {
+        // Validate auction type
+        if (auctionType != AuctionType.DUTCH) {
+            revert Auction__UnsupportedAuctionType();
+        }
+
+        // Use default price drop of 5% per hour
+        uint256 defaultPriceDropPerHour = 500; // 5%
+
+        // Create the auction using base functionality
+        AuctionParams memory params = AuctionParams({
+            nftContract: nftContract,
+            tokenId: tokenId,
+            amount: amount,
+            startPrice: startPrice,
+            reservePrice: reservePrice,
+            duration: duration,
+            auctionType: AuctionType.DUTCH,
+            seller: seller
+        });
+
+        auctionId = _createAuctionInternal(params);
+
+        // Store Dutch auction specific parameters
+        priceDropPerHour[auctionId] = defaultPriceDropPerHour;
+
+        return auctionId;
+    }
+
+    /**
      * @notice Creates a new Dutch auction with price drop configuration
      * @param nftContract Address of the NFT contract
      * @param tokenId Token ID to auction

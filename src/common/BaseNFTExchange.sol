@@ -189,13 +189,16 @@ contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
 
     // Internal function to distribute payments
     function _distributePayments(PaymentDistribution memory payment) internal {
+        // Calculate seller amount (listing price minus royalty)
+        uint256 sellerAmount = payment.price - payment.royalty;
+
         // Convert to PaymentDistributionLib format
         PaymentDistributionLib.PaymentData memory paymentData = PaymentDistributionLib.PaymentData({
             seller: payment.seller,
             royaltyReceiver: payment.royaltyReceiver,
             marketplaceWallet: s_marketplaceWallet,
-            totalAmount: payment.realityPrice,
-            sellerAmount: payment.price,
+            totalAmount: sellerAmount + payment.takerFee + payment.royalty, // Sum of all payments
+            sellerAmount: sellerAmount,
             marketplaceFee: payment.takerFee,
             royaltyAmount: payment.royalty
         });

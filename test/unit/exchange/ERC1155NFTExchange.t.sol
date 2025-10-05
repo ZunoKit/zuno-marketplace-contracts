@@ -11,10 +11,10 @@ import {Fee} from "src/common/Fee.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 interface IFee {
-    function royaltyInfo(uint256 tokenId, uint256 salePrice)
-        external
-        view
-        returns (address receiver, uint256 royaltyAmount);
+    function royaltyInfo(
+        uint256 tokenId,
+        uint256 salePrice
+    ) external view returns (address receiver, uint256 royaltyAmount);
     function owner() external view returns (address);
 }
 
@@ -23,6 +23,7 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
     MockERC1155 public nftContract;
     address public owner = address(this);
     address public buyer = address(0x456);
+    address public marketplaceWallet = address(0x789);
     uint256 constant TAKER_FEE_BPS = 200; // 2%
     uint256 constant BPS_DENOMINATOR = 10000;
 
@@ -34,7 +35,7 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
 
     function setUp() public {
         exchange = new ERC1155NFTExchange();
-        exchange.initialize(address(this), address(this));
+        exchange.initialize(marketplaceWallet, address(this));
         nftContract = new MockERC1155("MockNFT", "MNFT");
         nftContract.mint(address(this), 1, 10);
         nftContract.mint(address(this), 2, 5);
@@ -42,27 +43,28 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
     }
 
     // Implement IERC1155Receiver interface
-    function onERC1155Received(address operator, address from, uint256 id, uint256 value, bytes calldata data)
-        external
-        pure
-        override
-        returns (bytes4)
-    {
+    function onERC1155Received(
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes calldata
+    ) external pure override returns (bytes4) {
         return this.onERC1155Received.selector;
     }
 
     function onERC1155BatchReceived(
-        address operator,
-        address from,
-        uint256[] calldata ids,
-        uint256[] calldata values,
-        bytes calldata data
+        address,
+        address,
+        uint256[] calldata,
+        uint256[] calldata,
+        bytes calldata
     ) external pure override returns (bytes4) {
         return this.onERC1155BatchReceived.selector;
     }
 
-    function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
-        return interfaceId == type(IERC1155Receiver).interfaceId;
+    function supportsInterface(bytes4) external pure override returns (bool) {
+        return true;
     }
 
     // Test 1: List a single ERC-1155 NFT
@@ -73,10 +75,20 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         uint256 price = 1 ether;
         uint256 duration = 1 days;
 
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), tokenId, owner);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            tokenId,
+            owner
+        );
         vm.expectEmit(true, true, true, true);
         emit NFTListed(listingId, address(nftContract), tokenId, owner, price);
-        exchange.listNFT(address(nftContract), tokenId, amount, price, duration);
+        exchange.listNFT(
+            address(nftContract),
+            tokenId,
+            amount,
+            price,
+            duration
+        );
     }
 
     // Test 2: Batch list ERC-1155 NFTs
@@ -93,13 +105,27 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         prices[1] = 2 ether;
         uint256 duration = 1 days;
 
-        bytes32 listingId1 = exchange.getGeneratedListingId(address(nftContract), 1, owner);
-        bytes32 listingId2 = exchange.getGeneratedListingId(address(nftContract), 2, owner);
+        bytes32 listingId1 = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
+        bytes32 listingId2 = exchange.getGeneratedListingId(
+            address(nftContract),
+            2,
+            owner
+        );
         vm.expectEmit(true, true, true, true);
         emit NFTListed(listingId1, address(nftContract), 1, owner, prices[0]);
         vm.expectEmit(true, true, true, true);
         emit NFTListed(listingId2, address(nftContract), 2, owner, prices[1]);
-        exchange.batchListNFT(address(nftContract), tokenIds, amounts, prices, duration);
+        exchange.batchListNFT(
+            address(nftContract),
+            tokenIds,
+            amounts,
+            prices,
+            duration
+        );
     }
 
     // Test 3: Buy a single ERC-1155 NFT
@@ -109,14 +135,24 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         uint256 amount = 2;
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), tokenId, owner);
-        exchange.listNFT(address(nftContract), tokenId, amount, price, duration);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            tokenId,
+            owner
+        );
+        exchange.listNFT(
+            address(nftContract),
+            tokenId,
+            amount,
+            price,
+            duration
+        );
 
-        uint256 takerFee = (price * TAKER_FEE_BPS) / BPS_DENOMINATOR;
-        uint256 totalPrice = price + takerFee;
-        vm.deal(buyer, totalPrice);
+        // Get the actual price including royalties and fees
+        uint256 realityPrice = exchange.getBuyerSeesPrice(listingId);
+        vm.deal(buyer, realityPrice);
         vm.prank(buyer);
-        exchange.buyNFT{value: totalPrice}(listingId);
+        exchange.buyNFT{value: realityPrice}(listingId);
         assertEq(nftContract.balanceOf(buyer, tokenId), amount);
     }
 
@@ -127,15 +163,25 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         uint256 amount = 2;
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), tokenId, owner);
-        exchange.listNFT(address(nftContract), tokenId, amount, price, duration);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            tokenId,
+            owner
+        );
+        exchange.listNFT(
+            address(nftContract),
+            tokenId,
+            amount,
+            price,
+            duration
+        );
 
-        uint256 takerFee = (price * TAKER_FEE_BPS) / BPS_DENOMINATOR;
-        uint256 totalPrice = price + takerFee;
-        vm.deal(buyer, totalPrice);
+        // Get the actual price including royalties and fees
+        uint256 realityPrice = exchange.getBuyerSeesPrice(listingId);
+        vm.deal(buyer, realityPrice);
         vm.prank(buyer);
         vm.expectRevert(NFTExchange__InsufficientPayment.selector);
-        exchange.buyNFT{value: totalPrice - 0.5 ether}(listingId);
+        exchange.buyNFT{value: realityPrice - 0.5 ether}(listingId);
     }
 
     // Test 5: Buy ERC-1155 NFT with expired listing
@@ -145,17 +191,27 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         uint256 amount = 2;
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), tokenId, owner);
-        exchange.listNFT(address(nftContract), tokenId, amount, price, duration);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            tokenId,
+            owner
+        );
+        exchange.listNFT(
+            address(nftContract),
+            tokenId,
+            amount,
+            price,
+            duration
+        );
 
         vm.warp(block.timestamp + 2 days);
 
-        uint256 takerFee = (price * TAKER_FEE_BPS) / BPS_DENOMINATOR;
-        uint256 totalPrice = price + takerFee;
-        vm.deal(buyer, totalPrice);
+        // Get the actual price including royalties and fees
+        uint256 realityPrice = exchange.getBuyerSeesPrice(listingId);
+        vm.deal(buyer, realityPrice);
         vm.prank(buyer);
         vm.expectRevert(NFTExchange__ListingExpired.selector);
-        exchange.buyNFT{value: totalPrice}(listingId);
+        exchange.buyNFT{value: realityPrice}(listingId);
     }
 
     // Test 6: Cancel a listing
@@ -165,8 +221,18 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         uint256 amount = 2;
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), tokenId, owner);
-        exchange.listNFT(address(nftContract), tokenId, amount, price, duration);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            tokenId,
+            owner
+        );
+        exchange.listNFT(
+            address(nftContract),
+            tokenId,
+            amount,
+            price,
+            duration
+        );
 
         emit ListingCancelled(listingId, address(nftContract), tokenId, owner);
         exchange.cancelListing(listingId);
@@ -179,8 +245,18 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         uint256 amount = 2;
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), tokenId, owner);
-        exchange.listNFT(address(nftContract), tokenId, amount, price, duration);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            tokenId,
+            owner
+        );
+        exchange.listNFT(
+            address(nftContract),
+            tokenId,
+            amount,
+            price,
+            duration
+        );
 
         vm.prank(buyer);
         vm.expectRevert(NFTExchange__NotTheOwner.selector);
@@ -200,11 +276,25 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         prices[0] = 1 ether;
         prices[1] = 2 ether;
         uint256 duration = 1 days;
-        exchange.batchListNFT(address(nftContract), tokenIds, amounts, prices, duration);
+        exchange.batchListNFT(
+            address(nftContract),
+            tokenIds,
+            amounts,
+            prices,
+            duration
+        );
 
         bytes32[] memory listingIds = new bytes32[](2);
-        listingIds[0] = exchange.getGeneratedListingId(address(nftContract), 1, owner);
-        listingIds[1] = exchange.getGeneratedListingId(address(nftContract), 2, owner);
+        listingIds[0] = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
+        listingIds[1] = exchange.getGeneratedListingId(
+            address(nftContract),
+            2,
+            owner
+        );
 
         emit ListingCancelled(listingIds[0], address(nftContract), 1, owner);
         emit ListingCancelled(listingIds[1], address(nftContract), 2, owner);
@@ -224,11 +314,25 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         prices[0] = 1 ether;
         prices[1] = 2 ether;
         uint256 duration = 1 days;
-        exchange.batchListNFT(address(nftContract), tokenIds, amounts, prices, duration);
+        exchange.batchListNFT(
+            address(nftContract),
+            tokenIds,
+            amounts,
+            prices,
+            duration
+        );
 
         bytes32[] memory listingIds = new bytes32[](2);
-        listingIds[0] = exchange.getGeneratedListingId(address(nftContract), 1, owner);
-        listingIds[1] = exchange.getGeneratedListingId(address(nftContract), 2, owner);
+        listingIds[0] = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
+        listingIds[1] = exchange.getGeneratedListingId(
+            address(nftContract),
+            2,
+            owner
+        );
 
         vm.prank(buyer);
         vm.expectRevert(NFTExchange__NotTheOwner.selector);
@@ -259,12 +363,23 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         // Create listings
         for (uint256 i = 0; i < 2; i++) {
             nftContract.setApprovalForAll(address(exchange), true);
-            exchange.listNFT(address(nftContract), tokenIds[i], amounts[i], prices[i], 1 days);
-            listingIds[i] = exchange.getGeneratedListingId(address(nftContract), tokenIds[i], owner);
+            exchange.listNFT(
+                address(nftContract),
+                tokenIds[i],
+                amounts[i],
+                prices[i],
+                1 days
+            );
+            listingIds[i] = exchange.getGeneratedListingId(
+                address(nftContract),
+                tokenIds[i],
+                owner
+            );
         }
 
         // Calculate total price including fees
-        uint256 totalWithFees = exchange.getBuyerSeesPrice(listingIds[0]) + exchange.getBuyerSeesPrice(listingIds[1]);
+        uint256 totalWithFees = exchange.getBuyerSeesPrice(listingIds[0]) +
+            exchange.getBuyerSeesPrice(listingIds[1]);
 
         // Buy NFTs with correct payment
         vm.deal(buyer, totalWithFees);
@@ -303,18 +418,31 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         // Create listings
         for (uint256 i = 0; i < 2; i++) {
             nftContract.setApprovalForAll(address(exchange), true);
-            exchange.listNFT(address(nftContract), tokenIds[i], amounts[i], prices[i], 1 days);
-            listingIds[i] = exchange.getGeneratedListingId(address(nftContract), tokenIds[i], owner);
+            exchange.listNFT(
+                address(nftContract),
+                tokenIds[i],
+                amounts[i],
+                prices[i],
+                1 days
+            );
+            listingIds[i] = exchange.getGeneratedListingId(
+                address(nftContract),
+                tokenIds[i],
+                owner
+            );
         }
 
         // Calculate total price including fees
-        uint256 totalWithFees = exchange.getBuyerSeesPrice(listingIds[0]) + exchange.getBuyerSeesPrice(listingIds[1]);
+        uint256 totalWithFees = exchange.getBuyerSeesPrice(listingIds[0]) +
+            exchange.getBuyerSeesPrice(listingIds[1]);
 
         // Try to buy with insufficient payment (send 1 wei less than required)
         vm.deal(buyer, totalWithFees - 1);
         vm.deal(address(this), totalWithFees); // Give the test contract enough ETH to receive payments
         vm.prank(buyer);
-        vm.expectRevert(abi.encodeWithSelector(NFTExchange__InsufficientPayment.selector));
+        vm.expectRevert(
+            abi.encodeWithSelector(NFTExchange__InsufficientPayment.selector)
+        );
         exchange.batchBuyNFT{value: totalWithFees - 1}(listingIds);
     }
 
@@ -329,15 +457,27 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         exchange.listNFT(address(nftContract), 1, 2, 1 ether, 1 days);
         exchange.listNFT(address(nftContract2), 4, 3, 2 ether, 1 days);
 
-        bytes32 listingId1 = exchange.getGeneratedListingId(address(nftContract), 1, owner);
-        bytes32 listingId2 = exchange.getGeneratedListingId(address(nftContract2), 4, owner);
+        bytes32 listingId1 = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
+        bytes32 listingId2 = exchange.getGeneratedListingId(
+            address(nftContract2),
+            4,
+            owner
+        );
 
         bytes32[] memory listingIds = new bytes32[](2);
         listingIds[0] = listingId1;
         listingIds[1] = listingId2;
 
-        uint256 totalPrice = 1 ether + (1 ether * TAKER_FEE_BPS) / BPS_DENOMINATOR + 2 ether
-            + (2 ether * TAKER_FEE_BPS) / BPS_DENOMINATOR;
+        uint256 totalPrice = 1 ether +
+            (1 ether * TAKER_FEE_BPS) /
+            BPS_DENOMINATOR +
+            2 ether +
+            (2 ether * TAKER_FEE_BPS) /
+            BPS_DENOMINATOR;
         vm.deal(buyer, totalPrice);
         vm.prank(buyer);
         vm.expectRevert(NFTExchange__ArrayLengthMismatch.selector);
@@ -352,7 +492,13 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         uint256 price = 0;
         uint256 duration = 1 days;
         vm.expectRevert(NFTExchange__PriceMustBeGreaterThanZero.selector);
-        exchange.listNFT(address(nftContract), tokenId, amount, price, duration);
+        exchange.listNFT(
+            address(nftContract),
+            tokenId,
+            amount,
+            price,
+            duration
+        );
     }
 
     // Test 14: List ERC-1155 NFT with zero duration
@@ -363,7 +509,13 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         uint256 price = 1 ether;
         uint256 duration = 0;
         vm.expectRevert(NFTExchange__DurationMustBeGreaterThanZero.selector);
-        exchange.listNFT(address(nftContract), tokenId, amount, price, duration);
+        exchange.listNFT(
+            address(nftContract),
+            tokenId,
+            amount,
+            price,
+            duration
+        );
     }
 
     // Test 15: List ERC-1155 NFT with zero amount
@@ -374,7 +526,13 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         uint256 price = 1 ether;
         uint256 duration = 1 days;
         vm.expectRevert(NFTExchange__AmountMustBeGreaterThanZero.selector);
-        exchange.listNFT(address(nftContract), tokenId, amount, price, duration);
+        exchange.listNFT(
+            address(nftContract),
+            tokenId,
+            amount,
+            price,
+            duration
+        );
     }
 
     // Test 16: List ERC-1155 NFT with insufficient balance
@@ -385,12 +543,22 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         uint256 price = 1 ether;
         uint256 duration = 1 days;
         vm.expectRevert(NFTExchange__InsufficientBalance.selector);
-        exchange.listNFT(address(nftContract), tokenId, amount, price, duration);
+        exchange.listNFT(
+            address(nftContract),
+            tokenId,
+            amount,
+            price,
+            duration
+        );
     }
 
     // Test 17: Buy ERC-1155 NFT with no active listing
     function test_BuyNFT_NoListing() public {
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
         vm.deal(buyer, 1 ether);
         vm.prank(buyer);
         vm.expectRevert(NFTExchange__NFTNotActive.selector);
@@ -404,8 +572,18 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         uint256 amount = 2;
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), tokenId, owner);
-        exchange.listNFT(address(nftContract), tokenId, amount, price, duration);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            tokenId,
+            owner
+        );
+        exchange.listNFT(
+            address(nftContract),
+            tokenId,
+            amount,
+            price,
+            duration
+        );
         exchange.cancelListing(listingId);
         vm.expectRevert(NFTExchange__NFTNotActive.selector);
         exchange.cancelListing(listingId);
@@ -430,13 +608,23 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         amounts[0] = 2;
         prices[0] = 1 ether;
 
-        exchange.batchListNFT(address(nftContract), tokenIds, amounts, prices, 1 days);
+        exchange.batchListNFT(
+            address(nftContract),
+            tokenIds,
+            amounts,
+            prices,
+            1 days
+        );
 
         bytes32[] memory listingIds = new bytes32[](1);
-        listingIds[0] = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        listingIds[0] = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
 
-        uint256 takerFee = (prices[0] * TAKER_FEE_BPS) / BPS_DENOMINATOR;
-        uint256 totalPrice = prices[0] + takerFee;
+        // Calculate total price based on current royalty path
+        uint256 totalPrice = exchange.getBuyerSeesPrice(listingIds[0]);
 
         vm.deal(buyer, totalPrice);
         vm.prank(buyer);
@@ -456,14 +644,26 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         amounts[0] = 2;
         prices[0] = 1 ether;
 
-        exchange.batchListNFT(address(nftContract), tokenIds, amounts, prices, 1 days);
+        exchange.batchListNFT(
+            address(nftContract),
+            tokenIds,
+            amounts,
+            prices,
+            1 days
+        );
 
         bytes32[] memory listingIds = new bytes32[](1);
-        listingIds[0] = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        listingIds[0] = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
 
-        uint256 takerFee = (prices[0] * TAKER_FEE_BPS) / BPS_DENOMINATOR;
-        uint256 royaltyAmount = prices[0] / 10; // 10% royalty
-        uint256 totalPrice = prices[0] + takerFee + royaltyAmount;
+        // Calculate total price manually for each listing
+        uint256 totalPrice = 0;
+        for (uint256 i = 0; i < listingIds.length; i++) {
+            totalPrice += exchange.getBuyerSeesPrice(listingIds[i]);
+        }
 
         // Create a contract that will fail on receive
         MockFailingReceiver failingReceiver = new MockFailingReceiver();
@@ -474,7 +674,9 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
 
         // Mock the fee contract's owner() method to return the failing receiver
         vm.mockCall(
-            address(feeContract), abi.encodeWithSelector(Ownable.owner.selector), abi.encode(address(failingReceiver))
+            address(feeContract),
+            abi.encodeWithSelector(Ownable.owner.selector),
+            abi.encode(address(failingReceiver))
         );
 
         // Mock the fee contract's getRoyaltyFee() method to return 1000 (10%)
@@ -484,8 +686,18 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
             abi.encode(uint256(1000)) // 10% in basis points
         );
 
-        vm.prank(address(failingReceiver));
-        vm.expectRevert(bytes4(keccak256("PaymentDistribution__TransferFailed()")));
+        // Disable ERC2981 default royalty so Fee fallback path is used
+        vm.prank(owner);
+        nftContract.setDefaultRoyalty(owner, 0);
+        // Recompute total price after mocks to avoid InsufficientPayment
+        totalPrice = exchange.getBuyerSeesPrice(listingIds[0]);
+        // Fund buyer with the required total price to avoid OutOfFunds
+        vm.deal(buyer, totalPrice);
+        // Expect revert from payment distribution during batch buy
+        vm.prank(buyer);
+        vm.expectRevert(
+            bytes4(keccak256("PaymentDistribution__TransferFailed()"))
+        );
         exchange.batchBuyNFT{value: totalPrice}(listingIds);
     }
 
@@ -500,10 +712,20 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         amounts[0] = 2;
         prices[0] = 1 ether;
 
-        exchange.batchListNFT(address(nftContract), tokenIds, amounts, prices, 1 days);
+        exchange.batchListNFT(
+            address(nftContract),
+            tokenIds,
+            amounts,
+            prices,
+            1 days
+        );
 
         bytes32[] memory listingIds = new bytes32[](1);
-        listingIds[0] = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        listingIds[0] = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
 
         vm.warp(block.timestamp + 2 days);
 
@@ -522,10 +744,20 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         amounts[0] = 2;
         prices[0] = 1 ether;
 
-        exchange.batchListNFT(address(nftContract), tokenIds, amounts, prices, 1 days);
+        exchange.batchListNFT(
+            address(nftContract),
+            tokenIds,
+            amounts,
+            prices,
+            1 days
+        );
 
         bytes32[] memory listingIds = new bytes32[](1);
-        listingIds[0] = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        listingIds[0] = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
 
         // Cancel the listing first
         exchange.cancelListing(listingIds[0]);
@@ -552,16 +784,31 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         prices[0] = 1 ether;
         prices[1] = 2 ether;
 
-        exchange.batchListNFT(address(nftContract), tokenIds, amounts, prices, 1 days);
+        exchange.batchListNFT(
+            address(nftContract),
+            tokenIds,
+            amounts,
+            prices,
+            1 days
+        );
 
         bytes32[] memory listingIds = new bytes32[](2);
-        listingIds[0] = exchange.getGeneratedListingId(address(nftContract), 1, owner);
-        listingIds[1] = exchange.getGeneratedListingId(address(nftContract), 2, owner);
+        listingIds[0] = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
+        listingIds[1] = exchange.getGeneratedListingId(
+            address(nftContract),
+            2,
+            owner
+        );
 
-        uint256 totalPrice = prices[0] + (prices[0] * TAKER_FEE_BPS) / BPS_DENOMINATOR + prices[1]
-            + (prices[1] * TAKER_FEE_BPS) / BPS_DENOMINATOR;
-
-        // Note: MockERC1155 has 0% royalty, so no royalty is added
+        // Calculate total price manually for each listing
+        uint256 totalPrice = 0;
+        for (uint256 i = 0; i < listingIds.length; i++) {
+            totalPrice += exchange.getBuyerSeesPrice(listingIds[i]);
+        }
 
         vm.deal(buyer, totalPrice);
         vm.prank(buyer);
@@ -581,11 +828,21 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         uint256 price = 1 ether;
         uint256 duration = 1 days;
 
-        exchange.listNFT(address(nftContract), tokenId, amount, price, duration);
+        exchange.listNFT(
+            address(nftContract),
+            tokenId,
+            amount,
+            price,
+            duration
+        );
 
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), tokenId, owner);
-        uint256 takerFee = (price * TAKER_FEE_BPS) / BPS_DENOMINATOR;
-        uint256 totalPrice = price + takerFee;
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            tokenId,
+            owner
+        );
+        // Get the actual price including royalties and fees
+        uint256 totalPrice = exchange.getBuyerSeesPrice(listingId);
 
         vm.deal(buyer, totalPrice);
         vm.prank(buyer);
@@ -607,13 +864,26 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         amounts[0] = 2;
         prices[0] = 1 ether;
 
-        exchange.batchListNFT(address(nftContract), tokenIds, amounts, prices, 1 days);
+        exchange.batchListNFT(
+            address(nftContract),
+            tokenIds,
+            amounts,
+            prices,
+            1 days
+        );
 
         bytes32[] memory listingIds = new bytes32[](1);
-        listingIds[0] = exchange.getGeneratedListingId(address(nftContract), 1, owner);
+        listingIds[0] = exchange.getGeneratedListingId(
+            address(nftContract),
+            1,
+            owner
+        );
 
-        uint256 takerFee = (prices[0] * TAKER_FEE_BPS) / BPS_DENOMINATOR;
-        uint256 totalPrice = prices[0] + takerFee; // No royalty for MockERC1155
+        // Calculate total price manually for each listing
+        uint256 totalPrice = 0;
+        for (uint256 i = 0; i < listingIds.length; i++) {
+            totalPrice += exchange.getBuyerSeesPrice(listingIds[i]);
+        }
 
         vm.deal(buyer, totalPrice);
         vm.prank(buyer);
@@ -698,20 +968,32 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         uint256 amount = 2;
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        bytes32 listingId = exchange.getGeneratedListingId(address(nftContract), tokenId, owner);
-        exchange.listNFT(address(nftContract), tokenId, amount, price, duration);
+        bytes32 listingId = exchange.getGeneratedListingId(
+            address(nftContract),
+            tokenId,
+            owner
+        );
+        exchange.listNFT(
+            address(nftContract),
+            tokenId,
+            amount,
+            price,
+            duration
+        );
 
         uint256 takerFee = (price * TAKER_FEE_BPS) / BPS_DENOMINATOR;
-        uint256 totalPrice = price + takerFee;
+        uint256 royaltyFee = (price * 500) / BPS_DENOMINATOR; // 5% royalty from MockERC1155
+        uint256 totalPrice = price + takerFee + royaltyFee;
 
-        uint256 marketplaceBalanceBefore = address(this).balance;
+        uint256 marketplaceBalanceBefore = marketplaceWallet.balance;
 
         vm.deal(buyer, totalPrice);
         vm.prank(buyer);
         exchange.buyNFT{value: totalPrice}(listingId);
 
-        uint256 marketplaceBalanceAfter = address(this).balance;
-        assertEq(marketplaceBalanceAfter - marketplaceBalanceBefore, price + takerFee);
+        uint256 marketplaceBalanceAfter = marketplaceWallet.balance;
+        // Marketplace should only receive the taker fee, not the full payment
+        assertEq(marketplaceBalanceAfter - marketplaceBalanceBefore, takerFee);
     }
 
     // Test 35: Test batch list with mismatched array lengths for amounts
@@ -728,7 +1010,13 @@ contract ERC1155NFTExchangeTest is Test, IERC1155Receiver {
         uint256 duration = 1 days;
 
         vm.expectRevert(NFTExchange__ArrayLengthMismatch.selector);
-        exchange.batchListNFT(address(nftContract), tokenIds, amounts, prices, duration);
+        exchange.batchListNFT(
+            address(nftContract),
+            tokenIds,
+            amounts,
+            prices,
+            duration
+        );
     }
 
     // Test 36: Test list NFT that seller doesn't own
@@ -748,26 +1036,27 @@ contract MockFailingReceiver is IERC1155Receiver {
         revert("Transfer failed");
     }
 
-    function onERC1155Received(address operator, address from, uint256 id, uint256 value, bytes calldata data)
-        external
-        pure
-        override
-        returns (bytes4)
-    {
+    function onERC1155Received(
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes calldata
+    ) external pure override returns (bytes4) {
         return this.onERC1155Received.selector;
     }
 
     function onERC1155BatchReceived(
-        address operator,
-        address from,
-        uint256[] calldata ids,
-        uint256[] calldata values,
-        bytes calldata data
+        address,
+        address,
+        uint256[] calldata,
+        uint256[] calldata,
+        bytes calldata
     ) external pure override returns (bytes4) {
         return this.onERC1155BatchReceived.selector;
     }
 
-    function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
-        return interfaceId == type(IERC1155Receiver).interfaceId;
+    function supportsInterface(bytes4) external pure override returns (bool) {
+        return true;
     }
 }

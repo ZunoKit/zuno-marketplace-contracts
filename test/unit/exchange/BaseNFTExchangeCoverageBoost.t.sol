@@ -133,9 +133,9 @@ contract BaseNFTExchangeCoverageBoostTest is Test {
     function test_GetRoyaltyInfo_WithMockContract() public {
         (address receiver, uint256 royaltyAmount) = testableExchange.getRoyaltyInfo(address(mockERC721), 1, 1 ether);
 
-        // Mock contract has a fee contract with 0% royalty
-        assertTrue(receiver != address(0)); // Fee contract owner
-        assertEq(royaltyAmount, 0); // 0% royalty fee
+        // MockERC721 has ERC2981 (5% to test contract) which takes precedence over fee contract
+        assertEq(receiver, address(this)); // ERC2981 returns test contract
+        assertEq(royaltyAmount, 0.05 ether); // 5% of 1 ether
     }
 
     // ============================================================================

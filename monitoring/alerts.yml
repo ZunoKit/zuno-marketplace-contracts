@@ -1,0 +1,126 @@
+# Production Monitoring Configuration
+# This file defines alerts and monitoring rules for the NFT Marketplace
+
+# Contract Health Monitoring
+contract_health:
+  - name: "Exchange Contract Health"
+    contracts:
+      - ERC721NFTExchange
+      - ERC1155NFTExchange
+    alerts:
+      - condition: "transaction_failure_rate > 5%"
+        severity: "HIGH"
+        action: "page_oncall"
+      - condition: "gas_usage > 500000"
+        severity: "MEDIUM"
+        action: "slack_alert"
+
+  - name: "Auction System Health"
+    contracts:
+      - EnglishAuction
+      - DutchAuction
+    alerts:
+      - condition: "failed_settlements > 3"
+        severity: "CRITICAL"
+        action: "emergency_pause"
+      - condition: "auction_creation_failure > 10%"
+        severity: "HIGH"
+        action: "page_oncall"
+
+# Financial Monitoring
+financial_health:
+  - name: "Fee Collection Monitoring"
+    metrics:
+      - marketplace_fees_collected
+      - royalty_distributions
+    alerts:
+      - condition: "fee_calculation_error > 0"
+        severity: "CRITICAL"
+        action: "immediate_investigation"
+      - condition: "stuck_payments > 0.1 ETH"
+        severity: "HIGH"
+        action: "manual_review"
+
+  - name: "Large Transaction Monitoring"
+    thresholds:
+      - transaction_value: "> 10 ETH"
+        action: "enhanced_monitoring"
+      - transaction_value: "> 100 ETH"
+        action: "manual_verification"
+
+# Security Monitoring
+security_alerts:
+  - name: "Access Control Violations"
+    events:
+      - unauthorized_role_grant
+      - suspicious_admin_activity
+    severity: "CRITICAL"
+    action: "immediate_pause"
+
+  - name: "Emergency Events"
+    events:
+      - emergency_pause_activated
+      - contract_blacklisted
+      - bulk_cancellations
+    severity: "HIGH"
+    action: "escalate_security_team"
+
+  - name: "Unusual Patterns"
+    patterns:
+      - rapid_listing_cancellations: "> 100 in 1 hour"
+      - mass_bid_withdrawals: "> 50 in 10 minutes"
+      - repetitive_failed_transactions: "> 20 from same address"
+    action: "investigate_potential_attack"
+
+# Performance Monitoring
+performance_metrics:
+  - name: "Gas Usage Tracking"
+    functions:
+      - listNFT: "target < 200k gas"
+      - buyNFT: "target < 300k gas"
+      - placeBid: "target < 150k gas"
+    alerts:
+      - condition: "gas_usage > target * 1.5"
+        severity: "MEDIUM"
+        action: "optimization_review"
+
+  - name: "Contract Size Monitoring"
+    thresholds:
+      - contract_size: "> 23kb"
+        action: "review_for_splitting"
+
+# Network Monitoring
+network_health:
+  - name: "Ethereum Network Issues"
+    metrics:
+      - gas_price_spikes: "> 100 gwei"
+      - network_congestion: "> 95% blocks full"
+    actions:
+      - pause_non_critical_operations
+      - notify_users_of_delays
+
+# User Experience Monitoring
+user_experience:
+  - name: "Transaction Success Rates"
+    metrics:
+      - overall_success_rate: "target > 98%"
+      - average_confirmation_time: "target < 2 minutes"
+    alerts:
+      - condition: "success_rate < 95%"
+        severity: "HIGH"
+        action: "investigate_user_issues"
+
+# Incident Response
+incident_response:
+  escalation_matrix:
+    - level_1: "Engineering Team"
+      response_time: "15 minutes"
+    - level_2: "Security Team + Engineering Lead"
+      response_time: "30 minutes"
+    - level_3: "Executive Team + All Hands"
+      response_time: "1 hour"
+
+  runbooks:
+    - emergency_pause: "/docs/runbooks/emergency-pause.md"
+    - security_incident: "/docs/runbooks/security-response.md"
+    - performance_degradation: "/docs/runbooks/performance-issues.md"

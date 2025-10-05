@@ -65,9 +65,7 @@ contract BaseCollectionCoverageTest is Test {
         });
 
         vm.prank(CREATOR);
-        CoverageTestableBaseCollection collection = new CoverageTestableBaseCollection(
-                params
-            );
+        CoverageTestableBaseCollection collection = new CoverageTestableBaseCollection(params);
 
         assertEq(collection.s_feeContract().getRoyaltyFee(), 0);
     }
@@ -90,9 +88,7 @@ contract BaseCollectionCoverageTest is Test {
         });
 
         vm.prank(CREATOR);
-        CoverageTestableBaseCollection collection = new CoverageTestableBaseCollection(
-                params
-            );
+        CoverageTestableBaseCollection collection = new CoverageTestableBaseCollection(params);
 
         assertEq(collection.s_feeContract().getRoyaltyFee(), 1000);
     }
@@ -200,9 +196,7 @@ contract BaseCollectionCoverageTest is Test {
         address[] memory addresses = new address[](0);
 
         vm.prank(CREATOR);
-        vm.expectRevert(
-            abi.encodeWithSelector(Collection__InvalidAmount.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Collection__InvalidAmount.selector));
         testableCollection.addToAllowlist(addresses);
     }
 
@@ -248,9 +242,7 @@ contract BaseCollectionCoverageTest is Test {
         addresses[0] = address(0);
 
         vm.prank(CREATOR);
-        vm.expectRevert(
-            abi.encodeWithSelector(Collection__InvalidAmount.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Collection__InvalidAmount.selector));
         testableCollection.addToAllowlist(addresses);
     }
 

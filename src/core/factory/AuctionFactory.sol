@@ -225,12 +225,9 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
             revert Auction__NotAuctionSeller();
         }
 
-        // Check if auction can be cancelled (has bids)
-        if (auction.auctionType == IAuction.AuctionType.ENGLISH && auction.bidCount > 0) {
-            revert Auction__CannotCancelWithBids();
-        }
-
-        // Use cancelAuctionFor() to bypass onlySeller modifier since we validated above
+        // Delegate cancellation to the underlying auction contract. For English auctions
+        // with existing bids, the contract will handle refunding all bidders.
+        // This bypasses the onlySeller modifier since seller was validated above.
         IAuction(auctionContract).cancelAuctionFor(auctionId, msg.sender);
 
         // Notify validator about auction cancellation
