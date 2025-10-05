@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "src/core/collection/CollectionVerifier.sol";
 import "src/core/access/MarketplaceAccessControl.sol";
 import "src/errors/CollectionErrors.sol";
-import "../../../mocks/MockERC721.sol";
+import "../../mocks/MockERC721.sol";
 
 contract CollectionVerifierTest is Test {
     CollectionVerifier public verifier;

@@ -9,8 +9,8 @@ import {EnglishAuctionImplementation} from "src/core/auction/EnglishAuctionImple
 import {DutchAuctionImplementation} from "src/core/auction/DutchAuctionImplementation.sol";
 import {AuctionFactory} from "src/core/auction/AuctionFactory.sol";
 import {MarketplaceValidator} from "src/core/validation/MarketplaceValidator.sol";
-import {MockERC721} from "../../../mocks/MockERC721.sol";
-import {MockERC1155} from "../../../mocks/MockERC1155.sol";
+import {MockERC721} from "../../mocks/MockERC721.sol";
+import {MockERC1155} from "../../mocks/MockERC1155.sol";
 /**
  * @title AuctionTestHelpers
  * @notice Helper contract for auction testing

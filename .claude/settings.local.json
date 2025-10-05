@@ -20,7 +20,13 @@
       "Bash(forge build:*)",
       "Bash(mv:*)",
       "Bash([ -d \"test/unit/exchange/unit\" ])",
-      "Bash(rmdir:*)"
+      "Bash(rmdir:*)",
+      "Bash([ -d \"test/unit/auction/unit\" ])",
+      "Bash([ -d \"test/unit/auction/integration\" ])",
+      "Bash(mkdir:*)",
+      "Bash([ -d \"test/unit/auction/utils\" ])",
+      "Bash([ -d \"test/unit/collection/unit\" ])",
+      "Bash(touch:*)"
     ],
     "deny": [],
     "ask": []
