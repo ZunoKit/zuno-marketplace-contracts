@@ -21,7 +21,13 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
         // Step 1: Normal operations - Create listings
         vm.prank(alice);
         mockERC721.mint(alice, 1);
-        bytes32 listingId = listERC721(alice, address(mockERC721), 1, NFT_PRICE, LISTING_DURATION);
+        bytes32 listingId = listERC721(
+            alice,
+            address(mockERC721),
+            1,
+            NFT_PRICE,
+            LISTING_DURATION
+        );
         console2.log("Step 1: Normal marketplace operations");
 
         // Step 2: Emergency detected - Admin pauses
@@ -31,7 +37,9 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
         console2.log("Step 2: Emergency pause activated");
 
         // Step 3: Verify all operations blocked when checking paused state
-        console2.log("Step 3: Verified operations would be blocked (pause state active)");
+        console2.log(
+            "Step 3: Verified operations would be blocked (pause state active)"
+        );
 
         // Step 4: Admin investigates and fixes issue
         console2.log("Step 4: Issue investigation and resolution");
@@ -64,9 +72,27 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
         mockERC721.mint(alice, 12);
         vm.stopPrank();
 
-        bytes32 listing1 = listERC721(alice, address(mockERC721), 10, 1 ether, LISTING_DURATION);
-        bytes32 listing2 = listERC721(alice, address(mockERC721), 11, 2 ether, LISTING_DURATION);
-        bytes32 listing3 = listERC721(alice, address(mockERC721), 12, 3 ether, LISTING_DURATION);
+        bytes32 listing1 = listERC721(
+            alice,
+            address(mockERC721),
+            10,
+            1 ether,
+            LISTING_DURATION
+        );
+        bytes32 listing2 = listERC721(
+            alice,
+            address(mockERC721),
+            11,
+            2 ether,
+            LISTING_DURATION
+        );
+        bytes32 listing3 = listERC721(
+            alice,
+            address(mockERC721),
+            12,
+            3 ether,
+            LISTING_DURATION
+        );
         console2.log("Step 1: 3 active listings created");
 
         // Step 2: Pause marketplace
@@ -106,7 +132,13 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
         // Step 1: Active marketplace with ongoing activity
         vm.prank(alice);
         mockERC721.mint(alice, 20);
-        bytes32 listingId = listERC721(alice, address(mockERC721), 20, 5 ether, LISTING_DURATION);
+        bytes32 listingId = listERC721(
+            alice,
+            address(mockERC721),
+            20,
+            5 ether,
+            LISTING_DURATION
+        );
         console2.log("Step 1: High-value listing active");
 
         // Step 2: Security issue detected
@@ -141,7 +173,13 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
         // Step 9: Full operations restored
         vm.prank(charlie);
         mockERC721.mint(charlie, 21);
-        bytes32 newListing = listERC721(charlie, address(mockERC721), 21, 1 ether, LISTING_DURATION);
+        bytes32 newListing = listERC721(
+            charlie,
+            address(mockERC721),
+            21,
+            1 ether,
+            LISTING_DURATION
+        );
         buyERC721(dave, newListing);
         console2.log("Step 9: Full operations confirmed");
 
@@ -166,7 +204,13 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
         // Step 3: Verify marketplace still operational
         vm.prank(alice);
         mockERC721.mint(alice, 30);
-        bytes32 listingId = listERC721(alice, address(mockERC721), 30, NFT_PRICE, LISTING_DURATION);
+        bytes32 listingId = listERC721(
+            alice,
+            address(mockERC721),
+            30,
+            NFT_PRICE,
+            LISTING_DURATION
+        );
         buyERC721(bob, listingId);
         console2.log("Step 3: Marketplace operations unaffected");
 
@@ -197,7 +241,14 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
         vm.startPrank(alice);
         mockERC721.approve(address(englishAuction), 40);
         bytes32 auctionId = englishAuction.createAuction(
-            address(mockERC721), 40, 1, 1 ether, 2 ether, AUCTION_DURATION, IAuction.AuctionType.ENGLISH, alice
+            address(mockERC721),
+            40,
+            1,
+            1 ether,
+            2 ether,
+            AUCTION_DURATION,
+            IAuction.AuctionType.ENGLISH,
+            alice
         );
         vm.stopPrank();
         console2.log("Step 1: Auction created");
@@ -261,7 +312,8 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
         emergencyManager.emergencyPause("Multi-cycle test - pause 2");
         console2.log("  Paused again");
 
-        vm.warp(block.timestamp + 30 minutes);
+        // Respect minimum pause interval of 1 hour
+        vm.warp(block.timestamp + 1 hours);
 
         vm.prank(admin);
         emergencyManager.emergencyUnpause();
@@ -280,10 +332,18 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
         // Verify system still works correctly
         vm.prank(alice);
         mockERC721.mint(alice, 51);
-        bytes32 finalListing = listERC721(alice, address(mockERC721), 51, NFT_PRICE, LISTING_DURATION);
+        bytes32 finalListing = listERC721(
+            alice,
+            address(mockERC721),
+            51,
+            NFT_PRICE,
+            LISTING_DURATION
+        );
         buyERC721(bob, finalListing);
         assertNFTOwner(address(mockERC721), 51, bob);
-        console2.log("Final verification: System operational after multiple cycles");
+        console2.log(
+            "Final verification: System operational after multiple cycles"
+        );
 
         console2.log("=== Multiple Pause/Unpause Cycles: SUCCESS ===\n");
     }
@@ -302,9 +362,27 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
         mockERC721.mint(alice, 62);
         vm.stopPrank();
 
-        bytes32 listing1 = listERC721(alice, address(mockERC721), 60, 1 ether, LISTING_DURATION);
-        bytes32 listing2 = listERC721(alice, address(mockERC721), 61, 2 ether, LISTING_DURATION);
-        bytes32 listing3 = listERC721(alice, address(mockERC721), 62, 3 ether, LISTING_DURATION);
+        bytes32 listing1 = listERC721(
+            alice,
+            address(mockERC721),
+            60,
+            1 ether,
+            LISTING_DURATION
+        );
+        bytes32 listing2 = listERC721(
+            alice,
+            address(mockERC721),
+            61,
+            2 ether,
+            LISTING_DURATION
+        );
+        bytes32 listing3 = listERC721(
+            alice,
+            address(mockERC721),
+            62,
+            3 ether,
+            LISTING_DURATION
+        );
 
         // Record state before pause
         uint256 aliceBalanceBefore = alice.balance;
@@ -335,7 +413,11 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
 
         // Verify Alice received all payments
         uint256 aliceBalanceAfter = alice.balance;
-        assertGt(aliceBalanceAfter, aliceBalanceBefore, "Alice should have received payments");
+        assertGt(
+            aliceBalanceAfter,
+            aliceBalanceBefore,
+            "Alice should have received payments"
+        );
         console2.log("Step 5: State integrity verified");
 
         console2.log("=== State Integrity After Pause: SUCCESS ===\n");

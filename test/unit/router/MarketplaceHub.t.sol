@@ -36,7 +36,12 @@ contract MarketplaceHubTest is Test {
         // Deploy registries
         exchangeRegistry = new ExchangeRegistry(admin);
         collectionRegistry = new CollectionRegistry(admin);
-        feeRegistry = new FeeRegistry(admin, baseFee, feeManager, royaltyManager);
+        feeRegistry = new FeeRegistry(
+            admin,
+            baseFee,
+            feeManager,
+            royaltyManager
+        );
         auctionRegistry = new AuctionRegistry(admin);
 
         // Deploy hub
@@ -45,16 +50,30 @@ contract MarketplaceHubTest is Test {
             address(exchangeRegistry),
             address(collectionRegistry),
             address(feeRegistry),
-            address(auctionRegistry)
+            address(auctionRegistry),
+            address(0x1111),
+            address(0x2222)
         );
 
         // Register some contracts
-        exchangeRegistry.registerExchange(IExchangeRegistry.TokenStandard.ERC721, erc721Exchange);
-        exchangeRegistry.registerExchange(IExchangeRegistry.TokenStandard.ERC1155, erc1155Exchange);
+        exchangeRegistry.registerExchange(
+            IExchangeRegistry.TokenStandard.ERC721,
+            erc721Exchange
+        );
+        exchangeRegistry.registerExchange(
+            IExchangeRegistry.TokenStandard.ERC1155,
+            erc1155Exchange
+        );
         collectionRegistry.registerFactory("ERC721", erc721Factory);
         collectionRegistry.registerFactory("ERC1155", erc1155Factory);
-        auctionRegistry.registerAuction(IAuctionRegistry.AuctionType.ENGLISH, englishAuction);
-        auctionRegistry.registerAuction(IAuctionRegistry.AuctionType.DUTCH, dutchAuction);
+        auctionRegistry.registerAuction(
+            IAuctionRegistry.AuctionType.ENGLISH,
+            englishAuction
+        );
+        auctionRegistry.registerAuction(
+            IAuctionRegistry.AuctionType.DUTCH,
+            dutchAuction
+        );
         auctionRegistry.updateAuctionFactory(auctionFactory);
 
         vm.stopPrank();
@@ -69,7 +88,9 @@ contract MarketplaceHubTest is Test {
             address _englishAuction,
             address _dutchAuction,
             address _auctionFactory,
-            address _feeRegistry
+            address _feeRegistry,
+            address _bundleManager,
+            address _offerManager
         ) = hub.getAllAddresses();
 
         assertEq(_erc721Exchange, erc721Exchange);
@@ -80,6 +101,8 @@ contract MarketplaceHubTest is Test {
         assertEq(_dutchAuction, dutchAuction);
         assertEq(_auctionFactory, auctionFactory);
         assertEq(_feeRegistry, address(feeRegistry));
+        assertEq(_bundleManager, address(0x1111));
+        assertEq(_offerManager, address(0x2222));
     }
 
     function test_GetERC721Exchange() public {
@@ -107,7 +130,13 @@ contract MarketplaceHubTest is Test {
     function test_RevertIf_ZeroAddressInConstructor() public {
         vm.expectRevert(MarketplaceHub.MarketplaceHub__ZeroAddress.selector);
         new MarketplaceHub(
-            admin, address(0), address(collectionRegistry), address(feeRegistry), address(auctionRegistry)
+            admin,
+            address(0),
+            address(collectionRegistry),
+            address(feeRegistry),
+            address(auctionRegistry),
+            address(1),
+            address(2)
         );
     }
 }

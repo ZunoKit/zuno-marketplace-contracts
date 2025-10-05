@@ -29,6 +29,10 @@ contract MarketplaceHub is AccessControl {
     IFeeRegistry public feeRegistry;
     IAuctionRegistry public auctionRegistry;
 
+    // Direct contract addresses (not in registries)
+    address public bundleManager;
+    address public offerManager;
+
     error MarketplaceHub__ZeroAddress();
     error MarketplaceHub__InvalidRegistry();
 
@@ -39,11 +43,13 @@ contract MarketplaceHub is AccessControl {
         address _exchangeRegistry,
         address _collectionRegistry,
         address _feeRegistry,
-        address _auctionRegistry
+        address _auctionRegistry,
+        address _bundleManager,
+        address _offerManager
     ) {
         if (
             _exchangeRegistry == address(0) || _collectionRegistry == address(0) || _feeRegistry == address(0)
-                || _auctionRegistry == address(0)
+                || _auctionRegistry == address(0) || _bundleManager == address(0) || _offerManager == address(0)
         ) {
             revert MarketplaceHub__ZeroAddress();
         }
@@ -55,6 +61,8 @@ contract MarketplaceHub is AccessControl {
         collectionRegistry = ICollectionRegistry(_collectionRegistry);
         feeRegistry = IFeeRegistry(_feeRegistry);
         auctionRegistry = IAuctionRegistry(_auctionRegistry);
+        bundleManager = _bundleManager;
+        offerManager = _offerManager;
     }
 
     // ==================== ADDRESS DISCOVERY ====================
@@ -109,6 +117,20 @@ contract MarketplaceHub is AccessControl {
      */
     function getAuctionFactory() external view returns (address) {
         return auctionRegistry.getAuctionFactory();
+    }
+
+    /**
+     * @notice Get Bundle Manager address
+     */
+    function getBundleManager() external view returns (address) {
+        return bundleManager;
+    }
+
+    /**
+     * @notice Get Offer Manager address
+     */
+    function getOfferManager() external view returns (address) {
+        return offerManager;
     }
 
     // ==================== FEE QUERIES ====================
@@ -182,7 +204,9 @@ contract MarketplaceHub is AccessControl {
             address englishAuction,
             address dutchAuction,
             address auctionFactory,
-            address feeRegistryAddr
+            address feeRegistryAddr,
+            address bundleManagerAddr,
+            address offerManagerAddr
         )
     {
         erc721Exchange = exchangeRegistry.getExchange(IExchangeRegistry.TokenStandard.ERC721);
@@ -193,13 +217,15 @@ contract MarketplaceHub is AccessControl {
         dutchAuction = auctionRegistry.getAuctionContract(IAuctionRegistry.AuctionType.DUTCH);
         auctionFactory = auctionRegistry.getAuctionFactory();
         feeRegistryAddr = address(feeRegistry);
+        bundleManagerAddr = bundleManager;
+        offerManagerAddr = offerManager;
     }
 
     // ==================== ADMIN ====================
 
     /**
      * @notice Update a registry address
-     * @param registryType "exchange", "collection", "fee", or "auction"
+     * @param registryType "exchange", "collection", "fee", "auction", "bundle", or "offer"
      * @param newRegistry The new registry address
      */
     function updateRegistry(string memory registryType, address newRegistry) external onlyRole(ADMIN_ROLE) {
@@ -215,6 +241,10 @@ contract MarketplaceHub is AccessControl {
             feeRegistry = IFeeRegistry(newRegistry);
         } else if (typeHash == keccak256(bytes("auction"))) {
             auctionRegistry = IAuctionRegistry(newRegistry);
+        } else if (typeHash == keccak256(bytes("bundle"))) {
+            bundleManager = newRegistry;
+        } else if (typeHash == keccak256(bytes("offer"))) {
+            offerManager = newRegistry;
         } else {
             revert MarketplaceHub__InvalidRegistry();
         }
