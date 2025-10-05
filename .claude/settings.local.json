@@ -26,7 +26,8 @@
       "Bash(mkdir:*)",
       "Bash([ -d \"test/unit/auction/utils\" ])",
       "Bash([ -d \"test/unit/collection/unit\" ])",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(bash:*)"
     ],
     "deny": [],
     "ask": []
