@@ -56,38 +56,26 @@ contract NFTValidationLibTest is Test {
     // ============================================================================
 
     function test_ValidateERC721_Success() public {
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(
-                address(mockERC721),
-                TOKEN_ID,
-                1,
-                OWNER,
-                SPENDER
-            );
+        NFTValidationLib.ValidationParams memory params =
+            NFTValidationLib.createValidationParams(address(mockERC721), TOKEN_ID, 1, OWNER, SPENDER);
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib
-            .validateERC721(params);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC721(params);
 
         assertTrue(result.isValid);
-        assertEq(
-            uint256(result.standard),
-            uint256(NFTValidationLib.NFTStandard.ERC721)
-        );
+        assertEq(uint256(result.standard), uint256(NFTValidationLib.NFTStandard.ERC721));
         assertEq(bytes(result.errorMessage).length, 0);
     }
 
     function test_ValidateERC721_NotOwner() public {
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(
-                address(mockERC721),
-                TOKEN_ID,
-                1,
-                OTHER_USER, // Not the owner
-                SPENDER
-            );
+        NFTValidationLib.ValidationParams memory params = NFTValidationLib.createValidationParams(
+            address(mockERC721),
+            TOKEN_ID,
+            1,
+            OTHER_USER, // Not the owner
+            SPENDER
+        );
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib
-            .validateERC721(params);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC721(params);
 
         assertFalse(result.isValid);
         assertEq(result.errorMessage, "Not the owner");
@@ -98,17 +86,15 @@ contract NFTValidationLibTest is Test {
         vm.prank(address(this));
         mockERC721.mint(OWNER, 2);
 
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(
-                address(mockERC721),
-                2, // Not approved token
-                1,
-                OWNER,
-                SPENDER
-            );
+        NFTValidationLib.ValidationParams memory params = NFTValidationLib.createValidationParams(
+            address(mockERC721),
+            2, // Not approved token
+            1,
+            OWNER,
+            SPENDER
+        );
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib
-            .validateERC721(params);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC721(params);
 
         assertFalse(result.isValid);
         assertEq(result.errorMessage, "Not approved");
@@ -123,27 +109,24 @@ contract NFTValidationLibTest is Test {
         vm.prank(address(this));
         mockERC721.mint(OWNER, 3);
 
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(address(mockERC721), 3, 1, OWNER, SPENDER);
+        NFTValidationLib.ValidationParams memory params =
+            NFTValidationLib.createValidationParams(address(mockERC721), 3, 1, OWNER, SPENDER);
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib
-            .validateERC721(params);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC721(params);
 
         assertTrue(result.isValid);
     }
 
     function test_ValidateERC721_InvalidToken() public {
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(
-                address(mockERC721),
-                999, // Non-existent token
-                1,
-                OWNER,
-                SPENDER
-            );
+        NFTValidationLib.ValidationParams memory params = NFTValidationLib.createValidationParams(
+            address(mockERC721),
+            999, // Non-existent token
+            1,
+            OWNER,
+            SPENDER
+        );
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib
-            .validateERC721(params);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC721(params);
 
         assertFalse(result.isValid);
         assertEq(result.errorMessage, "Failed to get owner");
@@ -154,55 +137,41 @@ contract NFTValidationLibTest is Test {
     // ============================================================================
 
     function test_ValidateERC1155_Success() public {
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(
-                address(mockERC1155),
-                TOKEN_ID,
-                AMOUNT,
-                OWNER,
-                SPENDER
-            );
+        NFTValidationLib.ValidationParams memory params =
+            NFTValidationLib.createValidationParams(address(mockERC1155), TOKEN_ID, AMOUNT, OWNER, SPENDER);
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib
-            .validateERC1155(params);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC1155(params);
 
         assertTrue(result.isValid);
-        assertEq(
-            uint256(result.standard),
-            uint256(NFTValidationLib.NFTStandard.ERC1155)
-        );
+        assertEq(uint256(result.standard), uint256(NFTValidationLib.NFTStandard.ERC1155));
         assertEq(bytes(result.errorMessage).length, 0);
     }
 
     function test_ValidateERC1155_ZeroAmount() public {
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(
-                address(mockERC1155),
-                TOKEN_ID,
-                0, // Zero amount
-                OWNER,
-                SPENDER
-            );
+        NFTValidationLib.ValidationParams memory params = NFTValidationLib.createValidationParams(
+            address(mockERC1155),
+            TOKEN_ID,
+            0, // Zero amount
+            OWNER,
+            SPENDER
+        );
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib
-            .validateERC1155(params);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC1155(params);
 
         assertFalse(result.isValid);
         assertEq(result.errorMessage, "Amount must be greater than zero");
     }
 
     function test_ValidateERC1155_InsufficientBalance() public {
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(
-                address(mockERC1155),
-                TOKEN_ID,
-                20, // More than balance (10)
-                OWNER,
-                SPENDER
-            );
+        NFTValidationLib.ValidationParams memory params = NFTValidationLib.createValidationParams(
+            address(mockERC1155),
+            TOKEN_ID,
+            20, // More than balance (10)
+            OWNER,
+            SPENDER
+        );
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib
-            .validateERC1155(params);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC1155(params);
 
         assertFalse(result.isValid);
         assertEq(result.errorMessage, "Insufficient balance");
@@ -213,34 +182,25 @@ contract NFTValidationLibTest is Test {
         vm.prank(OWNER);
         mockERC1155.setApprovalForAll(SPENDER, false);
 
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(
-                address(mockERC1155),
-                TOKEN_ID,
-                AMOUNT,
-                OWNER,
-                SPENDER
-            );
+        NFTValidationLib.ValidationParams memory params =
+            NFTValidationLib.createValidationParams(address(mockERC1155), TOKEN_ID, AMOUNT, OWNER, SPENDER);
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib
-            .validateERC1155(params);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC1155(params);
 
         assertFalse(result.isValid);
         assertEq(result.errorMessage, "Not approved");
     }
 
     function test_ValidateERC1155_InvalidToken() public {
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(
-                address(invalidNFT), // Invalid contract
-                TOKEN_ID,
-                AMOUNT,
-                OWNER,
-                SPENDER
-            );
+        NFTValidationLib.ValidationParams memory params = NFTValidationLib.createValidationParams(
+            address(invalidNFT), // Invalid contract
+            TOKEN_ID,
+            AMOUNT,
+            OWNER,
+            SPENDER
+        );
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib
-            .validateERC1155(params);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC1155(params);
 
         assertFalse(result.isValid);
         assertEq(result.errorMessage, "Failed to get balance");
@@ -251,85 +211,50 @@ contract NFTValidationLibTest is Test {
     // ============================================================================
 
     function test_ValidateNFT_ERC721_Success() public {
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(
-                address(mockERC721),
-                TOKEN_ID,
-                1,
-                OWNER,
-                SPENDER
-            );
+        NFTValidationLib.ValidationParams memory params =
+            NFTValidationLib.createValidationParams(address(mockERC721), TOKEN_ID, 1, OWNER, SPENDER);
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib
-            .validateNFT(params);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateNFT(params);
 
         assertTrue(result.isValid);
-        assertEq(
-            uint256(result.standard),
-            uint256(NFTValidationLib.NFTStandard.ERC721)
-        );
+        assertEq(uint256(result.standard), uint256(NFTValidationLib.NFTStandard.ERC721));
     }
 
     function test_ValidateNFT_ERC1155_Success() public {
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(
-                address(mockERC1155),
-                TOKEN_ID,
-                AMOUNT,
-                OWNER,
-                SPENDER
-            );
+        NFTValidationLib.ValidationParams memory params =
+            NFTValidationLib.createValidationParams(address(mockERC1155), TOKEN_ID, AMOUNT, OWNER, SPENDER);
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib
-            .validateNFT(params);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateNFT(params);
 
         assertTrue(result.isValid);
-        assertEq(
-            uint256(result.standard),
-            uint256(NFTValidationLib.NFTStandard.ERC1155)
-        );
+        assertEq(uint256(result.standard), uint256(NFTValidationLib.NFTStandard.ERC1155));
     }
 
     function test_ValidateNFT_ZeroContractAddress() public {
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(ZERO_ADDRESS, TOKEN_ID, 1, OWNER, SPENDER);
+        NFTValidationLib.ValidationParams memory params =
+            NFTValidationLib.createValidationParams(ZERO_ADDRESS, TOKEN_ID, 1, OWNER, SPENDER);
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib
-            .validateNFT(params);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateNFT(params);
 
         assertFalse(result.isValid);
         assertEq(result.errorMessage, "Zero address provided");
     }
 
     function test_ValidateNFT_ZeroOwnerAddress() public {
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(
-                address(mockERC721),
-                TOKEN_ID,
-                1,
-                ZERO_ADDRESS,
-                SPENDER
-            );
+        NFTValidationLib.ValidationParams memory params =
+            NFTValidationLib.createValidationParams(address(mockERC721), TOKEN_ID, 1, ZERO_ADDRESS, SPENDER);
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib
-            .validateNFT(params);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateNFT(params);
 
         assertFalse(result.isValid);
         assertEq(result.errorMessage, "Zero address provided");
     }
 
     function test_ValidateNFT_UnsupportedStandard() public {
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(
-                address(invalidNFT),
-                TOKEN_ID,
-                1,
-                OWNER,
-                SPENDER
-            );
+        NFTValidationLib.ValidationParams memory params =
+            NFTValidationLib.createValidationParams(address(invalidNFT), TOKEN_ID, 1, OWNER, SPENDER);
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib
-            .validateNFT(params);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateNFT(params);
 
         assertFalse(result.isValid);
         assertEq(result.errorMessage, "Unsupported NFT standard");
@@ -340,39 +265,23 @@ contract NFTValidationLibTest is Test {
     // ============================================================================
 
     function test_DetectNFTStandard_ERC721() public {
-        NFTValidationLib.NFTStandard standard = NFTValidationLib
-            .detectNFTStandard(address(mockERC721));
-        assertEq(
-            uint256(standard),
-            uint256(NFTValidationLib.NFTStandard.ERC721)
-        );
+        NFTValidationLib.NFTStandard standard = NFTValidationLib.detectNFTStandard(address(mockERC721));
+        assertEq(uint256(standard), uint256(NFTValidationLib.NFTStandard.ERC721));
     }
 
     function test_DetectNFTStandard_ERC1155() public {
-        NFTValidationLib.NFTStandard standard = NFTValidationLib
-            .detectNFTStandard(address(mockERC1155));
-        assertEq(
-            uint256(standard),
-            uint256(NFTValidationLib.NFTStandard.ERC1155)
-        );
+        NFTValidationLib.NFTStandard standard = NFTValidationLib.detectNFTStandard(address(mockERC1155));
+        assertEq(uint256(standard), uint256(NFTValidationLib.NFTStandard.ERC1155));
     }
 
     function test_DetectNFTStandard_Unknown() public {
-        NFTValidationLib.NFTStandard standard = NFTValidationLib
-            .detectNFTStandard(address(invalidNFT));
-        assertEq(
-            uint256(standard),
-            uint256(NFTValidationLib.NFTStandard.UNKNOWN)
-        );
+        NFTValidationLib.NFTStandard standard = NFTValidationLib.detectNFTStandard(address(invalidNFT));
+        assertEq(uint256(standard), uint256(NFTValidationLib.NFTStandard.UNKNOWN));
     }
 
     function test_DetectNFTStandard_ZeroAddress() public {
-        NFTValidationLib.NFTStandard standard = NFTValidationLib
-            .detectNFTStandard(ZERO_ADDRESS);
-        assertEq(
-            uint256(standard),
-            uint256(NFTValidationLib.NFTStandard.UNKNOWN)
-        );
+        NFTValidationLib.NFTStandard standard = NFTValidationLib.detectNFTStandard(ZERO_ADDRESS);
+        assertEq(uint256(standard), uint256(NFTValidationLib.NFTStandard.UNKNOWN));
     }
 
     // ============================================================================
@@ -380,63 +289,29 @@ contract NFTValidationLibTest is Test {
     // ============================================================================
 
     function test_BatchValidateNFTs_Success() public {
-        NFTValidationLib.ValidationParams[]
-            memory paramsList = new NFTValidationLib.ValidationParams[](2);
+        NFTValidationLib.ValidationParams[] memory paramsList = new NFTValidationLib.ValidationParams[](2);
 
-        paramsList[0] = NFTValidationLib.createValidationParams(
-            address(mockERC721),
-            TOKEN_ID,
-            1,
-            OWNER,
-            SPENDER
-        );
+        paramsList[0] = NFTValidationLib.createValidationParams(address(mockERC721), TOKEN_ID, 1, OWNER, SPENDER);
 
-        paramsList[1] = NFTValidationLib.createValidationParams(
-            address(mockERC1155),
-            TOKEN_ID,
-            AMOUNT,
-            OWNER,
-            SPENDER
-        );
+        paramsList[1] = NFTValidationLib.createValidationParams(address(mockERC1155), TOKEN_ID, AMOUNT, OWNER, SPENDER);
 
-        NFTValidationLib.ValidationResult[] memory results = NFTValidationLib
-            .batchValidateNFTs(paramsList);
+        NFTValidationLib.ValidationResult[] memory results = NFTValidationLib.batchValidateNFTs(paramsList);
 
         assertEq(results.length, 2);
         assertTrue(results[0].isValid);
         assertTrue(results[1].isValid);
-        assertEq(
-            uint256(results[0].standard),
-            uint256(NFTValidationLib.NFTStandard.ERC721)
-        );
-        assertEq(
-            uint256(results[1].standard),
-            uint256(NFTValidationLib.NFTStandard.ERC1155)
-        );
+        assertEq(uint256(results[0].standard), uint256(NFTValidationLib.NFTStandard.ERC721));
+        assertEq(uint256(results[1].standard), uint256(NFTValidationLib.NFTStandard.ERC1155));
     }
 
     function test_BatchValidateNFTs_MixedResults() public {
-        NFTValidationLib.ValidationParams[]
-            memory paramsList = new NFTValidationLib.ValidationParams[](2);
+        NFTValidationLib.ValidationParams[] memory paramsList = new NFTValidationLib.ValidationParams[](2);
 
-        paramsList[0] = NFTValidationLib.createValidationParams(
-            address(mockERC721),
-            TOKEN_ID,
-            1,
-            OWNER,
-            SPENDER
-        );
+        paramsList[0] = NFTValidationLib.createValidationParams(address(mockERC721), TOKEN_ID, 1, OWNER, SPENDER);
 
-        paramsList[1] = NFTValidationLib.createValidationParams(
-            address(invalidNFT),
-            TOKEN_ID,
-            1,
-            OWNER,
-            SPENDER
-        );
+        paramsList[1] = NFTValidationLib.createValidationParams(address(invalidNFT), TOKEN_ID, 1, OWNER, SPENDER);
 
-        NFTValidationLib.ValidationResult[] memory results = NFTValidationLib
-            .batchValidateNFTs(paramsList);
+        NFTValidationLib.ValidationResult[] memory results = NFTValidationLib.batchValidateNFTs(paramsList);
 
         assertEq(results.length, 2);
         assertTrue(results[0].isValid);
@@ -444,11 +319,9 @@ contract NFTValidationLibTest is Test {
     }
 
     function test_BatchValidateNFTs_EmptyArray() public {
-        NFTValidationLib.ValidationParams[]
-            memory paramsList = new NFTValidationLib.ValidationParams[](0);
+        NFTValidationLib.ValidationParams[] memory paramsList = new NFTValidationLib.ValidationParams[](0);
 
-        NFTValidationLib.ValidationResult[] memory results = NFTValidationLib
-            .batchValidateNFTs(paramsList);
+        NFTValidationLib.ValidationResult[] memory results = NFTValidationLib.batchValidateNFTs(paramsList);
 
         assertEq(results.length, 0);
     }
@@ -458,14 +331,8 @@ contract NFTValidationLibTest is Test {
     // ============================================================================
 
     function test_CreateValidationParams() public {
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(
-                address(mockERC721),
-                TOKEN_ID,
-                1,
-                OWNER,
-                SPENDER
-            );
+        NFTValidationLib.ValidationParams memory params =
+            NFTValidationLib.createValidationParams(address(mockERC721), TOKEN_ID, 1, OWNER, SPENDER);
 
         assertEq(params.nftContract, address(mockERC721));
         assertEq(params.tokenId, TOKEN_ID);
@@ -523,12 +390,9 @@ contract NFTValidationLibTest is Test {
     //     );
     // }
 
-    function testFuzz_ValidateERC1155_ValidInputs(
-        uint256 tokenId,
-        uint256 amount,
-        address owner,
-        address spender
-    ) public {
+    function testFuzz_ValidateERC1155_ValidInputs(uint256 tokenId, uint256 amount, address owner, address spender)
+        public
+    {
         // Bound inputs
         tokenId = bound(tokenId, 1, 1000);
         amount = bound(amount, 1, 100);
@@ -556,23 +420,13 @@ contract NFTValidationLibTest is Test {
         vm.prank(owner);
         mockERC1155.setApprovalForAll(spender, true);
 
-        NFTValidationLib.ValidationParams memory params = NFTValidationLib
-            .createValidationParams(
-                address(mockERC1155),
-                tokenId,
-                amount,
-                owner,
-                spender
-            );
+        NFTValidationLib.ValidationParams memory params =
+            NFTValidationLib.createValidationParams(address(mockERC1155), tokenId, amount, owner, spender);
 
-        NFTValidationLib.ValidationResult memory result = NFTValidationLib
-            .validateERC1155(params);
+        NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC1155(params);
 
         assertTrue(result.isValid);
-        assertEq(
-            uint256(result.standard),
-            uint256(NFTValidationLib.NFTStandard.ERC1155)
-        );
+        assertEq(uint256(result.standard), uint256(NFTValidationLib.NFTStandard.ERC1155));
     }
 }
 

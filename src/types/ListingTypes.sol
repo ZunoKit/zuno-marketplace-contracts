@@ -32,7 +32,6 @@ enum ListingType {
     OFFER_BASED, // Accept offers only
     TIME_LIMITED, // Fixed price with time limit
     RESERVE_AUCTION // Auction with reserve price
-
 }
 
 /**
@@ -45,7 +44,6 @@ enum ListingStatus {
     EXPIRED, // Listing has expired
     PAUSED, // Listing is temporarily paused
     PENDING // Listing is pending approval
-
 }
 
 /**
@@ -56,7 +54,6 @@ enum OfferType {
     COLLECTION, // Offer for any item in collection
     TRAIT, // Offer for items with specific traits
     BUNDLE // Offer for bundle of items
-
 }
 
 /**
@@ -68,7 +65,6 @@ enum OfferStatus {
     REJECTED, // Offer was rejected
     WITHDRAWN, // Offer was withdrawn by buyer
     EXPIRED // Offer has expired
-
 }
 
 /**
@@ -78,7 +74,6 @@ enum BundleType {
     FIXED, // Fixed set of NFTs
     COLLECTION, // All NFTs from a collection
     TRAIT_BASED // NFTs with specific traits
-
 }
 
 // ============================================================================
@@ -258,8 +253,8 @@ struct BuyerStats {
 // CONSTANTS
 // ============================================================================
 
-// Maximum royalty fee
-uint256 constant MAX_ROYALTY_FEE = 10000;
+// Maximum royalty fee (10% = 1000 basis points)
+uint256 constant MAX_ROYALTY_FEE = 1000;
 
 // Maximum number of items in a bundle
 uint256 constant MAX_BUNDLE_ITEMS = 50;
@@ -310,8 +305,10 @@ uint256 constant GRACE_PERIOD = 24 hours;
  * @return Whether the listing type is auction-based
  */
 function isAuctionType(ListingType listingType) pure returns (bool) {
-    return listingType == ListingType.AUCTION || listingType == ListingType.DUTCH_AUCTION
-        || listingType == ListingType.RESERVE_AUCTION;
+    return
+        listingType == ListingType.AUCTION ||
+        listingType == ListingType.DUTCH_AUCTION ||
+        listingType == ListingType.RESERVE_AUCTION;
 }
 
 /**
@@ -320,8 +317,10 @@ function isAuctionType(ListingType listingType) pure returns (bool) {
  * @return Whether the listing type supports buy now
  */
 function supportsBuyNow(ListingType listingType) pure returns (bool) {
-    return listingType == ListingType.FIXED_PRICE || listingType == ListingType.TIME_LIMITED
-        || listingType == ListingType.BUNDLE;
+    return
+        listingType == ListingType.FIXED_PRICE ||
+        listingType == ListingType.TIME_LIMITED ||
+        listingType == ListingType.BUNDLE;
 }
 
 /**
@@ -330,8 +329,10 @@ function supportsBuyNow(ListingType listingType) pure returns (bool) {
  * @return Whether the listing type supports offers
  */
 function supportsOffers(ListingType listingType) pure returns (bool) {
-    return listingType == ListingType.OFFER_BASED || listingType == ListingType.FIXED_PRICE
-        || listingType == ListingType.TIME_LIMITED;
+    return
+        listingType == ListingType.OFFER_BASED ||
+        listingType == ListingType.FIXED_PRICE ||
+        listingType == ListingType.TIME_LIMITED;
 }
 
 /**
@@ -340,7 +341,10 @@ function supportsOffers(ListingType listingType) pure returns (bool) {
  * @param feePercentage The fee percentage in basis points
  * @return The calculated fee amount
  */
-function calculatePercentageFee(uint256 amount, uint256 feePercentage) pure returns (uint256) {
+function calculatePercentageFee(
+    uint256 amount,
+    uint256 feePercentage
+) pure returns (uint256) {
     return (amount * feePercentage) / BASIS_POINTS;
 }
 
@@ -351,14 +355,22 @@ function calculatePercentageFee(uint256 amount, uint256 feePercentage) pure retu
  * @param listingType Type of listing
  * @return Whether the time constraints are valid
  */
-function validateTimeConstraints(uint256 startTime, uint256 endTime, ListingType listingType) pure returns (bool) {
+function validateTimeConstraints(
+    uint256 startTime,
+    uint256 endTime,
+    ListingType listingType
+) pure returns (bool) {
     if (startTime >= endTime) return false;
 
     uint256 duration = endTime - startTime;
 
     if (isAuctionType(listingType)) {
-        return duration >= MIN_AUCTION_DURATION && duration <= MAX_AUCTION_DURATION;
+        return
+            duration >= MIN_AUCTION_DURATION &&
+            duration <= MAX_AUCTION_DURATION;
     } else {
-        return duration >= MIN_LISTING_DURATION && duration <= MAX_LISTING_DURATION;
+        return
+            duration >= MIN_LISTING_DURATION &&
+            duration <= MAX_LISTING_DURATION;
     }
 }

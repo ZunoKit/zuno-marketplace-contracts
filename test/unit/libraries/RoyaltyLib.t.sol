@@ -65,8 +65,12 @@ contract RoyaltyLibTest is Test {
         // Setup: Mock ERC721 with fee contract
         mockERC721.setFeeContract(address(feeContract));
 
-        RoyaltyLib.RoyaltyParams memory params =
-            RoyaltyLib.createRoyaltyParams(address(mockERC721), TOKEN_ID, SALE_PRICE, MAX_ROYALTY_RATE);
+        RoyaltyLib.RoyaltyParams memory params = RoyaltyLib.createRoyaltyParams(
+            address(mockERC721),
+            TOKEN_ID,
+            SALE_PRICE,
+            MAX_ROYALTY_RATE
+        );
 
         RoyaltyLib.RoyaltyInfo memory info = RoyaltyLib.getRoyaltyInfo(params);
 
@@ -78,8 +82,12 @@ contract RoyaltyLibTest is Test {
     }
 
     function test_GetRoyaltyInfo_BaseCollection_Success() public {
-        RoyaltyLib.RoyaltyParams memory params =
-            RoyaltyLib.createRoyaltyParams(address(baseCollection), TOKEN_ID, SALE_PRICE, MAX_ROYALTY_RATE);
+        RoyaltyLib.RoyaltyParams memory params = RoyaltyLib.createRoyaltyParams(
+            address(baseCollection),
+            TOKEN_ID,
+            SALE_PRICE,
+            MAX_ROYALTY_RATE
+        );
 
         RoyaltyLib.RoyaltyInfo memory info = RoyaltyLib.getRoyaltyInfo(params);
 
@@ -94,8 +102,12 @@ contract RoyaltyLibTest is Test {
         // Setup ERC2981 contract
         erc2981Contract.setRoyaltyInfo(ROYALTY_RECEIVER, ROYALTY_FEE);
 
-        RoyaltyLib.RoyaltyParams memory params =
-            RoyaltyLib.createRoyaltyParams(address(erc2981Contract), TOKEN_ID, SALE_PRICE, MAX_ROYALTY_RATE);
+        RoyaltyLib.RoyaltyParams memory params = RoyaltyLib.createRoyaltyParams(
+            address(erc2981Contract),
+            TOKEN_ID,
+            SALE_PRICE,
+            MAX_ROYALTY_RATE
+        );
 
         RoyaltyLib.RoyaltyInfo memory info = RoyaltyLib.getRoyaltyInfo(params);
 
@@ -107,8 +119,12 @@ contract RoyaltyLibTest is Test {
     }
 
     function test_GetRoyaltyInfo_NoRoyalty() public {
-        RoyaltyLib.RoyaltyParams memory params =
-            RoyaltyLib.createRoyaltyParams(address(invalidContract), TOKEN_ID, SALE_PRICE, MAX_ROYALTY_RATE);
+        RoyaltyLib.RoyaltyParams memory params = RoyaltyLib.createRoyaltyParams(
+            address(invalidContract),
+            TOKEN_ID,
+            SALE_PRICE,
+            MAX_ROYALTY_RATE
+        );
 
         RoyaltyLib.RoyaltyInfo memory info = RoyaltyLib.getRoyaltyInfo(params);
 
@@ -122,16 +138,22 @@ contract RoyaltyLibTest is Test {
     function test_CalculateRoyalty_Success() public {
         mockERC721.setFeeContract(address(feeContract));
 
-        (address receiver, uint256 royaltyAmount) =
-            RoyaltyLib.calculateRoyalty(address(mockERC721), TOKEN_ID, SALE_PRICE);
+        (address receiver, uint256 royaltyAmount) = RoyaltyLib.calculateRoyalty(
+            address(mockERC721),
+            TOKEN_ID,
+            SALE_PRICE
+        );
 
         assertEq(receiver, OWNER);
         assertEq(royaltyAmount, (SALE_PRICE * ROYALTY_FEE) / 10000);
     }
 
     function test_CalculateRoyalty_NoRoyalty() public {
-        (address receiver, uint256 royaltyAmount) =
-            RoyaltyLib.calculateRoyalty(address(invalidContract), TOKEN_ID, SALE_PRICE);
+        (address receiver, uint256 royaltyAmount) = RoyaltyLib.calculateRoyalty(
+            address(invalidContract),
+            TOKEN_ID,
+            SALE_PRICE
+        );
 
         assertEq(receiver, address(0));
         assertEq(royaltyAmount, 0);
@@ -142,19 +164,25 @@ contract RoyaltyLibTest is Test {
     // ============================================================================
 
     function test_GetRoyaltyInfo_ExceedsMaxRate() public {
-        // Setup contract with high royalty rate
-        Fee highRoyaltyFee = new Fee(OWNER, 1500); // 15% > 10% max
-        mockERC721.setFeeContract(address(highRoyaltyFee));
+        // Test 1: Fee contract constructor should revert on invalid fee
+        vm.expectRevert(Fee__InvalidRoyaltyFee.selector);
+        new Fee(OWNER, 1500); // 15% > 10% max - should revert
 
-        // Also set ERC2981 royalty to exceed max rate to ensure no fallback
-        mockERC721.setDefaultRoyalty(OWNER, 1200); // 12% > 10% max
+        // Test 2: Valid Fee contract but rate exceeds RoyaltyLib's maxRoyaltyRate parameter
+        Fee validFee = new Fee(OWNER, 1000); // 10% - valid for Fee contract
+        mockERC721.setFeeContract(address(validFee));
 
-        RoyaltyLib.RoyaltyParams memory params =
-            RoyaltyLib.createRoyaltyParams(address(mockERC721), TOKEN_ID, SALE_PRICE, MAX_ROYALTY_RATE);
+        // Use a lower maxRoyaltyRate in params (5%)
+        RoyaltyLib.RoyaltyParams memory params = RoyaltyLib.createRoyaltyParams(
+            address(mockERC721),
+            TOKEN_ID,
+            SALE_PRICE,
+            500
+        ); // 5% max
 
         RoyaltyLib.RoyaltyInfo memory info = RoyaltyLib.getRoyaltyInfo(params);
 
-        // Should fall back to no royalty when exceeding max rate
+        // Should return no royalty when Fee's 10% exceeds params' 5% max
         assertFalse(info.hasRoyalty);
         assertEq(info.source, "None");
     }
@@ -195,23 +223,36 @@ contract RoyaltyLibTest is Test {
     // ============================================================================
 
     function test_CalculateRoyaltyAmount() public {
-        uint256 royaltyAmount = RoyaltyLib.calculateRoyaltyAmount(SALE_PRICE, ROYALTY_FEE);
+        uint256 royaltyAmount = RoyaltyLib.calculateRoyaltyAmount(
+            SALE_PRICE,
+            ROYALTY_FEE
+        );
         assertEq(royaltyAmount, (SALE_PRICE * ROYALTY_FEE) / 10000);
     }
 
     function test_CalculateRoyaltyAmount_ZeroPrice() public {
-        uint256 royaltyAmount = RoyaltyLib.calculateRoyaltyAmount(0, ROYALTY_FEE);
+        uint256 royaltyAmount = RoyaltyLib.calculateRoyaltyAmount(
+            0,
+            ROYALTY_FEE
+        );
         assertEq(royaltyAmount, 0);
     }
 
     function test_CalculateRoyaltyAmount_ZeroRate() public {
-        uint256 royaltyAmount = RoyaltyLib.calculateRoyaltyAmount(SALE_PRICE, 0);
+        uint256 royaltyAmount = RoyaltyLib.calculateRoyaltyAmount(
+            SALE_PRICE,
+            0
+        );
         assertEq(royaltyAmount, 0);
     }
 
     function test_CreateRoyaltyParams() public {
-        RoyaltyLib.RoyaltyParams memory params =
-            RoyaltyLib.createRoyaltyParams(address(mockERC721), TOKEN_ID, SALE_PRICE, MAX_ROYALTY_RATE);
+        RoyaltyLib.RoyaltyParams memory params = RoyaltyLib.createRoyaltyParams(
+            address(mockERC721),
+            TOKEN_ID,
+            SALE_PRICE,
+            MAX_ROYALTY_RATE
+        );
 
         assertEq(params.nftContract, address(mockERC721));
         assertEq(params.tokenId, TOKEN_ID);
@@ -223,12 +264,18 @@ contract RoyaltyLibTest is Test {
     // FUZZ TESTS
     // ============================================================================
 
-    function testFuzz_CalculateRoyaltyAmount(uint256 salePrice, uint256 royaltyRate) public {
+    function testFuzz_CalculateRoyaltyAmount(
+        uint256 salePrice,
+        uint256 royaltyRate
+    ) public {
         // Bound inputs to reasonable ranges
         salePrice = bound(salePrice, 0, type(uint128).max);
         royaltyRate = bound(royaltyRate, 0, 10000); // 0-100%
 
-        uint256 royaltyAmount = RoyaltyLib.calculateRoyaltyAmount(salePrice, royaltyRate);
+        uint256 royaltyAmount = RoyaltyLib.calculateRoyaltyAmount(
+            salePrice,
+            royaltyRate
+        );
 
         // Verify calculation
         assertEq(royaltyAmount, (salePrice * royaltyRate) / 10000);
@@ -237,7 +284,11 @@ contract RoyaltyLibTest is Test {
         assertLe(royaltyAmount, salePrice);
     }
 
-    function testFuzz_GetRoyaltyInfo_ValidInputs(uint256 salePrice, uint256 maxRoyaltyRate, uint256 tokenId) public {
+    function testFuzz_GetRoyaltyInfo_ValidInputs(
+        uint256 salePrice,
+        uint256 maxRoyaltyRate,
+        uint256 tokenId
+    ) public {
         // Bound inputs
         salePrice = bound(salePrice, 1, type(uint128).max);
         maxRoyaltyRate = bound(maxRoyaltyRate, 100, 10000); // 1-100%
@@ -245,8 +296,12 @@ contract RoyaltyLibTest is Test {
 
         mockERC721.setFeeContract(address(feeContract));
 
-        RoyaltyLib.RoyaltyParams memory params =
-            RoyaltyLib.createRoyaltyParams(address(mockERC721), tokenId, salePrice, maxRoyaltyRate);
+        RoyaltyLib.RoyaltyParams memory params = RoyaltyLib.createRoyaltyParams(
+            address(mockERC721),
+            tokenId,
+            salePrice,
+            maxRoyaltyRate
+        );
 
         RoyaltyLib.RoyaltyInfo memory info = RoyaltyLib.getRoyaltyInfo(params);
 
@@ -299,16 +354,16 @@ contract MockERC2981Contract is IERC2981 {
         royaltyRate = _rate;
     }
 
-    function royaltyInfo(uint256, uint256 salePrice)
-        external
-        view
-        override
-        returns (address receiver, uint256 royaltyAmount)
-    {
+    function royaltyInfo(
+        uint256,
+        uint256 salePrice
+    ) external view override returns (address receiver, uint256 royaltyAmount) {
         return (royaltyReceiver, (salePrice * royaltyRate) / 10000);
     }
 
-    function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) external pure override returns (bool) {
         return interfaceId == type(IERC2981).interfaceId;
     }
 }
@@ -318,5 +373,5 @@ contract MockERC2981Contract is IERC2981 {
  * @notice Mock contract that doesn't implement any royalty standards
  */
 contract MockInvalidContract {
-// Empty contract for testing fallback behavior
+    // Empty contract for testing fallback behavior
 }
