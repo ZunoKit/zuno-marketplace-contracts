@@ -4,14 +4,14 @@ pragma solidity ^0.8.30;
 import "forge-std/Test.sol";
 import "src/core/validation/MarketplaceValidator.sol";
 import "src/core/auction/AuctionFactory.sol";
-import {NFTExchangeFactory} from "src/core/NFTExchange/NFTExchangeFactory.sol";
+import {NFTExchangeFactory} from "src/core/exchange/NFTExchangeFactory.sol";
 import "src/errors/MarketplaceValidatorErrors.sol";
 import "src/errors/AuctionErrors.sol";
 import "../mocks/MockERC721.sol";
-import "src/core/NFTExchange/ERC721NFTExchange.sol";
-import "src/core/NFTExchange/ERC1155NFTExchange.sol";
-import "src/core/NFTExchange/ERC721NFTExchange.sol";
-import "src/core/NFTExchange/ERC1155NFTExchange.sol";
+import "src/core/exchange/ERC721NFTExchange.sol";
+import "src/core/exchange/ERC1155NFTExchange.sol";
+import "src/core/exchange/ERC721NFTExchange.sol";
+import "src/core/exchange/ERC1155NFTExchange.sol";
 
 contract MarketplaceValidatorTest is Test {
     MarketplaceValidator public validator;

@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
 import "test/mocks/MockERC721.sol";
-import "src/core/NFTExchange/ERC721NFTExchange.sol";
+import "src/core/exchange/ERC721NFTExchange.sol";
 import "src/errors/NFTExchangeErrors.sol";
 import "src/events/NFTExchangeEvents.sol";
 import {Fee} from "src/common/Fee.sol";

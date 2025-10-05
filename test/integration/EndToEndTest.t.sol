@@ -3,11 +3,11 @@ pragma solidity ^0.8.30;
 
 import {Test, console2, Vm} from "forge-std/Test.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {NFTExchangeFactory} from "src/core/NFTExchange/NFTExchangeFactory.sol";
-import {ERC721NFTExchange} from "src/core/NFTExchange/ERC721NFTExchange.sol";
-import {ERC1155NFTExchange} from "src/core/NFTExchange/ERC1155NFTExchange.sol";
-import {ERC721NFTExchange} from "src/core/NFTExchange/ERC721NFTExchange.sol";
-import {ERC1155NFTExchange} from "src/core/NFTExchange/ERC1155NFTExchange.sol";
+import {NFTExchangeFactory} from "src/core/exchange/NFTExchangeFactory.sol";
+import {ERC721NFTExchange} from "src/core/exchange/ERC721NFTExchange.sol";
+import {ERC1155NFTExchange} from "src/core/exchange/ERC1155NFTExchange.sol";
+import {ERC721NFTExchange} from "src/core/exchange/ERC721NFTExchange.sol";
+import {ERC1155NFTExchange} from "src/core/exchange/ERC1155NFTExchange.sol";
 import {CollectionFactoryRegistry} from "src/core/collection/CollectionFactoryRegistry.sol";
 import {ERC721CollectionFactory} from "src/core/collection/ERC721CollectionFactory.sol";
 import {ERC1155CollectionFactory} from "src/core/collection/ERC1155CollectionFactory.sol";
