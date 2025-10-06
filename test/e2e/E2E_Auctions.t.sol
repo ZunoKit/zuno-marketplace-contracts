@@ -64,21 +64,11 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
         console2.log("Step 5: Auction ended");
 
         // Step 6: Settle auction
-        BalanceSnapshot memory balancesBefore = snapshotBalances(
-            dave,
-            alice,
-            englishAuction.marketplaceWallet(),
-            eve
-        );
+        BalanceSnapshot memory balancesBefore = snapshotBalances(dave, alice, englishAuction.marketplaceWallet(), eve);
 
         englishAuction.settleAuction(auctionId);
 
-        BalanceSnapshot memory balancesAfter = snapshotBalances(
-            dave,
-            alice,
-            englishAuction.marketplaceWallet(),
-            eve
-        );
+        BalanceSnapshot memory balancesAfter = snapshotBalances(dave, alice, englishAuction.marketplaceWallet(), eve);
         console2.log("Step 6: Auction settled");
 
         // Step 7: Verify NFT transferred to winner
@@ -92,22 +82,13 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
         uint256 sellerReceives = winningBid - fee - royaltyFee; // Seller receives bid minus fees
 
         assertApproxEqAbs(
-            balancesAfter.seller - balancesBefore.seller,
-            sellerReceives,
-            1e15,
-            "Seller should receive bid minus fees"
+            balancesAfter.seller - balancesBefore.seller, sellerReceives, 1e15, "Seller should receive bid minus fees"
         );
         assertApproxEqAbs(
-            balancesAfter.marketplace - balancesBefore.marketplace,
-            fee,
-            1e15,
-            "Marketplace fee incorrect"
+            balancesAfter.marketplace - balancesBefore.marketplace, fee, 1e15, "Marketplace fee incorrect"
         );
         assertApproxEqAbs(
-            balancesAfter.royaltyReceiver - balancesBefore.royaltyReceiver,
-            royaltyFee,
-            1e15,
-            "Royalty not paid"
+            balancesAfter.royaltyReceiver - balancesBefore.royaltyReceiver, royaltyFee, 1e15, "Royalty not paid"
         );
         console2.log("Step 8: Payment verified");
 
@@ -149,11 +130,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
 
         // Step 2: Get initial price
         uint256 initialPrice = dutchAuction.getCurrentPrice(auctionId);
-        assertEq(
-            initialPrice,
-            2 ether,
-            "Initial price should be starting price"
-        );
+        assertEq(initialPrice, 2 ether, "Initial price should be starting price");
         console2.log("Step 2: Initial price:", initialPrice);
 
         // Step 3: Fast forward to 6 hours (price should still be above reserve)
@@ -166,22 +143,12 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
         assertGt(midPrice, 0.5 ether, "Price should be above ending price");
 
         // Step 4: Bob buys at current price
-        BalanceSnapshot memory balancesBefore = snapshotBalances(
-            bob,
-            alice,
-            dutchAuction.marketplaceWallet(),
-            eve
-        );
+        BalanceSnapshot memory balancesBefore = snapshotBalances(bob, alice, dutchAuction.marketplaceWallet(), eve);
 
         vm.prank(bob);
         dutchAuction.buyNow{value: midPrice}(auctionId);
 
-        BalanceSnapshot memory balancesAfter = snapshotBalances(
-            bob,
-            alice,
-            dutchAuction.marketplaceWallet(),
-            eve
-        );
+        BalanceSnapshot memory balancesAfter = snapshotBalances(bob, alice, dutchAuction.marketplaceWallet(), eve);
         console2.log("Step 4: Bob purchased at", midPrice);
 
         // Step 5: Verify NFT ownership
@@ -191,14 +158,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
         // Step 6: Verify payment
         uint256 fee = (midPrice * TAKER_FEE_BPS) / 10000;
         uint256 royaltyFee = (midPrice * ROYALTY_FEE_BPS) / 10000;
-        assertBalanceChanges(
-            balancesBefore,
-            balancesAfter,
-            midPrice,
-            midPrice - fee - royaltyFee,
-            fee,
-            royaltyFee
-        );
+        assertBalanceChanges(balancesBefore, balancesAfter, midPrice, midPrice - fee - royaltyFee, fee, royaltyFee);
         console2.log("Step 6: Payment verified");
 
         console2.log("=== Dutch Auction Complete Flow: SUCCESS ===\n");
@@ -220,14 +180,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
 
         // Create auction
         bytes32 auctionId = englishAuction.createAuction(
-            address(mockERC721),
-            3,
-            1,
-            1 ether,
-            1.5 ether,
-            AUCTION_DURATION,
-            IAuction.AuctionType.ENGLISH,
-            alice
+            address(mockERC721), 3, 1, 1 ether, 1.5 ether, AUCTION_DURATION, IAuction.AuctionType.ENGLISH, alice
         );
         vm.stopPrank();
         console2.log("Step 1: Auction with royalty NFT created");
@@ -241,30 +194,17 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
         vm.warp(block.timestamp + AUCTION_DURATION + 1);
 
         // Track balances
-        BalanceSnapshot memory balancesBefore = snapshotBalances(
-            bob,
-            alice,
-            englishAuction.marketplaceWallet(),
-            eve
-        );
+        BalanceSnapshot memory balancesBefore = snapshotBalances(bob, alice, englishAuction.marketplaceWallet(), eve);
 
         englishAuction.settleAuction(auctionId);
 
-        BalanceSnapshot memory balancesAfter = snapshotBalances(
-            bob,
-            alice,
-            englishAuction.marketplaceWallet(),
-            eve
-        );
+        BalanceSnapshot memory balancesAfter = snapshotBalances(bob, alice, englishAuction.marketplaceWallet(), eve);
         console2.log("Step 3: Auction settled");
 
         // Verify royalty paid
         uint256 royaltyAmount = (2 ether * ROYALTY_FEE_BPS) / 10000;
         assertApproxEqAbs(
-            balancesAfter.royaltyReceiver - balancesBefore.royaltyReceiver,
-            royaltyAmount,
-            1e15,
-            "Royalty not paid"
+            balancesAfter.royaltyReceiver - balancesBefore.royaltyReceiver, royaltyAmount, 1e15, "Royalty not paid"
         );
         console2.log("Step 4: Royalty verified:", royaltyAmount);
 
@@ -291,36 +231,15 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
         mockERC721.approve(address(englishAuction), 12);
 
         bytes32 auction1 = englishAuction.createAuction(
-            address(mockERC721),
-            10,
-            1,
-            1 ether,
-            1.5 ether,
-            AUCTION_DURATION,
-            IAuction.AuctionType.ENGLISH,
-            alice
+            address(mockERC721), 10, 1, 1 ether, 1.5 ether, AUCTION_DURATION, IAuction.AuctionType.ENGLISH, alice
         );
 
         bytes32 auction2 = englishAuction.createAuction(
-            address(mockERC721),
-            11,
-            1,
-            2 ether,
-            2.5 ether,
-            AUCTION_DURATION,
-            IAuction.AuctionType.ENGLISH,
-            alice
+            address(mockERC721), 11, 1, 2 ether, 2.5 ether, AUCTION_DURATION, IAuction.AuctionType.ENGLISH, alice
         );
 
         bytes32 auction3 = englishAuction.createAuction(
-            address(mockERC721),
-            12,
-            1,
-            0.5 ether,
-            0.8 ether,
-            AUCTION_DURATION,
-            IAuction.AuctionType.ENGLISH,
-            alice
+            address(mockERC721), 12, 1, 0.5 ether, 0.8 ether, AUCTION_DURATION, IAuction.AuctionType.ENGLISH, alice
         );
         vm.stopPrank();
         console2.log("Step 1: 3 concurrent auctions created");
@@ -376,14 +295,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
         vm.startPrank(alice);
         mockERC721.approve(address(englishAuction), 20);
         bytes32 auctionId = englishAuction.createAuction(
-            address(mockERC721),
-            20,
-            1,
-            1 ether,
-            1.5 ether,
-            AUCTION_DURATION,
-            IAuction.AuctionType.ENGLISH,
-            alice
+            address(mockERC721), 20, 1, 1 ether, 1.5 ether, AUCTION_DURATION, IAuction.AuctionType.ENGLISH, alice
         );
         vm.stopPrank();
         console2.log("Step 1: Auction created");
@@ -411,10 +323,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
         vm.warp(originalEndTime + 1);
 
         // Verify auction still active
-        assertTrue(
-            englishAuction.isAuctionActive(auctionId),
-            "Auction should still be active"
-        );
+        assertTrue(englishAuction.isAuctionActive(auctionId), "Auction should still be active");
         console2.log("Step 5: Auction still active after original end time");
 
         // Fast forward past new end time
@@ -441,14 +350,8 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
 
         vm.startPrank(alice);
         mockERC721.approve(address(englishAuction), 30);
-        bytes32 auctionId = auctionFactory.createEnglishAuction(
-            address(mockERC721),
-            30,
-            1,
-            1 ether,
-            1.5 ether,
-            AUCTION_DURATION
-        );
+        bytes32 auctionId =
+            auctionFactory.createEnglishAuction(address(mockERC721), 30, 1, 1 ether, 1.5 ether, AUCTION_DURATION);
         vm.stopPrank();
         console2.log("Step 1: Auction created");
 
@@ -470,13 +373,9 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
 
         // Highest bid remains, no refunds until settlement; ownership unchanged yet
         assertNFTOwner(address(mockERC721), 30, alice);
-        console2.log(
-            "Step 4: NFT still with seller; refunds only on settlement/cancel without bids"
-        );
+        console2.log("Step 4: NFT still with seller; refunds only on settlement/cancel without bids");
 
-        console2.log(
-            "=== Auction Cancellation with Refund Attempt: SUCCESS ===\n"
-        );
+        console2.log("=== Auction Cancellation with Refund Attempt: SUCCESS ===\n");
     }
 
     // ============================================================================

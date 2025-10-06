@@ -20,13 +20,7 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
         // Step 1: Setup - Alice lists NFT
         vm.prank(alice);
         mockERC721.mint(alice, 1);
-        bytes32 listingId = listERC721(
-            alice,
-            address(mockERC721),
-            1,
-            NFT_PRICE,
-            LISTING_DURATION
-        );
+        bytes32 listingId = listERC721(alice, address(mockERC721), 1, NFT_PRICE, LISTING_DURATION);
         console2.log("Step 1: NFT listed at", NFT_PRICE);
 
         // Step 2: Calculate expected fees (include default royalty if present)
@@ -36,47 +30,24 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
         console2.log("Step 2: Taker fee calculated:", takerFee);
 
         // Step 3: Track balances before sale
-        BalanceSnapshot memory balancesBefore = snapshotBalances(
-            bob,
-            alice,
-            marketplaceWallet,
-            address(0)
-        );
+        BalanceSnapshot memory balancesBefore = snapshotBalances(bob, alice, marketplaceWallet, address(0));
 
         // Step 4: Bob buys NFT
         buyERC721(bob, listingId);
         console2.log("Step 3: NFT purchased");
 
         // Step 5: Verify fee distribution
-        BalanceSnapshot memory balancesAfter = snapshotBalances(
-            bob,
-            alice,
-            marketplaceWallet,
-            address(0)
-        );
+        BalanceSnapshot memory balancesAfter = snapshotBalances(bob, alice, marketplaceWallet, address(0));
 
         // Bob paid full price including fee
-        assertApproxEqAbs(
-            balancesBefore.buyer - balancesAfter.buyer,
-            totalPrice,
-            1e15,
-            "Buyer payment incorrect"
-        );
+        assertApproxEqAbs(balancesBefore.buyer - balancesAfter.buyer, totalPrice, 1e15, "Buyer payment incorrect");
 
         // Alice (seller) also receives royalty in this scenario, so total equals sale price
-        assertApproxEqAbs(
-            balancesAfter.seller - balancesBefore.seller,
-            NFT_PRICE,
-            1e15,
-            "Seller received incorrect"
-        );
+        assertApproxEqAbs(balancesAfter.seller - balancesBefore.seller, NFT_PRICE, 1e15, "Seller received incorrect");
 
         // Marketplace received taker fee
         assertApproxEqAbs(
-            balancesAfter.marketplace - balancesBefore.marketplace,
-            takerFee,
-            1e15,
-            "Marketplace fee incorrect"
+            balancesAfter.marketplace - balancesBefore.marketplace, takerFee, 1e15, "Marketplace fee incorrect"
         );
 
         console2.log("Step 4: Fee distribution verified");
@@ -101,13 +72,7 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
         vm.prank(alice);
         mockERC721.setDefaultRoyalty(alice, 0);
 
-        bytes32 primaryListingId = listERC721(
-            alice,
-            address(mockERC721),
-            2,
-            1 ether,
-            LISTING_DURATION
-        );
+        bytes32 primaryListingId = listERC721(alice, address(mockERC721), 2, 1 ether, LISTING_DURATION);
         console2.log("Step 1: Primary sale listed");
 
         buyERC721(bob, primaryListingId);
@@ -117,34 +82,18 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
         // Set royalty now so only secondary sale pays
         vm.prank(alice);
         mockERC721.setDefaultRoyalty(alice, uint96(ROYALTY_FEE_BPS));
-        bytes32 secondaryListingId = listERC721(
-            bob,
-            address(mockERC721),
-            2,
-            2 ether,
-            LISTING_DURATION
-        );
+        bytes32 secondaryListingId = listERC721(bob, address(mockERC721), 2, 2 ether, LISTING_DURATION);
         console2.log("Step 3: Secondary sale listed at 2 ETH");
 
         // Step 4: Track balances
-        BalanceSnapshot memory balancesBefore = snapshotBalances(
-            charlie,
-            bob,
-            marketplaceWallet,
-            alice
-        );
+        BalanceSnapshot memory balancesBefore = snapshotBalances(charlie, bob, marketplaceWallet, alice);
 
         // Step 5: Charlie buys (secondary sale triggers royalty)
         buyERC721(charlie, secondaryListingId);
         console2.log("Step 4: Secondary sale complete");
 
         // Step 6: Verify royalty payment
-        BalanceSnapshot memory balancesAfter = snapshotBalances(
-            charlie,
-            bob,
-            marketplaceWallet,
-            alice
-        );
+        BalanceSnapshot memory balancesAfter = snapshotBalances(charlie, bob, marketplaceWallet, alice);
 
         uint256 salePrice = 2 ether;
         uint256 expectedRoyalty = (salePrice * ROYALTY_FEE_BPS) / 10000;
@@ -180,13 +129,7 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
         vm.prank(alice);
         mockERC721.setDefaultRoyalty(alice, uint96(ROYALTY_FEE_BPS));
 
-        bytes32 listing1 = listERC721(
-            alice,
-            address(mockERC721),
-            10,
-            1 ether,
-            LISTING_DURATION
-        );
+        bytes32 listing1 = listERC721(alice, address(mockERC721), 10, 1 ether, LISTING_DURATION);
         buyERC721(bob, listing1);
         console2.log("Method 1 (ERC2981): Royalty detected and paid");
 
@@ -196,9 +139,7 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
 
         // Method 3: BaseCollection
         // Would use BaseCollection implementation in real scenario
-        console2.log(
-            "Method 3 (BaseCollection): Supported via collection interface"
-        );
+        console2.log("Method 3 (BaseCollection): Supported via collection interface");
 
         console2.log("=== Multiple Royalty Detection Methods: SUCCESS ===\n");
     }
@@ -208,9 +149,7 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
     // ============================================================================
 
     function test_E2E_CascadingSalesWithCumulativeRoyalties() public {
-        console2.log(
-            "\n=== Test: Cascading Sales with Cumulative Royalties ==="
-        );
+        console2.log("\n=== Test: Cascading Sales with Cumulative Royalties ===");
 
         // Setup
         vm.prank(alice);
@@ -222,84 +161,43 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
         uint256 totalRoyaltiesPaid = 0;
 
         // Sale 1: Alice -> Bob (primary, no royalty)
-        bytes32 sale1 = listERC721(
-            alice,
-            address(mockERC721),
-            20,
-            1 ether,
-            LISTING_DURATION
-        );
+        bytes32 sale1 = listERC721(alice, address(mockERC721), 20, 1 ether, LISTING_DURATION);
         buyERC721(bob, sale1);
         console2.log("Sale 1: Alice -> Bob (1 ETH) - Primary sale");
 
         // Sale 2: Bob -> Charlie (2 ETH, 5% royalty to Alice)
         uint256 aliceBalanceBefore = alice.balance;
-        bytes32 sale2 = listERC721(
-            bob,
-            address(mockERC721),
-            20,
-            2 ether,
-            LISTING_DURATION
-        );
+        bytes32 sale2 = listERC721(bob, address(mockERC721), 20, 2 ether, LISTING_DURATION);
         buyERC721(charlie, sale2);
 
         uint256 royalty2 = (2 ether * ROYALTY_FEE_BPS) / 10000;
         totalRoyaltiesPaid += royalty2;
-        assertApproxEqAbs(
-            alice.balance - aliceBalanceBefore,
-            royalty2,
-            1e15,
-            "Royalty 2 incorrect"
-        );
+        assertApproxEqAbs(alice.balance - aliceBalanceBefore, royalty2, 1e15, "Royalty 2 incorrect");
         console2.log("Sale 2: Bob -> Charlie (2 ETH) - Royalty:", royalty2);
 
         // Sale 3: Charlie -> Dave (3 ETH, 5% royalty to Alice)
         aliceBalanceBefore = alice.balance;
-        bytes32 sale3 = listERC721(
-            charlie,
-            address(mockERC721),
-            20,
-            3 ether,
-            LISTING_DURATION
-        );
+        bytes32 sale3 = listERC721(charlie, address(mockERC721), 20, 3 ether, LISTING_DURATION);
         buyERC721(dave, sale3);
 
         uint256 royalty3 = (3 ether * ROYALTY_FEE_BPS) / 10000;
         totalRoyaltiesPaid += royalty3;
-        assertApproxEqAbs(
-            alice.balance - aliceBalanceBefore,
-            royalty3,
-            1e15,
-            "Royalty 3 incorrect"
-        );
+        assertApproxEqAbs(alice.balance - aliceBalanceBefore, royalty3, 1e15, "Royalty 3 incorrect");
         console2.log("Sale 3: Charlie -> Dave (3 ETH) - Royalty:", royalty3);
 
         // Sale 4: Dave -> Eve (4 ETH, 5% royalty to Alice)
         aliceBalanceBefore = alice.balance;
-        bytes32 sale4 = listERC721(
-            dave,
-            address(mockERC721),
-            20,
-            4 ether,
-            LISTING_DURATION
-        );
+        bytes32 sale4 = listERC721(dave, address(mockERC721), 20, 4 ether, LISTING_DURATION);
         buyERC721(eve, sale4);
 
         uint256 royalty4 = (4 ether * ROYALTY_FEE_BPS) / 10000;
         totalRoyaltiesPaid += royalty4;
-        assertApproxEqAbs(
-            alice.balance - aliceBalanceBefore,
-            royalty4,
-            1e15,
-            "Royalty 4 incorrect"
-        );
+        assertApproxEqAbs(alice.balance - aliceBalanceBefore, royalty4, 1e15, "Royalty 4 incorrect");
         console2.log("Sale 4: Dave -> Eve (4 ETH) - Royalty:", royalty4);
 
         // Verify cumulative royalties
         uint256 aliceFinalBalance = alice.balance;
-        uint256 expectedTotal = aliceInitialBalance +
-            1 ether +
-            totalRoyaltiesPaid; // primary sale + royalties
+        uint256 expectedTotal = aliceInitialBalance + 1 ether + totalRoyaltiesPaid; // primary sale + royalties
 
         console2.log("\nCumulative Results:");
         console2.log("  Total royalties paid:", totalRoyaltiesPaid);
@@ -307,16 +205,9 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
         console2.log("  Alice final balance:", aliceFinalBalance);
         console2.log("  Expected total:", expectedTotal);
 
-        assertApproxEqAbs(
-            aliceFinalBalance,
-            expectedTotal,
-            5e15,
-            "Cumulative balance incorrect"
-        );
+        assertApproxEqAbs(aliceFinalBalance, expectedTotal, 5e15, "Cumulative balance incorrect");
 
-        console2.log(
-            "=== Cascading Sales with Cumulative Royalties: SUCCESS ===\n"
-        );
+        console2.log("=== Cascading Sales with Cumulative Royalties: SUCCESS ===\n");
     }
 
     // ============================================================================
@@ -333,13 +224,7 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
         mockERC721.setDefaultRoyalty(alice, uint96(ROYALTY_FEE_BPS));
 
         // Primary sale
-        bytes32 primaryListing = listERC721(
-            alice,
-            address(mockERC721),
-            30,
-            10 ether,
-            LISTING_DURATION
-        );
+        bytes32 primaryListing = listERC721(alice, address(mockERC721), 30, 10 ether, LISTING_DURATION);
         buyERC721(bob, primaryListing);
         console2.log("Primary sale: 10 ETH");
 
@@ -349,13 +234,7 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
         uint256 aliceBalanceBefore = alice.balance;
         uint256 marketplaceBalanceBefore = marketplaceWallet.balance;
 
-        bytes32 secondaryListing = listERC721(
-            bob,
-            address(mockERC721),
-            30,
-            10 ether,
-            LISTING_DURATION
-        );
+        bytes32 secondaryListing = listERC721(bob, address(mockERC721), 30, 10 ether, LISTING_DURATION);
 
         uint256 totalPrice = erc721Exchange.getBuyerSeesPrice(secondaryListing);
         buyERC721(charlie, secondaryListing);
@@ -374,29 +253,11 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
         console2.log("  Buyer pays:", totalPrice);
 
         // Verify balances
+        assertApproxEqAbs(charlieBalanceBefore - charlie.balance, totalPrice, 1e15, "Charlie payment incorrect");
+        assertApproxEqAbs(bob.balance - bobBalanceBefore, sellerReceives, 1e15, "Bob (seller) incorrect");
+        assertApproxEqAbs(alice.balance - aliceBalanceBefore, royalty, 1e15, "Alice (creator) royalty incorrect");
         assertApproxEqAbs(
-            charlieBalanceBefore - charlie.balance,
-            totalPrice,
-            1e15,
-            "Charlie payment incorrect"
-        );
-        assertApproxEqAbs(
-            bob.balance - bobBalanceBefore,
-            sellerReceives,
-            1e15,
-            "Bob (seller) incorrect"
-        );
-        assertApproxEqAbs(
-            alice.balance - aliceBalanceBefore,
-            royalty,
-            1e15,
-            "Alice (creator) royalty incorrect"
-        );
-        assertApproxEqAbs(
-            marketplaceWallet.balance - marketplaceBalanceBefore,
-            takerFee,
-            1e15,
-            "Marketplace fee incorrect"
+            marketplaceWallet.balance - marketplaceBalanceBefore, takerFee, 1e15, "Marketplace fee incorrect"
         );
 
         console2.log("=== Fee and Royalty Interaction: SUCCESS ===\n");
@@ -425,13 +286,7 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
             mockERC721.setDefaultRoyalty(alice, 0);
 
             // List and buy
-            bytes32 listingId = listERC721(
-                alice,
-                address(mockERC721),
-                100 + i,
-                prices[i],
-                LISTING_DURATION
-            );
+            bytes32 listingId = listERC721(alice, address(mockERC721), 100 + i, prices[i], LISTING_DURATION);
 
             // For fee calculation checks, ignore royalty on primary
             uint256 expectedFee = (prices[i] * TAKER_FEE_BPS) / 10000;
@@ -441,24 +296,16 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
 
             buyERC721(bob, listingId);
 
-            uint256 feeReceived = marketplaceWallet.balance -
-                marketplaceBalanceBefore;
+            uint256 feeReceived = marketplaceWallet.balance - marketplaceBalanceBefore;
 
-            assertApproxEqAbs(
-                feeReceived,
-                expectedFee,
-                1e14,
-                "Fee calculation incorrect"
-            );
+            assertApproxEqAbs(feeReceived, expectedFee, 1e14, "Fee calculation incorrect");
 
             console2.log("Price:", prices[i]);
             console2.log("Fee:", expectedFee);
             console2.log("Total:", totalPrice);
         }
 
-        console2.log(
-            "=== Variable Price Points Fee Calculation: SUCCESS ===\n"
-        );
+        console2.log("=== Variable Price Points Fee Calculation: SUCCESS ===\n");
     }
 
     // ============================================================================
@@ -476,33 +323,17 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
         mockERC721.setDefaultRoyalty(alice, 0);
 
         // Primary sale
-        bytes32 listing1 = listERC721(
-            alice,
-            address(mockERC721),
-            40,
-            5 ether,
-            LISTING_DURATION
-        );
+        bytes32 listing1 = listERC721(alice, address(mockERC721), 40, 5 ether, LISTING_DURATION);
         buyERC721(bob, listing1);
         console2.log("Primary sale: No royalty");
 
         // Secondary sale - still no royalty
         uint256 aliceBalanceBefore = alice.balance;
-        bytes32 listing2 = listERC721(
-            bob,
-            address(mockERC721),
-            40,
-            5 ether,
-            LISTING_DURATION
-        );
+        bytes32 listing2 = listERC721(bob, address(mockERC721), 40, 5 ether, LISTING_DURATION);
         buyERC721(charlie, listing2);
 
         // Alice should not receive any royalty
-        assertEq(
-            alice.balance,
-            aliceBalanceBefore,
-            "No royalty should be paid"
-        );
+        assertEq(alice.balance, aliceBalanceBefore, "No royalty should be paid");
         console2.log("Secondary sale: No royalty paid (as expected)");
 
         console2.log("=== Zero Royalty Edge Case: SUCCESS ===\n");
@@ -522,35 +353,18 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
         mockERC721.setDefaultRoyalty(alice, uint96(1000)); // 10%
 
         // Primary sale
-        bytes32 listing1 = listERC721(
-            alice,
-            address(mockERC721),
-            50,
-            10 ether,
-            LISTING_DURATION
-        );
+        bytes32 listing1 = listERC721(alice, address(mockERC721), 50, 10 ether, LISTING_DURATION);
         buyERC721(bob, listing1);
         console2.log("Primary sale complete");
 
         // Secondary sale with max royalty
         uint256 aliceBalanceBefore = alice.balance;
-        bytes32 listing2 = listERC721(
-            bob,
-            address(mockERC721),
-            50,
-            10 ether,
-            LISTING_DURATION
-        );
+        bytes32 listing2 = listERC721(bob, address(mockERC721), 50, 10 ether, LISTING_DURATION);
         buyERC721(charlie, listing2);
 
         // Verify 10% royalty paid
         uint256 expectedRoyalty = (10 ether * 1000) / 10000; // 10%
-        assertApproxEqAbs(
-            alice.balance - aliceBalanceBefore,
-            expectedRoyalty,
-            1e15,
-            "Max royalty incorrect"
-        );
+        assertApproxEqAbs(alice.balance - aliceBalanceBefore, expectedRoyalty, 1e15, "Max royalty incorrect");
 
         console2.log("Maximum royalty (10%) paid:", expectedRoyalty);
         console2.log("=== Maximum Royalty Rate: SUCCESS ===\n");
@@ -572,13 +386,7 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
             mockERC721.mint(alice, 200 + i);
 
             uint256 price = (i + 1) * 1 ether;
-            bytes32 listingId = listERC721(
-                alice,
-                address(mockERC721),
-                200 + i,
-                price,
-                LISTING_DURATION
-            );
+            bytes32 listingId = listERC721(alice, address(mockERC721), 200 + i, price, LISTING_DURATION);
 
             uint256 expectedFee = (price * TAKER_FEE_BPS) / 10000;
             totalFeesExpected += expectedFee;
@@ -592,15 +400,9 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
 
         // Verify total fees accumulated
         uint256 marketplaceFinalBalance = marketplaceWallet.balance;
-        uint256 totalFeesReceived = marketplaceFinalBalance -
-            marketplaceInitialBalance;
+        uint256 totalFeesReceived = marketplaceFinalBalance - marketplaceInitialBalance;
 
-        assertApproxEqAbs(
-            totalFeesReceived,
-            totalFeesExpected,
-            5e15,
-            "Total fees incorrect"
-        );
+        assertApproxEqAbs(totalFeesReceived, totalFeesExpected, 5e15, "Total fees incorrect");
 
         console2.log("\nFee Accumulation:");
         console2.log("  Total fees expected:", totalFeesExpected);
@@ -636,13 +438,7 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
 
         // Primary sales (no royalty)
         for (uint256 i = 0; i < 3; i++) {
-            bytes32 listingId = listERC721(
-                alice,
-                address(mockERC721),
-                tokenIds[i],
-                10 ether,
-                LISTING_DURATION
-            );
+            bytes32 listingId = listERC721(alice, address(mockERC721), tokenIds[i], 10 ether, LISTING_DURATION);
             buyERC721(bob, listingId);
             console2.log("Primary sale", i + 1);
             console2.log("Royalty rate (bps):", royaltyRates[i]);
@@ -657,32 +453,16 @@ contract E2E_FeesAndRoyaltiesTest is E2E_BaseSetup {
             vm.prank(alice);
             mockERC721.setDefaultRoyalty(alice, uint96(royaltyRates[i]));
 
-            bytes32 listingId = listERC721(
-                bob,
-                address(mockERC721),
-                tokenIds[i],
-                10 ether,
-                LISTING_DURATION
-            );
+            bytes32 listingId = listERC721(bob, address(mockERC721), tokenIds[i], 10 ether, LISTING_DURATION);
             buyERC721(charlie, listingId);
 
             uint256 royaltyPaid = alice.balance - aliceBalanceBefore;
             aliceTotalRoyalties += royaltyPaid;
 
             uint256 expectedRoyalty = (10 ether * royaltyRates[i]) / 10000;
-            assertApproxEqAbs(
-                royaltyPaid,
-                expectedRoyalty,
-                1e15,
-                "Royalty calculation incorrect"
-            );
+            assertApproxEqAbs(royaltyPaid, expectedRoyalty, 1e15, "Royalty calculation incorrect");
 
-            console2.log(
-                "Secondary sale",
-                i + 1,
-                "- Royalty paid:",
-                royaltyPaid
-            );
+            console2.log("Secondary sale", i + 1, "- Royalty paid:", royaltyPaid);
         }
 
         console2.log("\nTotal royalties paid to creator:", aliceTotalRoyalties);
