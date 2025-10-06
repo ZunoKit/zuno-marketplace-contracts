@@ -1,7 +1,5 @@
-.PHONY: help build test clean start-anvil deploy-all-local deploy-exchanges deploy-collections format snapshot coverage
+.PHONY: help build test clean start-anvil deploy-all-local format snapshot coverage
 
-# Default private key for local development (Anvil default account #0)
-PRIVATE_KEY := 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 LOCAL_RPC := http://localhost:8545
 
 help:
@@ -20,8 +18,6 @@ help:
 	@echo "Local Development:"
 	@echo "  make start-anvil        - Start local Anvil blockchain (port 8545)"
 	@echo "  make deploy-all-local   - Deploy all contracts to local network"
-	@echo "  make deploy-exchanges   - Deploy exchange contracts to local network"
-	@echo "  make deploy-collections - Deploy collection contracts to local network"
 	@echo ""
 
 # Build contracts
@@ -70,15 +66,7 @@ start-anvil:
 
 # Deploy all contracts to local network
 deploy-all-local:
-	forge script script/DeployAll.s.sol --rpc-url $(LOCAL_RPC) --private-key $(PRIVATE_KEY) --broadcast
-
-# Deploy exchanges to local network
-deploy-exchanges:
-	forge script script/DeployExchanges.s.sol --rpc-url $(LOCAL_RPC) --private-key $(PRIVATE_KEY) --broadcast
-
-# Deploy collections to local network
-deploy-collections:
-	forge script script/DeployCollections.s.sol --rpc-url $(LOCAL_RPC) --private-key $(PRIVATE_KEY) --broadcast
+	forge script script/deploy/DeployAll.s.sol:DeployAll --rpc-url $(LOCAL_RPC) --broadcast
 
 # Install dependencies
 install:
