@@ -18,11 +18,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         console2.log("\n=== Test: Complete ERC721 Trading Journey ===");
 
         // Step 1: Alice creates a collection
-        address collection = createERC721Collection(
-            alice,
-            "Alice NFTs",
-            "ALICE"
-        );
+        address collection = createERC721Collection(alice, "Alice NFTs", "ALICE");
         assertFalse(collection == address(0), "Collection creation failed");
 
         // Step 2: Alice mints an NFT
@@ -36,31 +32,15 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         mockERC721.setDefaultRoyalty(eve, uint96(ROYALTY_FEE_BPS));
 
         // Step 3: Alice lists the NFT
-        bytes32 listingId = listERC721(
-            alice,
-            address(mockERC721),
-            1,
-            NFT_PRICE,
-            LISTING_DURATION
-        );
+        bytes32 listingId = listERC721(alice, address(mockERC721), 1, NFT_PRICE, LISTING_DURATION);
         console2.log("Step 3: NFT listed");
 
         // Step 4: Bob buys the NFT
-        BalanceSnapshot memory balancesBefore = snapshotBalances(
-            bob,
-            alice,
-            marketplaceWallet,
-            eve
-        );
+        BalanceSnapshot memory balancesBefore = snapshotBalances(bob, alice, marketplaceWallet, eve);
 
         buyERC721(bob, listingId);
 
-        BalanceSnapshot memory balancesAfter = snapshotBalances(
-            bob,
-            alice,
-            marketplaceWallet,
-            eve
-        );
+        BalanceSnapshot memory balancesAfter = snapshotBalances(bob, alice, marketplaceWallet, eve);
         console2.log("Step 4: NFT purchased");
 
         // Step 5: Verify ownership transfer
@@ -73,14 +53,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         uint256 totalPaid = NFT_PRICE + takerFee + royaltyFee;
         uint256 sellerReceives = NFT_PRICE - royaltyFee; // Seller receives listing price minus royalty
 
-        assertBalanceChanges(
-            balancesBefore,
-            balancesAfter,
-            totalPaid,
-            sellerReceives,
-            takerFee,
-            royaltyFee
-        );
+        assertBalanceChanges(balancesBefore, balancesAfter, totalPaid, sellerReceives, takerFee, royaltyFee);
         console2.log("Step 6: Payment distribution verified");
 
         console2.log("=== Complete ERC721 Trading Journey: SUCCESS ===\n");
@@ -104,32 +77,15 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         mockERC1155.setDefaultRoyalty(alice, 0);
 
         // Step 2: Alice lists 5 units for sale
-        bytes32 listingId = listERC1155(
-            alice,
-            address(mockERC1155),
-            1,
-            5,
-            NFT_PRICE,
-            LISTING_DURATION
-        );
+        bytes32 listingId = listERC1155(alice, address(mockERC1155), 1, 5, NFT_PRICE, LISTING_DURATION);
         console2.log("Step 2: 5 units listed");
 
         // Step 3: Bob buys 3 units
-        BalanceSnapshot memory balancesBefore = snapshotBalances(
-            bob,
-            alice,
-            marketplaceWallet,
-            address(0)
-        );
+        BalanceSnapshot memory balancesBefore = snapshotBalances(bob, alice, marketplaceWallet, address(0));
 
         buyERC1155(bob, listingId, 3);
 
-        BalanceSnapshot memory balancesAfter = snapshotBalances(
-            bob,
-            alice,
-            marketplaceWallet,
-            address(0)
-        );
+        BalanceSnapshot memory balancesAfter = snapshotBalances(bob, alice, marketplaceWallet, address(0));
         console2.log("Step 3: 3 units purchased");
 
         // Step 4: Verify balance changes
@@ -144,14 +100,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         uint256 totalPaid = totalPrice + takerFee;
         uint256 sellerReceives = totalPrice;
 
-        assertBalanceChanges(
-            balancesBefore,
-            balancesAfter,
-            totalPaid,
-            sellerReceives,
-            takerFee,
-            royaltyFee
-        );
+        assertBalanceChanges(balancesBefore, balancesAfter, totalPaid, sellerReceives, takerFee, royaltyFee);
         console2.log("Step 5: Payment distribution verified");
 
         // Step 6: Charlie buys remaining 2 units
@@ -175,13 +124,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         mockERC721.mint(alice, 2);
 
         // Step 1: Create listing
-        bytes32 listingId = listERC721(
-            alice,
-            address(mockERC721),
-            2,
-            NFT_PRICE,
-            LISTING_DURATION
-        );
+        bytes32 listingId = listERC721(alice, address(mockERC721), 2, NFT_PRICE, LISTING_DURATION);
         console2.log("Step 1: Listing created");
 
         // Step 2: Cancel original listing
@@ -190,13 +133,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         console2.log("Step 2: Original listing cancelled");
 
         // Step 3: Relist at higher price
-        bytes32 higherPriceListingId = listERC721(
-            alice,
-            address(mockERC721),
-            2,
-            NFT_PRICE * 2,
-            LISTING_DURATION
-        );
+        bytes32 higherPriceListingId = listERC721(alice, address(mockERC721), 2, NFT_PRICE * 2, LISTING_DURATION);
         console2.log("Step 3: Relisted at higher price:", NFT_PRICE * 2);
 
         // Step 4: Cancel again
@@ -205,13 +142,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         console2.log("Step 4: Higher price listing cancelled");
 
         // Step 5: Relist at lower price
-        bytes32 newListingId = listERC721(
-            alice,
-            address(mockERC721),
-            2,
-            NFT_PRICE / 2,
-            LISTING_DURATION
-        );
+        bytes32 newListingId = listERC721(alice, address(mockERC721), 2, NFT_PRICE / 2, LISTING_DURATION);
         console2.log("Step 5: NFT relisted at lower price:", NFT_PRICE / 2);
 
         // Step 6: Bob buys
@@ -241,37 +172,13 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         vm.stopPrank();
 
         // Step 1: Alice lists 2 NFTs
-        bytes32 listing1 = listERC721(
-            alice,
-            address(mockERC721),
-            10,
-            1 ether,
-            LISTING_DURATION
-        );
-        bytes32 listing2 = listERC721(
-            alice,
-            address(mockERC721),
-            11,
-            2 ether,
-            LISTING_DURATION
-        );
+        bytes32 listing1 = listERC721(alice, address(mockERC721), 10, 1 ether, LISTING_DURATION);
+        bytes32 listing2 = listERC721(alice, address(mockERC721), 11, 2 ether, LISTING_DURATION);
         console2.log("Step 1: Alice listed 2 NFTs");
 
         // Step 2: Charlie lists 2 NFTs
-        bytes32 listing3 = listERC721(
-            charlie,
-            address(mockERC721),
-            12,
-            1.5 ether,
-            LISTING_DURATION
-        );
-        bytes32 listing4 = listERC721(
-            charlie,
-            address(mockERC721),
-            13,
-            0.5 ether,
-            LISTING_DURATION
-        );
+        bytes32 listing3 = listERC721(charlie, address(mockERC721), 12, 1.5 ether, LISTING_DURATION);
+        bytes32 listing4 = listERC721(charlie, address(mockERC721), 13, 0.5 ether, LISTING_DURATION);
         console2.log("Step 2: Charlie listed 2 NFTs");
 
         // Step 3: Bob buys cheapest listing
@@ -304,13 +211,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         // Setup
         vm.prank(alice);
         mockERC721.mint(alice, 20);
-        bytes32 listingId = listERC721(
-            alice,
-            address(mockERC721),
-            20,
-            NFT_PRICE,
-            LISTING_DURATION
-        );
+        bytes32 listingId = listERC721(alice, address(mockERC721), 20, NFT_PRICE, LISTING_DURATION);
 
         // Scenario 1: Insufficient funds
         console2.log("Scenario 1: Insufficient funds");
@@ -339,13 +240,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         console2.log("Scenario 3: Expired listing");
         vm.prank(alice);
         mockERC721.mint(alice, 21);
-        bytes32 expiredListingId = listERC721(
-            alice,
-            address(mockERC721),
-            21,
-            NFT_PRICE,
-            1 days
-        );
+        bytes32 expiredListingId = listERC721(alice, address(mockERC721), 21, NFT_PRICE, 1 days);
 
         // Fast forward past expiration
         vm.warp(block.timestamp + 2 days);
@@ -357,13 +252,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
 
         // Scenario 3b: Relist after expiration
         vm.warp(block.timestamp + 1 days); // Move time forward again
-        bytes32 newListingId = listERC721(
-            alice,
-            address(mockERC721),
-            21,
-            NFT_PRICE,
-            LISTING_DURATION
-        );
+        bytes32 newListingId = listERC721(alice, address(mockERC721), 21, NFT_PRICE, LISTING_DURATION);
         buyERC721(dave, newListingId);
         console2.log("  -> Relisting successful");
 
@@ -390,28 +279,15 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         }
 
         // Step 1: Batch approve
-        setApprovalForAllERC721(
-            address(mockERC721),
-            alice,
-            address(erc721Exchange)
-        );
+        setApprovalForAllERC721(address(mockERC721), alice, address(erc721Exchange));
         console2.log("Step 1: Batch approved");
 
         // Step 2: Create multiple listings
         bytes32[] memory listingIds = new bytes32[](5);
         for (uint256 i = 0; i < 5; i++) {
             vm.prank(alice);
-            erc721Exchange.listNFT(
-                address(mockERC721),
-                tokenIds[i],
-                prices[i],
-                LISTING_DURATION
-            );
-            listingIds[i] = erc721Exchange.getGeneratedListingId(
-                address(mockERC721),
-                tokenIds[i],
-                alice
-            );
+            erc721Exchange.listNFT(address(mockERC721), tokenIds[i], prices[i], LISTING_DURATION);
+            listingIds[i] = erc721Exchange.getGeneratedListingId(address(mockERC721), tokenIds[i], alice);
         }
         console2.log("Step 2: Created 5 listings");
 
@@ -423,9 +299,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
 
         vm.startPrank(bob);
         for (uint256 i = 0; i < 3; i++) {
-            erc721Exchange.buyNFT{
-                value: erc721Exchange.getBuyerSeesPrice(listingIds[i])
-            }(listingIds[i]);
+            erc721Exchange.buyNFT{value: erc721Exchange.getBuyerSeesPrice(listingIds[i])}(listingIds[i]);
         }
         vm.stopPrank();
         console2.log("Step 3: Bob bought 3 NFTs");
@@ -439,9 +313,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         // Step 5: Charlie buys remaining
         vm.startPrank(charlie);
         for (uint256 i = 3; i < 5; i++) {
-            erc721Exchange.buyNFT{
-                value: erc721Exchange.getBuyerSeesPrice(listingIds[i])
-            }(listingIds[i]);
+            erc721Exchange.buyNFT{value: erc721Exchange.getBuyerSeesPrice(listingIds[i])}(listingIds[i]);
         }
         vm.stopPrank();
 
@@ -468,40 +340,18 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         console2.log("Step 1: NFT with royalties minted");
 
         // Step 2: Primary sale - Alice to Bob (no royalty on primary)
-        bytes32 listing1 = listERC721(
-            alice,
-            address(mockERC721),
-            30,
-            NFT_PRICE,
-            LISTING_DURATION
-        );
+        bytes32 listing1 = listERC721(alice, address(mockERC721), 30, NFT_PRICE, LISTING_DURATION);
         buyERC721(bob, listing1);
         assertNFTOwner(address(mockERC721), 30, bob);
         console2.log("Step 2: Primary sale complete");
 
         // Step 3: Secondary sale - Bob to Charlie (with royalty)
-        BalanceSnapshot memory balancesBefore = snapshotBalances(
-            charlie,
-            bob,
-            marketplaceWallet,
-            alice
-        );
+        BalanceSnapshot memory balancesBefore = snapshotBalances(charlie, bob, marketplaceWallet, alice);
 
-        bytes32 listing2 = listERC721(
-            bob,
-            address(mockERC721),
-            30,
-            NFT_PRICE * 2,
-            LISTING_DURATION
-        );
+        bytes32 listing2 = listERC721(bob, address(mockERC721), 30, NFT_PRICE * 2, LISTING_DURATION);
         buyERC721(charlie, listing2);
 
-        BalanceSnapshot memory balancesAfter = snapshotBalances(
-            charlie,
-            bob,
-            marketplaceWallet,
-            alice
-        );
+        BalanceSnapshot memory balancesAfter = snapshotBalances(charlie, bob, marketplaceWallet, alice);
         console2.log("Step 3: Secondary sale complete");
 
         // Step 4: Verify royalty payment to Alice
@@ -511,12 +361,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         uint256 sellerGets = salePrice - expectedRoyalty;
 
         assertBalanceChanges(
-            balancesBefore,
-            balancesAfter,
-            salePrice + takerFee + expectedRoyalty,
-            sellerGets,
-            takerFee,
-            expectedRoyalty
+            balancesBefore, balancesAfter, salePrice + takerFee + expectedRoyalty, sellerGets, takerFee, expectedRoyalty
         );
         console2.log("Step 4: Royalty payment verified");
 
@@ -538,21 +383,8 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         vm.stopPrank();
 
         // Step 1: List both tokens
-        bytes32 erc721Listing = listERC721(
-            alice,
-            address(mockERC721),
-            40,
-            1 ether,
-            LISTING_DURATION
-        );
-        bytes32 erc1155Listing = listERC1155(
-            alice,
-            address(mockERC1155),
-            2,
-            10,
-            0.5 ether,
-            LISTING_DURATION
-        );
+        bytes32 erc721Listing = listERC721(alice, address(mockERC721), 40, 1 ether, LISTING_DURATION);
+        bytes32 erc1155Listing = listERC1155(alice, address(mockERC1155), 2, 10, 0.5 ether, LISTING_DURATION);
         console2.log("Step 1: Both token types listed");
 
         // Step 2: Bob buys ERC721

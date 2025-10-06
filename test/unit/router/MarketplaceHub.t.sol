@@ -36,12 +36,7 @@ contract MarketplaceHubTest is Test {
         // Deploy registries
         exchangeRegistry = new ExchangeRegistry(admin);
         collectionRegistry = new CollectionRegistry(admin);
-        feeRegistry = new FeeRegistry(
-            admin,
-            baseFee,
-            feeManager,
-            royaltyManager
-        );
+        feeRegistry = new FeeRegistry(admin, baseFee, feeManager, royaltyManager);
         auctionRegistry = new AuctionRegistry(admin);
 
         // Deploy hub
@@ -56,24 +51,12 @@ contract MarketplaceHubTest is Test {
         );
 
         // Register some contracts
-        exchangeRegistry.registerExchange(
-            IExchangeRegistry.TokenStandard.ERC721,
-            erc721Exchange
-        );
-        exchangeRegistry.registerExchange(
-            IExchangeRegistry.TokenStandard.ERC1155,
-            erc1155Exchange
-        );
+        exchangeRegistry.registerExchange(IExchangeRegistry.TokenStandard.ERC721, erc721Exchange);
+        exchangeRegistry.registerExchange(IExchangeRegistry.TokenStandard.ERC1155, erc1155Exchange);
         collectionRegistry.registerFactory("ERC721", erc721Factory);
         collectionRegistry.registerFactory("ERC1155", erc1155Factory);
-        auctionRegistry.registerAuction(
-            IAuctionRegistry.AuctionType.ENGLISH,
-            englishAuction
-        );
-        auctionRegistry.registerAuction(
-            IAuctionRegistry.AuctionType.DUTCH,
-            dutchAuction
-        );
+        auctionRegistry.registerAuction(IAuctionRegistry.AuctionType.ENGLISH, englishAuction);
+        auctionRegistry.registerAuction(IAuctionRegistry.AuctionType.DUTCH, dutchAuction);
         auctionRegistry.updateAuctionFactory(auctionFactory);
 
         vm.stopPrank();

@@ -120,10 +120,7 @@ contract DeployAll is Script {
         console.log("2/6 Deploying Fee System...");
         baseFee = new Fee(admin, 500); // 5% default royalty fee
         feeManager = new AdvancedFeeManager(admin, address(accessControl));
-        royaltyManager = new AdvancedRoyaltyManager(
-            address(accessControl),
-            address(baseFee)
-        );
+        royaltyManager = new AdvancedRoyaltyManager(address(accessControl), address(baseFee));
 
         console.log("  BaseFee:", address(baseFee));
         console.log("  FeeManager:", address(feeManager));
@@ -151,10 +148,7 @@ contract DeployAll is Script {
 
         erc721Factory = new ERC721CollectionFactory();
         erc1155Factory = new ERC1155CollectionFactory();
-        factoryRegistry = new CollectionFactoryRegistry(
-            address(erc721Factory),
-            address(erc1155Factory)
-        );
+        factoryRegistry = new CollectionFactoryRegistry(address(erc721Factory), address(erc1155Factory));
 
         console.log("  ERC721Factory:", address(erc721Factory));
         console.log("  ERC1155Factory:", address(erc1155Factory));
@@ -167,12 +161,8 @@ contract DeployAll is Script {
         auctionFactory = new AuctionFactory(admin);
 
         // Get implementation addresses from factory
-        englishAuction = EnglishAuction(
-            auctionFactory.englishAuctionImplementation()
-        );
-        dutchAuction = DutchAuction(
-            auctionFactory.dutchAuctionImplementation()
-        );
+        englishAuction = EnglishAuction(auctionFactory.englishAuctionImplementation());
+        dutchAuction = DutchAuction(auctionFactory.dutchAuctionImplementation());
 
         console.log("  EnglishAuction:", address(englishAuction));
         console.log("  DutchAuction:", address(dutchAuction));
@@ -181,14 +171,8 @@ contract DeployAll is Script {
 
     function _deployAdvancedManagers() internal {
         console.log("5.5/6 Deploying Managers...");
-        offerManager = new OfferManager(
-            address(accessControl),
-            address(feeManager)
-        );
-        bundleManager = new BundleManager(
-            address(accessControl),
-            address(feeManager)
-        );
+        offerManager = new OfferManager(address(accessControl), address(feeManager));
+        bundleManager = new BundleManager(address(accessControl), address(feeManager));
         console.log("  OfferManager:", address(offerManager));
         console.log("  BundleManager:", address(bundleManager));
     }
@@ -199,12 +183,7 @@ contract DeployAll is Script {
         // Deploy registries
         hubExchangeRegistry = new ExchangeRegistry(admin);
         hubCollectionRegistry = new CollectionRegistry(admin);
-        hubFeeRegistry = new FeeRegistry(
-            admin,
-            address(baseFee),
-            address(feeManager),
-            address(royaltyManager)
-        );
+        hubFeeRegistry = new FeeRegistry(admin, address(baseFee), address(feeManager), address(royaltyManager));
         hubAuctionRegistry = new AuctionRegistry(admin);
 
         // Deploy managers before hub
@@ -222,29 +201,14 @@ contract DeployAll is Script {
         );
 
         // Register all contracts
-        hubExchangeRegistry.registerExchange(
-            IExchangeRegistry.TokenStandard.ERC721,
-            address(erc721Exchange)
-        );
-        hubExchangeRegistry.registerExchange(
-            IExchangeRegistry.TokenStandard.ERC1155,
-            address(erc1155Exchange)
-        );
+        hubExchangeRegistry.registerExchange(IExchangeRegistry.TokenStandard.ERC721, address(erc721Exchange));
+        hubExchangeRegistry.registerExchange(IExchangeRegistry.TokenStandard.ERC1155, address(erc1155Exchange));
 
         hubCollectionRegistry.registerFactory("ERC721", address(erc721Factory));
-        hubCollectionRegistry.registerFactory(
-            "ERC1155",
-            address(erc1155Factory)
-        );
+        hubCollectionRegistry.registerFactory("ERC1155", address(erc1155Factory));
 
-        hubAuctionRegistry.registerAuction(
-            IAuctionRegistry.AuctionType.ENGLISH,
-            address(englishAuction)
-        );
-        hubAuctionRegistry.registerAuction(
-            IAuctionRegistry.AuctionType.DUTCH,
-            address(dutchAuction)
-        );
+        hubAuctionRegistry.registerAuction(IAuctionRegistry.AuctionType.ENGLISH, address(englishAuction));
+        hubAuctionRegistry.registerAuction(IAuctionRegistry.AuctionType.DUTCH, address(dutchAuction));
         hubAuctionRegistry.updateAuctionFactory(address(auctionFactory));
 
         console.log("  HubExchangeRegistry:", address(hubExchangeRegistry));
