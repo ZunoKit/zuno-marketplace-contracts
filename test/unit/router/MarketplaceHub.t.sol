@@ -110,6 +110,80 @@ contract MarketplaceHubTest is Test {
         assertEq(hub.getAuctionRegistry(), address(auctionRegistry));
     }
 
+    function test_GetAllExchanges() public {
+        (IExchangeRegistry.TokenStandard[] memory standards, address[] memory exchanges) = hub.getAllExchanges();
+        assertEq(standards.length, 2);
+        assertEq(exchanges.length, 2);
+
+        // Check contents without assuming order
+        bool found721 = false;
+        bool found1155 = false;
+        for (uint256 i = 0; i < standards.length; i++) {
+            if (standards[i] == IExchangeRegistry.TokenStandard.ERC721 && exchanges[i] == erc721Exchange) {
+                found721 = true;
+            }
+            if (standards[i] == IExchangeRegistry.TokenStandard.ERC1155 && exchanges[i] == erc1155Exchange) {
+                found1155 = true;
+            }
+        }
+        assertTrue(found721, "ERC721 exchange not found");
+        assertTrue(found1155, "ERC1155 exchange not found");
+    }
+
+    function test_GetAllFactories() public {
+        (string[] memory typesList, address[] memory factories) = hub.getAllFactories();
+        assertEq(typesList.length, 2);
+        assertEq(factories.length, 2);
+
+        bool found721 = false;
+        bool found1155 = false;
+        for (uint256 i = 0; i < typesList.length; i++) {
+            if (keccak256(bytes(typesList[i])) == keccak256("ERC721") && factories[i] == erc721Factory) {
+                found721 = true;
+            }
+            if (keccak256(bytes(typesList[i])) == keccak256("ERC1155") && factories[i] == erc1155Factory) {
+                found1155 = true;
+            }
+        }
+        assertTrue(found721, "ERC721 factory not found");
+        assertTrue(found1155, "ERC1155 factory not found");
+    }
+
+    function test_GetAllAuctions() public {
+        (IAuctionRegistry.AuctionType[] memory typesList, address[] memory contracts) = hub.getAllAuctions();
+        assertEq(typesList.length, 2);
+        assertEq(contracts.length, 2);
+
+        bool foundEnglish = false;
+        bool foundDutch = false;
+        for (uint256 i = 0; i < typesList.length; i++) {
+            if (typesList[i] == IAuctionRegistry.AuctionType.ENGLISH && contracts[i] == englishAuction) {
+                foundEnglish = true;
+            }
+            if (typesList[i] == IAuctionRegistry.AuctionType.DUTCH && contracts[i] == dutchAuction) {
+                foundDutch = true;
+            }
+        }
+        assertTrue(foundEnglish, "English auction not found");
+        assertTrue(foundDutch, "Dutch auction not found");
+    }
+
+    function test_IsRegisteredChecks() public {
+        assertTrue(hub.isRegisteredExchange(erc721Exchange));
+        assertTrue(hub.isRegisteredExchange(erc1155Exchange));
+        assertTrue(hub.isRegisteredFactory(erc721Factory));
+        assertTrue(hub.isRegisteredFactory(erc1155Factory));
+        assertTrue(hub.isRegisteredAuction(englishAuction));
+        assertTrue(hub.isRegisteredAuction(dutchAuction));
+    }
+
+    function test_GetFeeContracts() public {
+        (address baseFeeAddr, address feeManagerAddr, address royaltyManagerAddr) = hub.getFeeContracts();
+        assertEq(baseFeeAddr, baseFee);
+        assertEq(feeManagerAddr, feeManager);
+        assertEq(royaltyManagerAddr, royaltyManager);
+    }
+
     function test_RevertIf_ZeroAddressInConstructor() public {
         vm.expectRevert(MarketplaceHub.MarketplaceHub__ZeroAddress.selector);
         new MarketplaceHub(
