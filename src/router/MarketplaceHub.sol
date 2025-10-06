@@ -48,8 +48,12 @@ contract MarketplaceHub is AccessControl {
         address _offerManager
     ) {
         if (
-            _exchangeRegistry == address(0) || _collectionRegistry == address(0) || _feeRegistry == address(0)
-                || _auctionRegistry == address(0) || _bundleManager == address(0) || _offerManager == address(0)
+            _exchangeRegistry == address(0) ||
+            _collectionRegistry == address(0) ||
+            _feeRegistry == address(0) ||
+            _auctionRegistry == address(0) ||
+            _bundleManager == address(0) ||
+            _offerManager == address(0)
         ) {
             revert MarketplaceHub__ZeroAddress();
         }
@@ -72,7 +76,9 @@ contract MarketplaceHub is AccessControl {
      * @param nftContract The NFT contract address
      * @return The exchange contract to use for this NFT
      */
-    function getExchangeFor(address nftContract) external view returns (address) {
+    function getExchangeFor(
+        address nftContract
+    ) external view returns (address) {
         return exchangeRegistry.getExchangeForToken(nftContract);
     }
 
@@ -80,21 +86,29 @@ contract MarketplaceHub is AccessControl {
      * @notice Get ERC721 Exchange address
      */
     function getERC721Exchange() external view returns (address) {
-        return exchangeRegistry.getExchange(IExchangeRegistry.TokenStandard.ERC721);
+        return
+            exchangeRegistry.getExchange(
+                IExchangeRegistry.TokenStandard.ERC721
+            );
     }
 
     /**
      * @notice Get ERC1155 Exchange address
      */
     function getERC1155Exchange() external view returns (address) {
-        return exchangeRegistry.getExchange(IExchangeRegistry.TokenStandard.ERC1155);
+        return
+            exchangeRegistry.getExchange(
+                IExchangeRegistry.TokenStandard.ERC1155
+            );
     }
 
     /**
      * @notice Get factory address for token type
      * @param tokenType "ERC721" or "ERC1155"
      */
-    function getCollectionFactory(string memory tokenType) external view returns (address) {
+    function getCollectionFactory(
+        string memory tokenType
+    ) external view returns (address) {
         return collectionRegistry.getFactory(tokenType);
     }
 
@@ -102,14 +116,20 @@ contract MarketplaceHub is AccessControl {
      * @notice Get English Auction contract address
      */
     function getEnglishAuction() external view returns (address) {
-        return auctionRegistry.getAuctionContract(IAuctionRegistry.AuctionType.ENGLISH);
+        return
+            auctionRegistry.getAuctionContract(
+                IAuctionRegistry.AuctionType.ENGLISH
+            );
     }
 
     /**
      * @notice Get Dutch Auction contract address
      */
     function getDutchAuction() external view returns (address) {
-        return auctionRegistry.getAuctionContract(IAuctionRegistry.AuctionType.DUTCH);
+        return
+            auctionRegistry.getAuctionContract(
+                IAuctionRegistry.AuctionType.DUTCH
+            );
     }
 
     /**
@@ -117,6 +137,76 @@ contract MarketplaceHub is AccessControl {
      */
     function getAuctionFactory() external view returns (address) {
         return auctionRegistry.getAuctionFactory();
+    }
+
+    /**
+     * @notice Get all registered exchanges
+     * @return standards Array of token standards
+     * @return exchanges Array of exchange addresses
+     */
+    function getAllExchanges()
+        external
+        view
+        returns (
+            IExchangeRegistry.TokenStandard[] memory standards,
+            address[] memory exchanges
+        )
+    {
+        return exchangeRegistry.getAllExchanges();
+    }
+
+    /**
+     * @notice Get all registered factories
+     * @return tokenTypes Array of token type identifiers
+     * @return factories Array of factory addresses
+     */
+    function getAllFactories()
+        external
+        view
+        returns (string[] memory tokenTypes, address[] memory factories)
+    {
+        return collectionRegistry.getAllFactories();
+    }
+
+    /**
+     * @notice Get all registered auction contracts
+     * @return types Array of auction types
+     * @return contracts Array of auction contract addresses
+     */
+    function getAllAuctions()
+        external
+        view
+        returns (
+            IAuctionRegistry.AuctionType[] memory types,
+            address[] memory contracts
+        )
+    {
+        return auctionRegistry.getAllAuctions();
+    }
+
+    /**
+     * @notice Check if address is a registered exchange
+     */
+    function isRegisteredExchange(
+        address exchange
+    ) external view returns (bool) {
+        return exchangeRegistry.isRegisteredExchange(exchange);
+    }
+
+    /**
+     * @notice Check if address is a registered factory
+     */
+    function isRegisteredFactory(address factory) external view returns (bool) {
+        return collectionRegistry.isRegisteredFactory(factory);
+    }
+
+    /**
+     * @notice Check if address is a registered auction contract
+     */
+    function isRegisteredAuction(
+        address auctionContract
+    ) external view returns (bool) {
+        return auctionRegistry.isRegisteredAuction(auctionContract);
     }
 
     /**
@@ -142,12 +232,34 @@ contract MarketplaceHub is AccessControl {
      * @param salePrice The sale price
      * @return breakdown Complete fee breakdown
      */
-    function calculateFees(address nftContract, uint256 tokenId, uint256 salePrice)
-        external
-        view
-        returns (IFeeRegistry.FeeBreakdown memory breakdown)
-    {
+    function calculateFees(
+        address nftContract,
+        uint256 tokenId,
+        uint256 salePrice
+    ) external view returns (IFeeRegistry.FeeBreakdown memory breakdown) {
         return feeRegistry.calculateAllFees(nftContract, tokenId, salePrice);
+    }
+
+    /**
+     * @notice Calculate platform fee only
+     */
+    function calculatePlatformFee(
+        uint256 salePrice
+    ) external view returns (uint256) {
+        return feeRegistry.calculatePlatformFee(salePrice);
+    }
+
+    /**
+     * @notice Calculate royalty fee only
+     * @return recipient Royalty recipient address
+     * @return amount Royalty amount
+     */
+    function calculateRoyalty(
+        address nftContract,
+        uint256 tokenId,
+        uint256 salePrice
+    ) external view returns (address recipient, uint256 amount) {
+        return feeRegistry.calculateRoyalty(nftContract, tokenId, salePrice);
     }
 
     /**
@@ -155,6 +267,25 @@ contract MarketplaceHub is AccessControl {
      */
     function getPlatformFeePercentage() external view returns (uint256) {
         return feeRegistry.getPlatformFeePercentage();
+    }
+
+    /**
+     * @notice Get fee-related contract addresses
+     */
+    function getFeeContracts()
+        external
+        view
+        returns (
+            address baseFeeContract,
+            address feeManagerContract,
+            address royaltyManagerContract
+        )
+    {
+        return (
+            feeRegistry.getBaseFeeContract(),
+            feeRegistry.getFeeManagerContract(),
+            feeRegistry.getRoyaltyManagerContract()
+        );
     }
 
     // ==================== COLLECTION VERIFICATION ====================
@@ -165,7 +296,9 @@ contract MarketplaceHub is AccessControl {
      * @return isValid Whether collection is verified
      * @return tokenType The token type ("ERC721" or "ERC1155")
      */
-    function verifyCollection(address collection) external view returns (bool isValid, string memory tokenType) {
+    function verifyCollection(
+        address collection
+    ) external view returns (bool isValid, string memory tokenType) {
         return collectionRegistry.verifyCollection(collection);
     }
 
@@ -209,12 +342,20 @@ contract MarketplaceHub is AccessControl {
             address offerManagerAddr
         )
     {
-        erc721Exchange = exchangeRegistry.getExchange(IExchangeRegistry.TokenStandard.ERC721);
-        erc1155Exchange = exchangeRegistry.getExchange(IExchangeRegistry.TokenStandard.ERC1155);
+        erc721Exchange = exchangeRegistry.getExchange(
+            IExchangeRegistry.TokenStandard.ERC721
+        );
+        erc1155Exchange = exchangeRegistry.getExchange(
+            IExchangeRegistry.TokenStandard.ERC1155
+        );
         erc721Factory = collectionRegistry.getFactory("ERC721");
         erc1155Factory = collectionRegistry.getFactory("ERC1155");
-        englishAuction = auctionRegistry.getAuctionContract(IAuctionRegistry.AuctionType.ENGLISH);
-        dutchAuction = auctionRegistry.getAuctionContract(IAuctionRegistry.AuctionType.DUTCH);
+        englishAuction = auctionRegistry.getAuctionContract(
+            IAuctionRegistry.AuctionType.ENGLISH
+        );
+        dutchAuction = auctionRegistry.getAuctionContract(
+            IAuctionRegistry.AuctionType.DUTCH
+        );
         auctionFactory = auctionRegistry.getAuctionFactory();
         feeRegistryAddr = address(feeRegistry);
         bundleManagerAddr = bundleManager;
@@ -228,7 +369,10 @@ contract MarketplaceHub is AccessControl {
      * @param registryType "exchange", "collection", "fee", "auction", "bundle", or "offer"
      * @param newRegistry The new registry address
      */
-    function updateRegistry(string memory registryType, address newRegistry) external onlyRole(ADMIN_ROLE) {
+    function updateRegistry(
+        string memory registryType,
+        address newRegistry
+    ) external onlyRole(ADMIN_ROLE) {
         if (newRegistry == address(0)) revert MarketplaceHub__ZeroAddress();
 
         bytes32 typeHash = keccak256(bytes(registryType));
