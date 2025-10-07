@@ -28,6 +28,12 @@ contract ERC1155Collection is ERC1155, BaseCollection, IERC2981 {
         return s_symbol;
     }
 
+    // Internal function to set name and symbol for proxy initialization
+    function _setNameAndSymbol(string memory _name, string memory _symbol) internal {
+        s_name = _name;
+        s_symbol = _symbol;
+    }
+
     // Mint a single NFT
     function mint(address to, uint256 amount) external payable {
         // checkMint now auto-updates stage internally
