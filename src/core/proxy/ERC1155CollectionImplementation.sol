@@ -50,6 +50,9 @@ contract ERC1155CollectionImplementation is ERC1155Collection, Initializable {
      * @dev Manually sets state variables that would normally be set in constructors
      */
     function _initializeProxyState(CollectionParams memory params) internal {
+        // Initialize name and symbol for proxy pattern
+        _setNameAndSymbol(params.name, params.symbol);
+        
         // Initialize BaseCollection state variables
         s_description = params.description;
         s_mintPrice = params.mintPrice;
@@ -70,8 +73,7 @@ contract ERC1155CollectionImplementation is ERC1155Collection, Initializable {
         // Create Fee contract for royalty management
         s_feeContract = new Fee(params.owner, params.royaltyFee);
 
-        // Note: ERC1155 name/symbol and URI are handled by the parent constructor
-        // For proxies, we'll need to set the URI manually if needed
+        // Set the URI for ERC1155
         _setURI(params.tokenURI);
     }
 
