@@ -11,7 +11,30 @@ import {Minted, BatchMinted} from "src/events/CollectionEvents.sol";
 import "src/errors/CollectionErrors.sol";
 
 contract ERC721Collection is ERC721, BaseCollection, IERC2981 {
-    constructor(CollectionParams memory params) ERC721(params.name, params.symbol) BaseCollection(params) {}
+    // Collection metadata - stored separately for proxy pattern compatibility
+    string private s_collectionName;
+    string private s_collectionSymbol;
+
+    constructor(CollectionParams memory params) ERC721(params.name, params.symbol) BaseCollection(params) {
+        s_collectionName = params.name;
+        s_collectionSymbol = params.symbol;
+    }
+
+    // Override name() to return our stored value (needed for proxy pattern)
+    function name() public view override returns (string memory) {
+        return s_collectionName;
+    }
+
+    // Override symbol() to return our stored value (needed for proxy pattern)
+    function symbol() public view override returns (string memory) {
+        return s_collectionSymbol;
+    }
+
+    // Internal function to set name and symbol for proxy initialization
+    function _setNameAndSymbol(string memory _name, string memory _symbol) internal {
+        s_collectionName = _name;
+        s_collectionSymbol = _symbol;
+    }
 
     function mint(address to) external payable {
         // checkMint now auto-updates stage internally
