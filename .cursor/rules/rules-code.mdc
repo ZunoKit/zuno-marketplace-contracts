@@ -852,3 +852,10 @@ contract ERC721NFTExchange is IExchangeCore {
 ---
 
 **⚠️ Security Notice**: This is a smart contract project handling user assets. Always prioritize security, conduct thorough testing, and get professional audits before mainnet deployment.
+
+---
+
+## 🎓 Additional Resources
+
+- See `CLAUDE.md` for complete project architecture overview
+- See `docs/` for detailed documentation on specific topics
