@@ -2,9 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+## 🎯 Project Overview
 
-Zuno Marketplace is a production-ready, modular NFT marketplace built with Foundry/Solidity ^0.8.30. It supports ERC721 and ERC1155 tokens with advanced trading features including auctions, offers, bundles, and comprehensive collection management.
+**Zuno Marketplace**: Production-ready, modular NFT marketplace built with Foundry/Solidity ^0.8.30
+
+It supports ERC721 and ERC1155 tokens with advanced trading features including auctions, offers, bundles, and comprehensive collection management.
 
 **Tech Stack:**
 
@@ -14,6 +16,38 @@ Zuno Marketplace is a production-ready, modular NFT marketplace built with Found
 - Makefile for common tasks
 
 **Note:** This is a pure Foundry project. Despite the README mentioning pnpm, there is no package.json - use Foundry or Makefile commands instead.
+
+**⚠️ Critical**: This is a security-critical smart contract project handling financial transactions and NFT transfers.
+
+## 🔴 RED-GREEN-REFACTOR Methodology (MANDATORY)
+
+**EVERY code change MUST follow this cycle:**
+
+### 1. 🔴 RED: Write failing tests FIRST
+
+- Write test cases that define the expected behavior
+- Run tests to confirm they fail for the right reasons
+- **Never skip this step, even for "simple" changes**
+
+### 2. 🟢 GREEN: Write minimal code to pass ALL tests
+
+- Implement the simplest solution that makes tests pass
+- Focus on making it work, not making it perfect
+- All tests must pass before moving to refactor
+
+### 3. 🔵 REFACTOR: Improve code while keeping ALL tests passing
+
+- Optimize for readability, maintainability, and gas efficiency
+- Apply design patterns and best practices
+- Run tests continuously to ensure nothing breaks
+
+### ⛔ FORBIDDEN
+
+- Writing implementation before tests
+- Skipping/removing tests to make code "work"
+- Leaving any tests failing
+- Committing code with failing tests
+- Commenting out tests instead of fixing issues
 
 ## Common Commands
 
@@ -356,11 +390,13 @@ Located in `script/deploy/`:
 - **`DeployAll.s.sol`** - Deploy EVERYTHING (core + hub) in one command
 
 Usage:
+
 ```bash
 forge script script/deploy/DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast --verify
 ```
 
 Output:
+
 - All core contracts deployed
 - MarketplaceHub deployed and configured
 - **Frontend only needs MarketplaceHub address** (shown at end of deployment)
@@ -370,10 +406,27 @@ Output:
 Project uses Conventional Commits:
 
 ```
-type(scope): description
+<type>(<scope>): <description>
 
-Types: feat, fix, docs, style, refactor, test, chore, contract, deploy, security
+Types: feat, fix, docs, style, refactor, perf, test, chore, contract, deploy, security
+Scopes: exchange, collection, auction, fees, security, factory, libraries, validation, access
 ```
+
+**Examples:**
+
+- `feat(exchange): add bundle trading support`
+- `fix(auction): prevent bid overflow in dutch auction`
+- `security(exchange): add reentrancy guard to purchase`
+
+## Security Alert Protocol
+
+If you discover a security vulnerability:
+
+1. **DO NOT** commit the fix to a public branch
+2. Document the issue privately
+3. Propose fix with comprehensive tests
+4. Tag with `security` type in commit message
+5. Recommend immediate audit review
 
 ## Key Security Features
 
@@ -384,8 +437,65 @@ Types: feat, fix, docs, style, refactor, test, chore, contract, deploy, security
 5. **Input Validation:** Dedicated validator contracts prevent invalid states
 6. **Safe Transfers:** NFTTransferLib handles all NFT movements
 
+## Quick Reference
+
+### Essential Commands
+
+```bash
+forge build              # Always build before testing
+forge test -vvv          # Run tests with verbosity
+forge coverage           # Generate coverage reports
+forge fmt                # Format code before committing
+forge snapshot           # Generate gas snapshots
+```
+
+### Design Patterns (Details in .cursor/rules/rules-code.mdc)
+
+1. **Proxy Pattern** - OpenZeppelin Clones for minimal proxies
+2. **Initializer Pattern** - `Initializable` with `initialize()` functions
+3. **Registry + Hub Pattern** - MarketplaceHub as single entry point
+4. **Role-Based Access Control** - MarketplaceAccessControl for permissions
+
+### Security Requirements
+
+- ✅ ReentrancyGuard on all state-changing functions
+- ✅ Input validation using dedicated validator contracts
+- ✅ Safe transfers via NFTTransferLib
+- ✅ Custom errors (NO string reverts)
+- ✅ Events for all state changes
+
+### Gas Optimization Checklist
+
+- Use minimal proxy pattern for deployments
+- Pack storage variables efficiently
+- Cache storage reads in memory
+- Use custom errors instead of strings
+- Follow patterns in `src/optimizations/`
+
+## Pre-Commit Checklist
+
+- [ ] All tests pass (`forge test`)
+- [ ] Code formatted (`forge fmt`)
+- [ ] No linter errors
+- [ ] Custom errors used (no require strings)
+- [ ] Events emitted for state changes
+- [ ] NatSpec documentation complete
+- [ ] Gas optimizations applied
+- [ ] Commit message follows conventional format
+
+## Documentation References
+
+- `.cursor/rules/rules-code.mdc` - Detailed technical patterns and best practices
+- `docs/user-guide.md` - Hub + Registry architecture
+- `docs/security/` - Security patterns and audit preparation
+- `docs/guides/integration-guide.md` - Frontend integration guide
+
 ## Current Status
 
 ⚠️ **Not yet audited** - Do not use in production without professional security audit.
 
 The codebase is under active development with recent critical security improvements (Priority 1 fixes) completed on the `fix/critical-security-improvements` branch.
+
+---
+
+**⚠️ Remember**: This is a financial application handling user assets. Quality, security, and testing are **non-negotiable**. When in doubt, write more tests.
