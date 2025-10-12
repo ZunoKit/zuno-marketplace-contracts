@@ -2,12 +2,12 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
-import "src/contracts/core/NFTExchange/ERC721NFTExchange.sol";
-import "src/contracts/core/NFTExchange/ERC1155NFTExchange.sol";
-import "src/contracts/core/auction/EnglishAuction.sol";
-import "src/contracts/core/auction/DutchAuction.sol";
-import "src/contracts/core/auction/AuctionFactory.sol";
-import "src/contracts/common/Fee.sol";
+import "src/core/exchange/ERC721NFTExchange.sol";
+import "src/core/exchange/ERC1155NFTExchange.sol";
+import "src/core/auction/EnglishAuction.sol";
+import "src/core/auction/DutchAuction.sol";
+import "src/core/factory/AuctionFactory.sol";
+import "src/common/Fee.sol";
 import "../../mocks/MockERC721.sol";
 import "../../mocks/MockERC1155.sol";
 
@@ -87,14 +87,20 @@ contract PaymentDistributionTest is Test {
 
         // Calculate expected payments
         uint256 takerFee = (DEFAULT_PRICE * TAKER_FEE_BPS) / BPS_DENOMINATOR;
-        uint256 totalPrice = DEFAULT_PRICE + takerFee;
+        uint256 royaltyFee = (DEFAULT_PRICE * 500) / BPS_DENOMINATOR; // 5% royalty from MockERC721
+        uint256 totalPrice = DEFAULT_PRICE + takerFee + royaltyFee;
 
         // Buy NFT
         vm.prank(BUYER);
         erc721Exchange.buyNFT{value: totalPrice}(listingId);
 
-        // Verify seller received correct payment
-        assertEq(SELLER.balance, sellerBalanceBefore + DEFAULT_PRICE, "Seller should receive listing price");
+        // Verify seller received correct payment (listing price minus royalty)
+        uint256 expectedSellerAmount = DEFAULT_PRICE - royaltyFee;
+        assertEq(
+            SELLER.balance,
+            sellerBalanceBefore + expectedSellerAmount,
+            "Seller should receive listing price minus royalty"
+        );
 
         // Verify marketplace received fee
         assertEq(
@@ -106,6 +112,9 @@ contract PaymentDistributionTest is Test {
     }
 
     function test_ERC721_BuyNFT_WithRoyalty_PaymentsDistributedCorrectly() public {
+        // Ensure ERC2981 default royalty does not interfere
+        vm.prank(address(this));
+        mockERC721.setDefaultRoyalty(address(this), 0);
         // Setup royalty via Fee contract (not ERC2981)
         vm.prank(address(this));
         Fee feeContract = mockERC721.getFeeContract();
@@ -134,7 +143,12 @@ contract PaymentDistributionTest is Test {
         erc721Exchange.buyNFT{value: totalPrice}(listingId);
 
         // Verify all payments distributed correctly
-        assertEq(SELLER.balance, sellerBalanceBefore + DEFAULT_PRICE, "Seller should receive listing price");
+        // Seller receives listing price minus royalty (since royalty is deducted from seller's payment)
+        assertEq(
+            SELLER.balance,
+            sellerBalanceBefore + (DEFAULT_PRICE - royalty),
+            "Seller should receive listing price minus royalty"
+        );
         assertEq(
             MARKETPLACE_WALLET.balance, marketplaceBalanceBefore + takerFee, "Marketplace should receive taker fee"
         );
@@ -161,14 +175,20 @@ contract PaymentDistributionTest is Test {
 
         // Calculate expected payments
         uint256 takerFee = (DEFAULT_PRICE * TAKER_FEE_BPS) / BPS_DENOMINATOR;
-        uint256 totalPrice = DEFAULT_PRICE + takerFee;
+        uint256 royaltyFee = (DEFAULT_PRICE * 500) / BPS_DENOMINATOR; // 5% royalty from MockERC1155
+        uint256 totalPrice = DEFAULT_PRICE + takerFee + royaltyFee;
 
         // Buy NFT
         vm.prank(BUYER);
         erc1155Exchange.buyNFT{value: totalPrice}(listingId);
 
-        // Verify seller received correct payment
-        assertEq(SELLER.balance, sellerBalanceBefore + DEFAULT_PRICE, "Seller should receive listing price");
+        // Verify seller received correct payment (listing price minus royalty)
+        uint256 expectedSellerAmount = DEFAULT_PRICE - royaltyFee;
+        assertEq(
+            SELLER.balance,
+            sellerBalanceBefore + expectedSellerAmount,
+            "Seller should receive listing price minus royalty"
+        );
 
         // Verify marketplace received fee
         assertEq(

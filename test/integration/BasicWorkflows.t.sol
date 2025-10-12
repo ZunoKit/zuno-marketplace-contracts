@@ -2,11 +2,11 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "src/contracts/core/validation/MarketplaceValidator.sol";
-import "src/contracts/core/NFTExchange/ERC721NFTExchange.sol";
-import "src/contracts/core/NFTExchange/ERC1155NFTExchange.sol";
-import "src/contracts/core/auction/EnglishAuction.sol";
-import "src/contracts/interfaces/IAuction.sol";
+import "src/core/validation/MarketplaceValidator.sol";
+import "src/core/exchange/ERC721NFTExchange.sol";
+import "src/core/exchange/ERC1155NFTExchange.sol";
+import "src/core/auction/EnglishAuction.sol";
+import "src/interfaces/IAuction.sol";
 import "test/mocks/MockERC721.sol";
 import "test/mocks/MockERC1155.sol";
 
@@ -78,7 +78,8 @@ contract BasicWorkflowsTest is Test {
         // 3. User2 buys NFT
         vm.startPrank(user2);
         uint256 takerFee = (PRICE * TAKER_FEE_BPS) / BPS_DENOMINATOR;
-        uint256 totalPrice = PRICE + takerFee;
+        uint256 royaltyFee = (PRICE * 500) / BPS_DENOMINATOR; // 5% royalty from MockERC721
+        uint256 totalPrice = PRICE + takerFee + royaltyFee;
         vm.deal(user2, totalPrice);
         erc721Exchange.buyNFT{value: totalPrice}(listingId);
         vm.stopPrank();
@@ -99,7 +100,8 @@ contract BasicWorkflowsTest is Test {
         // 3. User2 buys NFT
         vm.startPrank(user2);
         uint256 takerFee = (PRICE * TAKER_FEE_BPS) / BPS_DENOMINATOR;
-        uint256 totalPrice = PRICE + takerFee;
+        uint256 royaltyFee = (PRICE * 500) / BPS_DENOMINATOR; // 5% royalty from MockERC1155
+        uint256 totalPrice = PRICE + takerFee + royaltyFee;
         vm.deal(user2, totalPrice);
         erc1155Exchange.buyNFT{value: totalPrice}(listingId);
         vm.stopPrank();
@@ -268,7 +270,8 @@ contract BasicWorkflowsTest is Test {
         // User2 buys from user1
         vm.startPrank(user2);
         uint256 takerFee = (PRICE * TAKER_FEE_BPS) / BPS_DENOMINATOR;
-        uint256 totalPrice = PRICE + takerFee;
+        uint256 royaltyFee = (PRICE * 500) / BPS_DENOMINATOR; // 5% royalty from MockERC721
+        uint256 totalPrice = PRICE + takerFee + royaltyFee;
         vm.deal(user2, 10 ether);
         erc721Exchange.buyNFT{value: totalPrice}(listingId);
         vm.stopPrank();

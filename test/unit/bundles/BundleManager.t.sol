@@ -2,8 +2,8 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
-import "src/contracts/core/bundles/BundleManager.sol";
-import "src/contracts/core/access/MarketplaceAccessControl.sol";
+import "src/core/bundles/BundleManager.sol";
+import "src/core/access/MarketplaceAccessControl.sol";
 import "test/mocks/MockERC721.sol";
 import "test/mocks/MockERC1155.sol";
 import "test/mocks/MockERC20.sol";

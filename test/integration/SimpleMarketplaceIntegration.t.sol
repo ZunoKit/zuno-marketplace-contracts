@@ -5,21 +5,21 @@ import "forge-std/Test.sol";
 import "forge-std/console2.sol";
 
 // Core contracts
-import {MarketplaceValidator} from "src/contracts/core/validation/MarketplaceValidator.sol";
-import {NFTExchangeFactory} from "src/contracts/core/NFTExchange/NFTExchangeFactory.sol";
-import {NFTExchangeRegistry} from "src/contracts/core/NFTExchange/NFTExchangeRegistry.sol";
-import {ERC721NFTExchange} from "src/contracts/core/NFTExchange/ERC721NFTExchange.sol";
-import {ERC1155NFTExchange} from "src/contracts/core/NFTExchange/ERC1155NFTExchange.sol";
-import {AuctionFactory} from "src/contracts/core/auction/AuctionFactory.sol";
-import {OfferManager} from "src/contracts/core/offers/OfferManager.sol";
-import {BundleManager} from "src/contracts/core/bundles/BundleManager.sol";
-import {MarketplaceAccessControl} from "src/contracts/core/access/MarketplaceAccessControl.sol";
-import {AdvancedFeeManager} from "src/contracts/core/fees/AdvancedFeeManager.sol";
+import {MarketplaceValidator} from "src/core/validation/MarketplaceValidator.sol";
+import {NFTExchangeFactory} from "src/core/factory/NFTExchangeFactory.sol";
+import {NFTExchangeRegistry} from "src/core/exchange/NFTExchangeRegistry.sol";
+import {ERC721NFTExchange} from "src/core/exchange/ERC721NFTExchange.sol";
+import {ERC1155NFTExchange} from "src/core/exchange/ERC1155NFTExchange.sol";
+import {AuctionFactory} from "src/core/factory/AuctionFactory.sol";
+import {OfferManager} from "src/core/offers/OfferManager.sol";
+import {BundleManager} from "src/core/bundles/BundleManager.sol";
+import {MarketplaceAccessControl} from "src/core/access/MarketplaceAccessControl.sol";
+import {AdvancedFeeManager} from "src/core/fees/AdvancedFeeManager.sol";
 
 // Collection contracts
-import {ERC721CollectionFactory} from "src/contracts/core/collection/ERC721CollectionFactory.sol";
-import {ERC1155CollectionFactory} from "src/contracts/core/collection/ERC1155CollectionFactory.sol";
-import {CollectionFactoryRegistry} from "src/contracts/core/collection/CollectionFactoryRegistry.sol";
+import {ERC721CollectionFactory} from "src/core/factory/ERC721CollectionFactory.sol";
+import {ERC1155CollectionFactory} from "src/core/factory/ERC1155CollectionFactory.sol";
+import {CollectionFactoryRegistry} from "src/core/factory/CollectionFactoryRegistry.sol";
 
 // Mock contracts
 import {MockERC721} from "test/mocks/MockERC721.sol";

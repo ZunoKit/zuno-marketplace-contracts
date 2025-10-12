@@ -2,8 +2,8 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
-import "src/contracts/core/validation/MarketplaceValidator.sol";
-import "src/contracts/errors/MarketplaceValidatorErrors.sol";
+import "src/core/validation/MarketplaceValidator.sol";
+import "src/errors/MarketplaceValidatorErrors.sol";
 
 contract SimpleValidatorTest is Test {
     MarketplaceValidator public validator;

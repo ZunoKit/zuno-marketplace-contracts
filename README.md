@@ -236,6 +236,40 @@ exchange.createListing(
 );
 ```
 
+### Frontend Integration (MarketplaceHub)
+
+The frontend only needs the `MarketplaceHub` address. Initialize once, cache addresses, and call core
+contracts directly. See detailed guide in `docs/user-guide.md`.
+
+```typescript
+// config.ts
+export const MARKETPLACE_HUB = "0x...";
+
+// Initialize Hub and cache addresses
+import { ethers, Contract } from "ethers";
+import MarketplaceHubABI from "./abis/MarketplaceHub.json";
+
+const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+const hub = new Contract(MARKETPLACE_HUB, MarketplaceHubABI, provider);
+
+// Get all addresses once
+const addresses = await hub.getAllAddresses();
+
+// Auto-detect exchange for an NFT and list directly on the exchange
+const exchangeAddr = await hub.getExchangeFor(nftAddress);
+const exchange = new Contract(exchangeAddr, ExchangeABI, signer);
+await exchange.listNFT(nftAddress, tokenId, ethers.parseEther("1.0"), 86400);
+
+// Helper: calculate fees
+const fees = await hub.calculateFees(
+  nftAddress,
+  tokenId,
+  ethers.parseEther("1.0")
+);
+```
+
+More examples (React hook, end-to-end flows) in `docs/user-guide.md`.
+
 ### Core Features
 
 - **🏭 Collection Factory**: Deploy new ERC721/ERC1155 collections
@@ -250,34 +284,38 @@ exchange.createListing(
 The smart contracts implement multiple security layers:
 
 ### Access Control
+
 - **Role-based Permissions**: Admin, operator, and user roles
 - **Emergency Controls**: Pause/unpause functionality for critical operations
 - **Ownership Management**: Secure ownership transfer mechanisms
 
 ### Attack Prevention
+
 - **Reentrancy Guards**: Protection against reentrancy attacks
 - **Input Validation**: Comprehensive parameter validation
 - **Safe Math**: Built-in overflow/underflow protection (Solidity ^0.8.0)
 - **Pull Payment Pattern**: Secure fund withdrawal mechanisms
 
 ### Code Quality
+
 - **Comprehensive Testing**: >90% test coverage
 - **Gas Optimization**: Efficient contract design
 - **Upgradeable Patterns**: Future-proof architecture
 - **Static Analysis**: Automated security scanning
 
 ### Audit Status
+
 ⚠️ **This code has not been audited yet. Do not use in production without a professional security audit.**
 
 ## 📊 Gas Optimization
 
-| Contract | Deployment Cost | Avg. Function Cost |
-|----------|-----------------|-------------------|
-| ERC721NFTExchange | ~2.1M gas | ~150k gas |
-| ERC1155NFTExchange | ~2.0M gas | ~140k gas |
-| Collection Factory | ~1.8M gas | ~200k gas |
+| Contract           | Deployment Cost | Avg. Function Cost |
+| ------------------ | --------------- | ------------------ |
+| ERC721NFTExchange  | ~2.1M gas       | ~150k gas          |
+| ERC1155NFTExchange | ~2.0M gas       | ~140k gas          |
+| Collection Factory | ~1.8M gas       | ~200k gas          |
 
-*Gas costs are approximate and may vary based on network conditions*
+_Gas costs are approximate and may vary based on network conditions_
 
 ## 🤝 Contributing
 
@@ -319,6 +357,7 @@ docs(readme): update installation instructions
 ### Development Environment
 
 The project uses:
+
 - **Husky** for Git hooks
 - **Commitlint** for commit message validation
 - **Foundry** for smart contract development
@@ -328,16 +367,17 @@ The project uses:
 
 ### Contract Addresses
 
-| Network | Contract | Address |
-|---------|----------|---------|
-| Sepolia | ERC721NFTExchange | `TBD` |
-| Sepolia | ERC1155NFTExchange | `TBD` |
-| Mainnet | ERC721NFTExchange | `TBD` |
-| Mainnet | ERC1155NFTExchange | `TBD` |
+| Network | Contract           | Address |
+| ------- | ------------------ | ------- |
+| Sepolia | ERC721NFTExchange  | `TBD`   |
+| Sepolia | ERC1155NFTExchange | `TBD`   |
+| Mainnet | ERC721NFTExchange  | `TBD`   |
+| Mainnet | ERC1155NFTExchange | `TBD`   |
 
 ### API Reference
 
 For detailed API documentation, see:
+
 - [Contract Interfaces](./src/contracts/interfaces/)
 - [Events](./src/contracts/events/)
 - [Custom Errors](./src/contracts/errors/)

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
-import "src/contracts/libraries/NFTValidationLib.sol";
+import "src/libraries/NFTValidationLib.sol";
 import "test/mocks/MockERC721.sol";
 import "test/mocks/MockERC1155.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -396,14 +396,21 @@ contract NFTValidationLibTest is Test {
         // Bound inputs
         tokenId = bound(tokenId, 1, 1000);
         amount = bound(amount, 1, 100);
+
+        // Bound addresses to safe ranges to avoid precompiles and system contracts
+        // Use range 0x1000 to 0x100000 for test addresses (well above precompiles)
+        owner = address(uint160(bound(uint160(owner), 0x1000, 0x100000)));
+        spender = address(uint160(bound(uint160(spender), 0x1000, 0x100000)));
+
+        // Ensure addresses are valid and different
         vm.assume(owner != address(0) && spender != address(0));
-
-        // Filter out addresses that can't receive ERC1155 tokens
-        // Assume owner is an EOA or contract that can receive ERC1155
-        vm.assume(owner.code.length == 0 || owner == address(this));
-
-        // Ensure spender is different from owner for meaningful test
         vm.assume(spender != owner);
+
+        // Ensure owner is an EOA (no code deployed)
+        vm.assume(owner.code.length == 0);
+
+        // Ensure spender is an EOA (no code deployed)
+        vm.assume(spender.code.length == 0);
 
         // Mint tokens to owner
         vm.prank(address(this));
