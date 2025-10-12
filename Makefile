@@ -61,12 +61,12 @@ clean:
 	forge clean
 
 # Start local Anvil blockchain
-start-anvil:
-	anvil --port 8545
+anvil:
+	anvil --prune-history --port 8545
 
 # Deploy all contracts to local network
 deploy-all-local:
-	forge script script/deploy/DeployAll.s.sol:DeployAll --rpc-url $(LOCAL_RPC) --broadcast
+	forge script script/deploy/DeployAll.s.sol:DeployAll --rpc-url $(LOCAL_RPC) --broadcast --force
 
 # Install dependencies
 install:
