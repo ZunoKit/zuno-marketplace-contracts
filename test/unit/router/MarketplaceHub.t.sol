@@ -10,6 +10,8 @@ import {AuctionRegistry} from "src/registry/AuctionRegistry.sol";
 import {IExchangeRegistry} from "src/interfaces/registry/IExchangeRegistry.sol";
 import {IAuctionRegistry} from "src/interfaces/registry/IAuctionRegistry.sol";
 import {IFeeRegistry} from "src/interfaces/registry/IFeeRegistry.sol";
+import {ListingHistoryTracker} from "src/core/analytics/ListingHistoryTracker.sol";
+import {MarketplaceAccessControl} from "src/core/access/MarketplaceAccessControl.sol";
 
 contract MarketplaceHubTest is Test {
     MarketplaceHub hub;
@@ -17,6 +19,7 @@ contract MarketplaceHubTest is Test {
     CollectionRegistry collectionRegistry;
     FeeRegistry feeRegistry;
     AuctionRegistry auctionRegistry;
+    MarketplaceAccessControl accessControl;
 
     address admin = makeAddr("admin");
     address erc721Exchange = makeAddr("erc721Exchange");
@@ -31,12 +34,20 @@ contract MarketplaceHubTest is Test {
     address royaltyManager = makeAddr("royaltyManager");
 
     function setUp() public {
+        // Deploy access control
+        accessControl = new MarketplaceAccessControl();
+
         vm.startPrank(admin);
 
         // Deploy registries
         exchangeRegistry = new ExchangeRegistry(admin);
         collectionRegistry = new CollectionRegistry(admin);
-        feeRegistry = new FeeRegistry(admin, baseFee, feeManager, royaltyManager);
+        feeRegistry = new FeeRegistry(
+            admin,
+            baseFee,
+            feeManager,
+            royaltyManager
+        );
         auctionRegistry = new AuctionRegistry(admin);
 
         // Deploy hub
@@ -47,16 +58,29 @@ contract MarketplaceHubTest is Test {
             address(feeRegistry),
             address(auctionRegistry),
             address(0x1111),
-            address(0x2222)
+            address(0x2222),
+            address(0x3333) // ListingHistoryTracker
         );
 
         // Register some contracts
-        exchangeRegistry.registerExchange(IExchangeRegistry.TokenStandard.ERC721, erc721Exchange);
-        exchangeRegistry.registerExchange(IExchangeRegistry.TokenStandard.ERC1155, erc1155Exchange);
+        exchangeRegistry.registerExchange(
+            IExchangeRegistry.TokenStandard.ERC721,
+            erc721Exchange
+        );
+        exchangeRegistry.registerExchange(
+            IExchangeRegistry.TokenStandard.ERC1155,
+            erc1155Exchange
+        );
         collectionRegistry.registerFactory("ERC721", erc721Factory);
         collectionRegistry.registerFactory("ERC1155", erc1155Factory);
-        auctionRegistry.registerAuction(IAuctionRegistry.AuctionType.ENGLISH, englishAuction);
-        auctionRegistry.registerAuction(IAuctionRegistry.AuctionType.DUTCH, dutchAuction);
+        auctionRegistry.registerAuction(
+            IAuctionRegistry.AuctionType.ENGLISH,
+            englishAuction
+        );
+        auctionRegistry.registerAuction(
+            IAuctionRegistry.AuctionType.DUTCH,
+            dutchAuction
+        );
         auctionRegistry.updateAuctionFactory(auctionFactory);
 
         vm.stopPrank();
@@ -73,7 +97,8 @@ contract MarketplaceHubTest is Test {
             address _auctionFactory,
             address _feeRegistry,
             address _bundleManager,
-            address _offerManager
+            address _offerManager,
+            address _listingHistoryTracker
         ) = hub.getAllAddresses();
 
         assertEq(_erc721Exchange, erc721Exchange);
@@ -86,6 +111,92 @@ contract MarketplaceHubTest is Test {
         assertEq(_feeRegistry, address(feeRegistry));
         assertEq(_bundleManager, address(0x1111));
         assertEq(_offerManager, address(0x2222));
+        assertEq(_listingHistoryTracker, address(0x3333));
+    }
+
+    // ============================================================================
+    // LISTING HISTORY TRACKER INTEGRATION TESTS
+    // ============================================================================
+
+    function testGetListingHistoryTracker() public {
+        address trackerAddress = hub.getListingHistoryTracker();
+        assertEq(trackerAddress, address(0x3333));
+    }
+
+    function testUpdateRegistryAnalytics() public {
+        // Deploy new ListingHistoryTracker
+        ListingHistoryTracker newTracker = new ListingHistoryTracker(
+            address(accessControl),
+            admin
+        );
+
+        // Update registry
+        vm.prank(admin);
+        hub.updateRegistry("analytics", address(newTracker));
+
+        // Verify update
+        address trackerAddress = hub.getListingHistoryTracker();
+        assertEq(trackerAddress, address(newTracker));
+    }
+
+    function testUpdateRegistryAnalyticsOnlyAdmin() public {
+        address nonAdmin = makeAddr("nonAdmin");
+
+        // Non-admin should not be able to update registry
+        vm.prank(nonAdmin);
+        vm.expectRevert();
+        hub.updateRegistry("analytics", address(0x3333));
+    }
+
+    function testUpdateRegistryAnalyticsZeroAddress() public {
+        // Should not be able to set zero address
+        vm.prank(admin);
+        vm.expectRevert(MarketplaceHub.MarketplaceHub__ZeroAddress.selector);
+        hub.updateRegistry("analytics", address(0));
+    }
+
+    function testUpdateRegistryInvalidType() public {
+        // Should not be able to update with invalid registry type
+        vm.prank(admin);
+        vm.expectRevert(
+            MarketplaceHub.MarketplaceHub__InvalidRegistry.selector
+        );
+        hub.updateRegistry("invalid", address(0x3333));
+    }
+
+    function testListingHistoryTrackerIntegration() public {
+        // Test that we can interact with ListingHistoryTracker through Hub
+        address trackerAddress = hub.getListingHistoryTracker();
+        assertEq(trackerAddress, address(0x3333));
+    }
+
+    function testHubConstructorWithZeroListingHistoryTracker() public {
+        // Should revert if ListingHistoryTracker is zero address
+        vm.expectRevert(MarketplaceHub.MarketplaceHub__ZeroAddress.selector);
+        new MarketplaceHub(
+            admin,
+            address(exchangeRegistry),
+            address(collectionRegistry),
+            address(feeRegistry),
+            address(auctionRegistry),
+            address(0x1111),
+            address(0x2222),
+            address(0) // Zero address should revert
+        );
+    }
+
+    function testRegistryUpdatedEvent() public {
+        ListingHistoryTracker newTracker = new ListingHistoryTracker(
+            address(accessControl),
+            admin
+        );
+
+        // Expect RegistryUpdated event
+        vm.expectEmit(true, false, false, true);
+        emit MarketplaceHub.RegistryUpdated("analytics", address(newTracker));
+
+        vm.prank(admin);
+        hub.updateRegistry("analytics", address(newTracker));
     }
 
     function test_GetERC721Exchange() public {
@@ -111,7 +222,10 @@ contract MarketplaceHubTest is Test {
     }
 
     function test_GetAllExchanges() public {
-        (IExchangeRegistry.TokenStandard[] memory standards, address[] memory exchanges) = hub.getAllExchanges();
+        (
+            IExchangeRegistry.TokenStandard[] memory standards,
+            address[] memory exchanges
+        ) = hub.getAllExchanges();
         assertEq(standards.length, 2);
         assertEq(exchanges.length, 2);
 
@@ -119,10 +233,16 @@ contract MarketplaceHubTest is Test {
         bool found721 = false;
         bool found1155 = false;
         for (uint256 i = 0; i < standards.length; i++) {
-            if (standards[i] == IExchangeRegistry.TokenStandard.ERC721 && exchanges[i] == erc721Exchange) {
+            if (
+                standards[i] == IExchangeRegistry.TokenStandard.ERC721 &&
+                exchanges[i] == erc721Exchange
+            ) {
                 found721 = true;
             }
-            if (standards[i] == IExchangeRegistry.TokenStandard.ERC1155 && exchanges[i] == erc1155Exchange) {
+            if (
+                standards[i] == IExchangeRegistry.TokenStandard.ERC1155 &&
+                exchanges[i] == erc1155Exchange
+            ) {
                 found1155 = true;
             }
         }
@@ -131,17 +251,24 @@ contract MarketplaceHubTest is Test {
     }
 
     function test_GetAllFactories() public {
-        (string[] memory typesList, address[] memory factories) = hub.getAllFactories();
+        (string[] memory typesList, address[] memory factories) = hub
+            .getAllFactories();
         assertEq(typesList.length, 2);
         assertEq(factories.length, 2);
 
         bool found721 = false;
         bool found1155 = false;
         for (uint256 i = 0; i < typesList.length; i++) {
-            if (keccak256(bytes(typesList[i])) == keccak256("ERC721") && factories[i] == erc721Factory) {
+            if (
+                keccak256(bytes(typesList[i])) == keccak256("ERC721") &&
+                factories[i] == erc721Factory
+            ) {
                 found721 = true;
             }
-            if (keccak256(bytes(typesList[i])) == keccak256("ERC1155") && factories[i] == erc1155Factory) {
+            if (
+                keccak256(bytes(typesList[i])) == keccak256("ERC1155") &&
+                factories[i] == erc1155Factory
+            ) {
                 found1155 = true;
             }
         }
@@ -150,17 +277,26 @@ contract MarketplaceHubTest is Test {
     }
 
     function test_GetAllAuctions() public {
-        (IAuctionRegistry.AuctionType[] memory typesList, address[] memory contracts) = hub.getAllAuctions();
+        (
+            IAuctionRegistry.AuctionType[] memory typesList,
+            address[] memory contracts
+        ) = hub.getAllAuctions();
         assertEq(typesList.length, 2);
         assertEq(contracts.length, 2);
 
         bool foundEnglish = false;
         bool foundDutch = false;
         for (uint256 i = 0; i < typesList.length; i++) {
-            if (typesList[i] == IAuctionRegistry.AuctionType.ENGLISH && contracts[i] == englishAuction) {
+            if (
+                typesList[i] == IAuctionRegistry.AuctionType.ENGLISH &&
+                contracts[i] == englishAuction
+            ) {
                 foundEnglish = true;
             }
-            if (typesList[i] == IAuctionRegistry.AuctionType.DUTCH && contracts[i] == dutchAuction) {
+            if (
+                typesList[i] == IAuctionRegistry.AuctionType.DUTCH &&
+                contracts[i] == dutchAuction
+            ) {
                 foundDutch = true;
             }
         }
@@ -178,7 +314,11 @@ contract MarketplaceHubTest is Test {
     }
 
     function test_GetFeeContracts() public {
-        (address baseFeeAddr, address feeManagerAddr, address royaltyManagerAddr) = hub.getFeeContracts();
+        (
+            address baseFeeAddr,
+            address feeManagerAddr,
+            address royaltyManagerAddr
+        ) = hub.getFeeContracts();
         assertEq(baseFeeAddr, baseFee);
         assertEq(feeManagerAddr, feeManager);
         assertEq(royaltyManagerAddr, royaltyManager);
@@ -193,7 +333,8 @@ contract MarketplaceHubTest is Test {
             address(feeRegistry),
             address(auctionRegistry),
             address(1),
-            address(2)
+            address(2),
+            address(3)
         );
     }
 }

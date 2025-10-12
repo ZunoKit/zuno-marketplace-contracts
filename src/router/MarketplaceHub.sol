@@ -32,6 +32,7 @@ contract MarketplaceHub is AccessControl {
     // Direct contract addresses (not in registries)
     address public bundleManager;
     address public offerManager;
+    address public listingHistoryTracker;
 
     error MarketplaceHub__ZeroAddress();
     error MarketplaceHub__InvalidRegistry();
@@ -45,7 +46,8 @@ contract MarketplaceHub is AccessControl {
         address _feeRegistry,
         address _auctionRegistry,
         address _bundleManager,
-        address _offerManager
+        address _offerManager,
+        address _listingHistoryTracker
     ) {
         if (
             _exchangeRegistry == address(0) ||
@@ -53,7 +55,8 @@ contract MarketplaceHub is AccessControl {
             _feeRegistry == address(0) ||
             _auctionRegistry == address(0) ||
             _bundleManager == address(0) ||
-            _offerManager == address(0)
+            _offerManager == address(0) ||
+            _listingHistoryTracker == address(0)
         ) {
             revert MarketplaceHub__ZeroAddress();
         }
@@ -67,6 +70,7 @@ contract MarketplaceHub is AccessControl {
         auctionRegistry = IAuctionRegistry(_auctionRegistry);
         bundleManager = _bundleManager;
         offerManager = _offerManager;
+        listingHistoryTracker = _listingHistoryTracker;
     }
 
     // ==================== ADDRESS DISCOVERY ====================
@@ -223,6 +227,13 @@ contract MarketplaceHub is AccessControl {
         return offerManager;
     }
 
+    /**
+     * @notice Get Listing History Tracker address
+     */
+    function getListingHistoryTracker() external view returns (address) {
+        return listingHistoryTracker;
+    }
+
     // ==================== FEE QUERIES ====================
 
     /**
@@ -339,7 +350,8 @@ contract MarketplaceHub is AccessControl {
             address auctionFactory,
             address feeRegistryAddr,
             address bundleManagerAddr,
-            address offerManagerAddr
+            address offerManagerAddr,
+            address listingHistoryTrackerAddr
         )
     {
         erc721Exchange = exchangeRegistry.getExchange(
@@ -360,13 +372,14 @@ contract MarketplaceHub is AccessControl {
         feeRegistryAddr = address(feeRegistry);
         bundleManagerAddr = bundleManager;
         offerManagerAddr = offerManager;
+        listingHistoryTrackerAddr = listingHistoryTracker;
     }
 
     // ==================== ADMIN ====================
 
     /**
      * @notice Update a registry address
-     * @param registryType "exchange", "collection", "fee", "auction", "bundle", or "offer"
+     * @param registryType "exchange", "collection", "fee", "auction", "bundle", "offer", or "analytics"
      * @param newRegistry The new registry address
      */
     function updateRegistry(
@@ -389,6 +402,8 @@ contract MarketplaceHub is AccessControl {
             bundleManager = newRegistry;
         } else if (typeHash == keccak256(bytes("offer"))) {
             offerManager = newRegistry;
+        } else if (typeHash == keccak256(bytes("analytics"))) {
+            listingHistoryTracker = newRegistry;
         } else {
             revert MarketplaceHub__InvalidRegistry();
         }

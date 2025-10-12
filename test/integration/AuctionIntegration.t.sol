@@ -6,7 +6,7 @@ import {AuctionFactory} from "src/core/factory/AuctionFactory.sol";
 import {EnglishAuction} from "src/core/auction/EnglishAuction.sol";
 import {DutchAuction} from "src/core/auction/DutchAuction.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
-import {AuctionTestHelpers} from "../../utils/auction/AuctionTestHelpers.sol";
+import {AuctionTestHelpers} from "../utils/auction/AuctionTestHelpers.sol";
 
 /**
  * @title AuctionIntegrationTest
@@ -37,7 +37,12 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
         vm.startPrank(SELLER);
         mockERC721.setApprovalForAll(address(auctionFactory), true);
         bytes32 auctionId = auctionFactory.createEnglishAuction(
-            address(mockERC721), tokenId, 1, DEFAULT_START_PRICE, DEFAULT_RESERVE_PRICE, DEFAULT_DURATION
+            address(mockERC721),
+            tokenId,
+            1,
+            DEFAULT_START_PRICE,
+            DEFAULT_RESERVE_PRICE,
+            DEFAULT_DURATION
         );
         vm.stopPrank();
 
@@ -84,12 +89,18 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
         assertNFTOwnership(address(mockERC721), tokenId, BIDDER3);
 
         auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.SETTLED));
+        assertEq(
+            uint256(auction.status),
+            uint256(IAuction.AuctionStatus.SETTLED)
+        );
 
         // Verify payments
         uint256 marketplaceFee = (bid3 * 200) / 10000; // 2% fee
         assertGt(SELLER.balance, sellerBalanceBefore);
-        assertEq(MARKETPLACE_WALLET.balance, marketplaceBalanceBefore + marketplaceFee);
+        assertEq(
+            MARKETPLACE_WALLET.balance,
+            marketplaceBalanceBefore + marketplaceFee
+        );
     }
 
     function test_EnglishAuction_WithRoyalties_Success() public {
@@ -103,7 +114,12 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
         vm.startPrank(SELLER);
         mockERC721.setApprovalForAll(address(auctionFactory), true);
         bytes32 auctionId = auctionFactory.createEnglishAuction(
-            address(mockERC721), tokenId, 1, DEFAULT_START_PRICE, DEFAULT_RESERVE_PRICE, DEFAULT_DURATION
+            address(mockERC721),
+            tokenId,
+            1,
+            DEFAULT_START_PRICE,
+            DEFAULT_RESERVE_PRICE,
+            DEFAULT_DURATION
         );
         vm.stopPrank();
 
@@ -120,7 +136,10 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
 
         // Verify royalty payment
         uint256 expectedRoyalty = (winningBid * 1000) / 10000; // 10%
-        assertEq(royaltyReceiver.balance, royaltyReceiverBalanceBefore + expectedRoyalty);
+        assertEq(
+            royaltyReceiver.balance,
+            royaltyReceiverBalanceBefore + expectedRoyalty
+        );
     }
 
     function test_EnglishAuction_ReserveNotMet_RefundsAll() public {
@@ -131,7 +150,12 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
         vm.startPrank(SELLER);
         mockERC721.setApprovalForAll(address(auctionFactory), true);
         bytes32 auctionId = auctionFactory.createEnglishAuction(
-            address(mockERC721), tokenId, 1, DEFAULT_START_PRICE, highReserve, DEFAULT_DURATION
+            address(mockERC721),
+            tokenId,
+            1,
+            DEFAULT_START_PRICE,
+            highReserve,
+            DEFAULT_DURATION
         );
         vm.stopPrank();
 
@@ -146,7 +170,10 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
 
         // Verify auction ended without sale
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.ENDED));
+        assertEq(
+            uint256(auction.status),
+            uint256(IAuction.AuctionStatus.ENDED)
+        );
 
         // Verify NFT still with seller
         assertNFTOwnership(address(mockERC721), tokenId, SELLER);
@@ -197,14 +224,20 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
         assertNFTOwnership(address(mockERC721), tokenId, BIDDER1);
 
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.SETTLED));
+        assertEq(
+            uint256(auction.status),
+            uint256(IAuction.AuctionStatus.SETTLED)
+        );
         assertEq(auction.highestBidder, BIDDER1);
         assertEq(auction.highestBid, currentPrice);
 
         // Verify payments
         uint256 marketplaceFee = (currentPrice * 200) / 10000; // 2% fee
         assertGt(SELLER.balance, sellerBalanceBefore);
-        assertEq(MARKETPLACE_WALLET.balance, marketplaceBalanceBefore + marketplaceFee);
+        assertEq(
+            MARKETPLACE_WALLET.balance,
+            marketplaceBalanceBefore + marketplaceFee
+        );
     }
 
     function test_DutchAuction_PriceReachesReserve_Success() public {
@@ -263,7 +296,10 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
 
         // Verify auction ended without sale
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.ENDED));
+        assertEq(
+            uint256(auction.status),
+            uint256(IAuction.AuctionStatus.ENDED)
+        );
 
         // Verify NFT still with seller
         assertNFTOwnership(address(mockERC721), tokenId, SELLER);
@@ -279,11 +315,22 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
         mockERC721.setApprovalForAll(address(auctionFactory), true);
 
         bytes32 englishAuctionId = auctionFactory.createEnglishAuction(
-            address(mockERC721), 1, 1, DEFAULT_START_PRICE, DEFAULT_RESERVE_PRICE, DEFAULT_DURATION
+            address(mockERC721),
+            1,
+            1,
+            DEFAULT_START_PRICE,
+            DEFAULT_RESERVE_PRICE,
+            DEFAULT_DURATION
         );
 
         bytes32 dutchAuctionId = auctionFactory.createDutchAuction(
-            address(mockERC721), 2, 1, DEFAULT_START_PRICE, DEFAULT_RESERVE_PRICE, DEFAULT_DURATION, DEFAULT_PRICE_DROP
+            address(mockERC721),
+            2,
+            1,
+            DEFAULT_START_PRICE,
+            DEFAULT_RESERVE_PRICE,
+            DEFAULT_DURATION,
+            DEFAULT_PRICE_DROP
         );
         vm.stopPrank();
 
@@ -298,14 +345,24 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
         auctionFactory.buyNow{value: dutchPrice}(dutchAuctionId);
 
         // Verify both auctions work independently
-        IAuction.Auction memory englishAuction = auctionFactory.getAuction(englishAuctionId);
-        IAuction.Auction memory dutchAuction = auctionFactory.getAuction(dutchAuctionId);
+        IAuction.Auction memory englishAuction = auctionFactory.getAuction(
+            englishAuctionId
+        );
+        IAuction.Auction memory dutchAuction = auctionFactory.getAuction(
+            dutchAuctionId
+        );
 
         assertEq(englishAuction.highestBidder, BIDDER1);
-        assertEq(uint256(englishAuction.status), uint256(IAuction.AuctionStatus.ACTIVE));
+        assertEq(
+            uint256(englishAuction.status),
+            uint256(IAuction.AuctionStatus.ACTIVE)
+        );
 
         assertEq(dutchAuction.highestBidder, BIDDER2);
-        assertEq(uint256(dutchAuction.status), uint256(IAuction.AuctionStatus.SETTLED));
+        assertEq(
+            uint256(dutchAuction.status),
+            uint256(IAuction.AuctionStatus.SETTLED)
+        );
 
         // Verify NFT ownership
         assertNFTOwnership(address(mockERC721), 1, SELLER); // Still in English auction
@@ -324,7 +381,12 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
         vm.startPrank(SELLER);
         mockERC1155.setApprovalForAll(address(auctionFactory), true);
         bytes32 auctionId = auctionFactory.createEnglishAuction(
-            address(mockERC1155), tokenId, amount, DEFAULT_START_PRICE, DEFAULT_RESERVE_PRICE, DEFAULT_DURATION
+            address(mockERC1155),
+            tokenId,
+            amount,
+            DEFAULT_START_PRICE,
+            DEFAULT_RESERVE_PRICE,
+            DEFAULT_DURATION
         );
         vm.stopPrank();
 
@@ -384,7 +446,12 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
         for (uint256 i = 0; i < numAuctions; i++) {
             if (i % 2 == 0) {
                 auctionIds[i] = auctionFactory.createEnglishAuction(
-                    address(mockERC721), i + 1, 1, DEFAULT_START_PRICE, DEFAULT_RESERVE_PRICE, DEFAULT_DURATION
+                    address(mockERC721),
+                    i + 1,
+                    1,
+                    DEFAULT_START_PRICE,
+                    DEFAULT_RESERVE_PRICE,
+                    DEFAULT_DURATION
                 );
             } else {
                 auctionIds[i] = auctionFactory.createDutchAuction(
@@ -413,10 +480,14 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
             if (i % 2 == 0) {
                 // English auction - place bid
                 vm.prank(BIDDER1);
-                auctionFactory.placeBid{value: DEFAULT_START_PRICE}(auctionIds[i]);
+                auctionFactory.placeBid{value: DEFAULT_START_PRICE}(
+                    auctionIds[i]
+                );
             } else {
                 // Dutch auction - buy now
-                uint256 currentPrice = auctionFactory.getCurrentPrice(auctionIds[i]);
+                uint256 currentPrice = auctionFactory.getCurrentPrice(
+                    auctionIds[i]
+                );
                 vm.prank(BIDDER1);
                 auctionFactory.buyNow{value: currentPrice}(auctionIds[i]);
             }

@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "src/core/access/MarketplaceAccessControl.sol";
 import "src/errors/NFTExchangeErrors.sol";
+import "src/errors/AnalyticsErrors.sol";
 
 /**
  * @title ListingHistoryTracker
@@ -13,7 +14,12 @@ import "src/errors/NFTExchangeErrors.sol";
  * @dev Provides detailed transaction history and price analytics
  * @author NFT Marketplace Team
  */
-contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
+contract ListingHistoryTracker is
+    Ownable,
+    ReentrancyGuard,
+    Pausable,
+    AnalyticsErrors
+{
     // ============================================================================
     // STATE VARIABLES
     // ============================================================================
@@ -22,10 +28,12 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
     MarketplaceAccessControl public accessControl;
 
     /// @notice NFT transaction history
-    mapping(address => mapping(uint256 => TransactionRecord[])) public nftHistory;
+    mapping(address => mapping(uint256 => TransactionRecord[]))
+        public nftHistory;
 
     /// @notice NFT history metadata
-    mapping(address => mapping(uint256 => TransactionHistoryMeta)) public nftHistoryMeta;
+    mapping(address => mapping(uint256 => TransactionHistoryMeta))
+        public nftHistoryMeta;
 
     /// @notice Collection price statistics
     mapping(address => CollectionStats) public collectionStats;
@@ -42,11 +50,20 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
     /// @notice Daily trading volumes
     mapping(uint256 => DailyVolume) public dailyVolumes;
 
+    /// @notice Track all collections that have had transactions
+    address[] private s_trackedCollections;
+
+    /// @notice Mapping to check if a collection is tracked
+    mapping(address => bool) private s_isTrackedCollection;
+
     /// @notice Maximum history entries per NFT
     uint256 public constant MAX_HISTORY_ENTRIES = 100;
 
     /// @notice Maximum price points per collection
     uint256 public constant MAX_PRICE_POINTS = 1000;
+
+    /// @notice Maximum batch size for batch queries
+    uint256 public constant MAX_BATCH_SIZE = 100;
 
     // ============================================================================
     // STRUCTS
@@ -168,12 +185,25 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
     );
 
     event CollectionStatsUpdated(
-        address indexed collection, uint256 totalVolume, uint256 floorPrice, uint256 averagePrice
+        address indexed collection,
+        uint256 totalVolume,
+        uint256 floorPrice,
+        uint256 averagePrice
     );
 
-    event UserStatsUpdated(address indexed user, uint256 totalSales, uint256 totalPurchases, uint256 volumeTraded);
+    event UserStatsUpdated(
+        address indexed user,
+        uint256 totalSales,
+        uint256 totalPurchases,
+        uint256 volumeTraded
+    );
 
-    event PricePointAdded(address indexed collection, uint256 price, uint256 timestamp, TransactionType source);
+    event PricePointAdded(
+        address indexed collection,
+        uint256 price,
+        uint256 timestamp,
+        TransactionType source
+    );
 
     // ============================================================================
     // MODIFIERS
@@ -184,7 +214,7 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
      */
     modifier onlyRole(bytes32 role) {
         if (!accessControl.hasRole(role, msg.sender)) {
-            revert NFTExchange__NotTheOwner();
+            revert Analytics__InvalidUser();
         }
         _;
     }
@@ -194,7 +224,7 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
      */
     modifier validNFT(address collection, uint256 tokenId) {
         if (collection == address(0)) {
-            revert NFTExchange__InvalidMarketplaceWallet();
+            revert Analytics__InvalidCollection();
         }
         _;
     }
@@ -206,10 +236,14 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
     /**
      * @notice Initializes the ListingHistoryTracker
      * @param _accessControl Address of the access control contract
+     * @param _admin Address of the admin/owner
      */
-    constructor(address _accessControl) Ownable(msg.sender) {
+    constructor(address _accessControl, address _admin) Ownable(_admin) {
         if (_accessControl == address(0)) {
-            revert NFTExchange__NotTheOwner();
+            revert Analytics__InvalidCollection();
+        }
+        if (_admin == address(0)) {
+            revert Analytics__InvalidCollection();
         }
 
         accessControl = MarketplaceAccessControl(_accessControl);
@@ -247,12 +281,20 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
         TransactionType txType,
         address user,
         uint256 price
-    ) external onlyRole(accessControl.OPERATOR_ROLE()) validNFT(collection, tokenId) {
+    )
+        external
+        onlyRole(accessControl.OPERATOR_ROLE())
+        validNFT(collection, tokenId)
+    {
         // Create transaction record
         TransactionRecord memory record = TransactionRecord({
             listingId: listingId,
-            seller: txType == TransactionType.SALE_COMPLETED ? user : address(0),
-            buyer: txType == TransactionType.SALE_COMPLETED ? msg.sender : address(0),
+            seller: txType == TransactionType.SALE_COMPLETED
+                ? user
+                : address(0),
+            buyer: txType == TransactionType.SALE_COMPLETED
+                ? msg.sender
+                : address(0),
             price: price,
             timestamp: block.timestamp,
             txType: txType,
@@ -276,7 +318,14 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
         // Update daily volume
         _updateDailyVolume(price, txType);
 
-        emit TransactionRecorded(collection, tokenId, listingId, txType, user, price);
+        emit TransactionRecorded(
+            collection,
+            tokenId,
+            listingId,
+            txType,
+            user,
+            price
+        );
     }
 
     /**
@@ -286,13 +335,19 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
      * @param limit Maximum number of records to return
      * @return records Array of transaction records
      */
-    function getNFTHistory(address collection, uint256 tokenId, uint256 limit)
+    function getNFTHistory(
+        address collection,
+        uint256 tokenId,
+        uint256 limit
+    )
         external
         view
         validNFT(collection, tokenId)
         returns (TransactionRecord[] memory records)
     {
-        TransactionRecord[] memory allTransactions = nftHistory[collection][tokenId];
+        TransactionRecord[] memory allTransactions = nftHistory[collection][
+            tokenId
+        ];
         uint256 recordCount = allTransactions.length;
 
         if (limit > 0 && limit < recordCount) {
@@ -302,8 +357,12 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
         records = new TransactionRecord[](recordCount);
 
         // Return most recent transactions first
-        for (uint256 i = 0; i < recordCount; i++) {
-            records[i] = allTransactions[allTransactions.length - 1 - i];
+        uint256 allLength = allTransactions.length;
+        for (uint256 i = 0; i < recordCount; ) {
+            records[i] = allTransactions[allLength - 1 - i];
+            unchecked {
+                ++i;
+            }
         }
 
         return records;
@@ -315,11 +374,10 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
      * @param limit Maximum number of price points
      * @return pricePoints Array of price points
      */
-    function getCollectionPriceHistory(address collection, uint256 limit)
-        external
-        view
-        returns (PricePoint[] memory pricePoints)
-    {
+    function getCollectionPriceHistory(
+        address collection,
+        uint256 limit
+    ) external view returns (PricePoint[] memory pricePoints) {
         PricePoint[] memory allPoints = collectionPriceHistory[collection];
         uint256 pointCount = allPoints.length;
 
@@ -330,11 +388,125 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
         pricePoints = new PricePoint[](pointCount);
 
         // Return most recent points first
-        for (uint256 i = 0; i < pointCount; i++) {
-            pricePoints[i] = allPoints[allPoints.length - 1 - i];
+        uint256 allLength = allPoints.length;
+        for (uint256 i = 0; i < pointCount; ) {
+            pricePoints[i] = allPoints[allLength - 1 - i];
+            unchecked {
+                ++i;
+            }
         }
 
         return pricePoints;
+    }
+
+    /**
+     * @notice Gets global marketplace statistics
+     * @return stats Global marketplace statistics
+     */
+    function getGlobalStats()
+        external
+        view
+        returns (MarketplaceStats memory stats)
+    {
+        return globalStats;
+    }
+
+    /**
+     * @notice Gets collection statistics
+     * @param collection Collection address
+     * @return stats Collection statistics
+     */
+    function getCollectionStats(
+        address collection
+    ) external view returns (CollectionStats memory stats) {
+        return collectionStats[collection];
+    }
+
+    /**
+     * @notice Gets user trading statistics
+     * @param user User address
+     * @return stats User statistics
+     */
+    function getUserStats(
+        address user
+    ) external view returns (UserStats memory stats) {
+        return userStats[user];
+    }
+
+    /**
+     * @notice Gets daily trading volume for a specific day
+     * @param day Day timestamp (block.timestamp / 1 days)
+     * @return volume Daily volume data
+     */
+    function getDailyVolume(
+        uint256 day
+    ) external view returns (DailyVolume memory volume) {
+        return dailyVolumes[day];
+    }
+
+    /**
+     * @notice Gets all tracked collection addresses
+     * @return collections Array of collection addresses
+     */
+    function getAllTrackedCollections()
+        external
+        view
+        returns (address[] memory collections)
+    {
+        return s_trackedCollections;
+    }
+
+    /**
+     * @notice Gets the count of tracked collections
+     * @return count Number of tracked collections
+     */
+    function getTrackedCollectionsCount()
+        external
+        view
+        returns (uint256 count)
+    {
+        return s_trackedCollections.length;
+    }
+
+    /**
+     * @notice Gets collection statistics for multiple collections in batch
+     * @param collections Array of collection addresses
+     * @return statsArray Array of collection statistics
+     */
+    function getCollectionStatsBatch(
+        address[] calldata collections
+    ) external view returns (CollectionStats[] memory statsArray) {
+        if (collections.length > MAX_BATCH_SIZE) {
+            revert Analytics__BatchLimitExceeded();
+        }
+
+        statsArray = new CollectionStats[](collections.length);
+
+        uint256 length = collections.length;
+        for (uint256 i = 0; i < length; ) {
+            statsArray[i] = collectionStats[collections[i]];
+            unchecked {
+                ++i;
+            }
+        }
+
+        return statsArray;
+    }
+
+    /**
+     * @notice Pause the contract
+     * @dev Only owner can pause
+     */
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /**
+     * @notice Unpause the contract
+     * @dev Only owner can unpause
+     */
+    function unpause() external onlyOwner {
+        _unpause();
     }
 
     // ============================================================================
@@ -344,26 +516,42 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
     /**
      * @notice Adds transaction to NFT history
      */
-    function _addToNFTHistory(address collection, uint256 tokenId, TransactionRecord memory record) internal {
-        TransactionRecord[] storage transactions = nftHistory[collection][tokenId];
-        TransactionHistoryMeta storage meta = nftHistoryMeta[collection][tokenId];
+    function _addToNFTHistory(
+        address collection,
+        uint256 tokenId,
+        TransactionRecord memory record
+    ) internal {
+        TransactionRecord[] storage transactions = nftHistory[collection][
+            tokenId
+        ];
+        TransactionHistoryMeta storage meta = nftHistoryMeta[collection][
+            tokenId
+        ];
 
         // Limit history size
         if (transactions.length >= MAX_HISTORY_ENTRIES) {
             // Remove oldest transaction
-            for (uint256 i = 0; i < transactions.length - 1; i++) {
+            uint256 length = transactions.length;
+            for (uint256 i = 0; i < length - 1; ) {
                 transactions[i] = transactions[i + 1];
+                unchecked {
+                    ++i;
+                }
             }
-            transactions[transactions.length - 1] = record;
+            transactions[length - 1] = record;
         } else {
             transactions.push(record);
         }
 
         // Update history metadata
-        meta.totalTransactions++;
+        unchecked {
+            meta.totalTransactions++;
+        }
 
         if (record.txType == TransactionType.SALE_COMPLETED) {
-            meta.totalVolume += record.price;
+            unchecked {
+                meta.totalVolume += record.price;
+            }
             meta.lastSalePrice = record.price;
             meta.lastSaleTime = record.timestamp;
         }
@@ -372,16 +560,32 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
     /**
      * @notice Updates collection statistics
      */
-    function _updateCollectionStats(address collection, TransactionType txType, uint256 price) internal {
+    function _updateCollectionStats(
+        address collection,
+        TransactionType txType,
+        uint256 price
+    ) internal {
+        // Auto-register collection if not already tracked
+        if (!s_isTrackedCollection[collection]) {
+            s_trackedCollections.push(collection);
+            s_isTrackedCollection[collection] = true;
+        }
+
         CollectionStats storage stats = collectionStats[collection];
 
         if (txType == TransactionType.LISTING_CREATED) {
-            stats.totalListings++;
-            stats.activeListings++;
+            unchecked {
+                stats.totalListings++;
+                stats.activeListings++;
+            }
         } else if (txType == TransactionType.SALE_COMPLETED) {
-            stats.totalSales++;
-            stats.totalVolume += price;
-            stats.activeListings = stats.activeListings > 0 ? stats.activeListings - 1 : 0;
+            unchecked {
+                stats.totalSales++;
+                stats.totalVolume += price;
+            }
+            stats.activeListings = stats.activeListings > 0
+                ? stats.activeListings - 1
+                : 0;
 
             // Update average price
             stats.averagePrice = stats.totalVolume / stats.totalSales;
@@ -391,18 +595,29 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
                 stats.highestSale = price;
             }
         } else if (txType == TransactionType.LISTING_CANCELLED) {
-            stats.activeListings = stats.activeListings > 0 ? stats.activeListings - 1 : 0;
+            stats.activeListings = stats.activeListings > 0
+                ? stats.activeListings - 1
+                : 0;
         }
 
         stats.lastUpdated = block.timestamp;
 
-        emit CollectionStatsUpdated(collection, stats.totalVolume, stats.floorPrice, stats.averagePrice);
+        emit CollectionStatsUpdated(
+            collection,
+            stats.totalVolume,
+            stats.floorPrice,
+            stats.averagePrice
+        );
     }
 
     /**
      * @notice Updates user statistics
      */
-    function _updateUserStats(address user, TransactionType txType, uint256 price) internal {
+    function _updateUserStats(
+        address user,
+        TransactionType txType,
+        uint256 price
+    ) internal {
         UserStats storage stats = userStats[user];
 
         if (stats.firstActivity == 0) {
@@ -412,30 +627,48 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
         stats.lastActivity = block.timestamp;
 
         if (txType == TransactionType.LISTING_CREATED) {
-            stats.totalListings++;
+            unchecked {
+                stats.totalListings++;
+            }
         } else if (txType == TransactionType.SALE_COMPLETED) {
-            stats.totalSales++;
-            stats.volumeSold += price;
+            unchecked {
+                stats.totalSales++;
+                stats.volumeSold += price;
+            }
 
             // Update average sale price
             stats.averageSalePrice = stats.volumeSold / stats.totalSales;
         }
 
-        emit UserStatsUpdated(user, stats.totalSales, stats.totalPurchases, stats.volumeSold + stats.volumeBought);
+        emit UserStatsUpdated(
+            user,
+            stats.totalSales,
+            stats.totalPurchases,
+            stats.volumeSold + stats.volumeBought
+        );
     }
 
     /**
      * @notice Updates global marketplace statistics
      */
-    function _updateGlobalStats(TransactionType txType, uint256 price) internal {
+    function _updateGlobalStats(
+        TransactionType txType,
+        uint256 price
+    ) internal {
         if (txType == TransactionType.LISTING_CREATED) {
-            globalStats.totalListings++;
+            unchecked {
+                globalStats.totalListings++;
+            }
         } else if (txType == TransactionType.SALE_COMPLETED) {
-            globalStats.totalSales++;
-            globalStats.totalVolume += price;
+            unchecked {
+                globalStats.totalSales++;
+                globalStats.totalVolume += price;
+            }
 
             // Update average price
-            globalStats.averageSalePrice = globalStats.totalVolume / globalStats.totalSales;
+            globalStats.averageSalePrice =
+                globalStats.totalVolume /
+                globalStats.totalSales;
         }
 
         globalStats.lastUpdated = block.timestamp;
@@ -444,19 +677,38 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
     /**
      * @notice Adds price point to collection history
      */
-    function _addPricePoint(address collection, uint256 price, TransactionType source) internal {
+    function _addPricePoint(
+        address collection,
+        uint256 price,
+        TransactionType source
+    ) internal {
         PricePoint[] storage pricePoints = collectionPriceHistory[collection];
 
         // Limit price points
         if (pricePoints.length >= MAX_PRICE_POINTS) {
             // Remove oldest point
-            for (uint256 i = 0; i < pricePoints.length - 1; i++) {
+            uint256 length = pricePoints.length;
+            for (uint256 i = 0; i < length - 1; ) {
                 pricePoints[i] = pricePoints[i + 1];
+                unchecked {
+                    ++i;
+                }
             }
-            pricePoints[pricePoints.length - 1] =
-                PricePoint({price: price, timestamp: block.timestamp, volume: price, source: source});
+            pricePoints[length - 1] = PricePoint({
+                price: price,
+                timestamp: block.timestamp,
+                volume: price,
+                source: source
+            });
         } else {
-            pricePoints.push(PricePoint({price: price, timestamp: block.timestamp, volume: price, source: source}));
+            pricePoints.push(
+                PricePoint({
+                    price: price,
+                    timestamp: block.timestamp,
+                    volume: price,
+                    source: source
+                })
+            );
         }
 
         emit PricePointAdded(collection, price, block.timestamp, source);
@@ -465,13 +717,18 @@ contract ListingHistoryTracker is Ownable, ReentrancyGuard, Pausable {
     /**
      * @notice Updates daily trading volume
      */
-    function _updateDailyVolume(uint256 price, TransactionType txType) internal {
+    function _updateDailyVolume(
+        uint256 price,
+        TransactionType txType
+    ) internal {
         uint256 today = block.timestamp / 1 days;
         DailyVolume storage volume = dailyVolumes[today];
 
         if (txType == TransactionType.SALE_COMPLETED) {
-            volume.volume += price;
-            volume.transactions++;
+            unchecked {
+                volume.volume += price;
+                volume.transactions++;
+            }
 
             // Update average price
             volume.averagePrice = volume.volume / volume.transactions;
