@@ -191,4 +191,81 @@ contract UserHub {
 
         return (true, activeContracts, block.timestamp);
     }
+
+    /**
+     * @notice Get all additional contract addresses
+     * @dev Returns addresses that were set via updateAdditionalContracts()
+     */
+    function getAdditionalAddresses() external view returns (
+        address listingValidatorAddr,
+        address emergencyManagerAddr,
+        address accessControlAddr,
+        address historyTrackerAddr
+    ) {
+        return (
+            listingValidator,
+            emergencyManager,
+            accessControl,
+            historyTracker
+        );
+    }
+
+    /**
+     * @notice Get listing validator address
+     */
+    function getListingValidator() external view returns (address) {
+        return listingValidator;
+    }
+
+    /**
+     * @notice Get emergency manager address
+     */
+    function getEmergencyManager() external view returns (address) {
+        return emergencyManager;
+    }
+
+    /**
+     * @notice Get access control address
+     */
+    function getAccessControl() external view returns (address) {
+        return accessControl;
+    }
+
+    /**
+     * @notice Get history tracker address
+     */
+    function getHistoryTracker() external view returns (address) {
+        return historyTracker;
+    }
+
+    /**
+     * @notice Get bundle manager address
+     */
+    function getBundleManager() external view returns (address) {
+        return bundleManager;
+    }
+
+    /**
+     * @notice Get offer manager address
+     */
+    function getOfferManager() external view returns (address) {
+        return offerManager;
+    }
+
+    /**
+     * @notice Get all registries addresses
+     */
+    function getAllRegistries() external view returns (
+        address exchange,
+        address collection,
+        address fee,
+        address auction
+    ) {
+        return (
+            address(exchangeRegistry),
+            address(collectionRegistry),
+            address(feeRegistry),
+            address(auctionRegistry)
+        );
+    }
 }
