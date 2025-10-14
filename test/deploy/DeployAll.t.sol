@@ -11,24 +11,20 @@ import "../../script/deploy/DeployAll.s.sol";
 contract DeployAllTest is Test {
     DeployAll public deployer;
     
-    address public constant ADMIN = address(0x1234);
+    // Use the address that corresponds to the private key used in the test
+    address public constant ADMIN = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
     
     function setUp() public {
-        // Set environment variables with actual ADMIN address
-        vm.setEnv("MARKETPLACE_WALLET", "0x0000000000000000000000000000000000001234");
+        // Set environment variables - use the correct admin address that matches the private key
+        vm.setEnv("MARKETPLACE_WALLET", vm.toString(ADMIN));
         vm.setEnv("PRIVATE_KEY", "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80");
         
         deployer = new DeployAll();
     }
     
     function test_DeployAll_Success() public {
-        // Prank as the admin for the deployment
-        vm.startPrank(ADMIN);
-        
-        // Execute deployment
+        // Execute deployment without prank (the script handles broadcasting internally)
         deployer.run();
-        
-        vm.stopPrank();
         
         // Verify all core contracts deployed
         assertNotEq(address(deployer.erc721Exchange()), address(0), "ERC721 Exchange not deployed");
