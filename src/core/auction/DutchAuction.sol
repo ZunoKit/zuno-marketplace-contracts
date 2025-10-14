@@ -149,7 +149,7 @@ contract DutchAuction is BaseAuction {
      * @notice Not applicable for Dutch auctions
      * @dev This function reverts as Dutch auctions use direct purchase, not bidding
      */
-    function placeBid(bytes32 auctionId) external payable override {
+    function placeBid(bytes32) external payable override {
         revert Auction__UnsupportedAuctionType();
     }
 
@@ -174,7 +174,7 @@ contract DutchAuction is BaseAuction {
      * @notice Not applicable for Dutch auctions
      * @dev Dutch auctions don't have bid refunds
      */
-    function withdrawBid(bytes32 auctionId) external override {
+    function withdrawBid(bytes32) external override {
         revert Auction__UnsupportedAuctionType();
     }
 
@@ -495,15 +495,13 @@ contract DutchAuction is BaseAuction {
 
     /**
      * @notice Gets pending refund amount for a bidder
-     * @param auctionId Unique identifier of the auction
-     * @param bidder Address of the bidder
      * @return refundAmount Amount available for refund (always 0 for Dutch auctions)
      */
-    function getPendingRefund(bytes32 auctionId, address bidder)
+    function getPendingRefund(bytes32, address)
         external
         view
         override
-        returns (uint256 refundAmount)
+        returns (uint256)
     {
         // Dutch auctions don't have bidding, so no refunds
         return 0;

@@ -112,7 +112,7 @@ contract EnglishAuction is BaseAuction {
      * @notice Not applicable for English auctions
      * @dev This function reverts as English auctions use bidding, not direct purchase
      */
-    function buyNow(bytes32 auctionId) external payable override {
+    function buyNow(bytes32) external payable override {
         revert Auction__UnsupportedAuctionType();
     }
 
