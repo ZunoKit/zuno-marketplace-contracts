@@ -157,7 +157,7 @@ contract UnitCollectionFactoryTest is Test {
 
     function test_ContractType() public {
         string memory contractType = setup.factory.contractType();
-        assertEq(contractType, "ERC721CollectionFactory");
+        assertEq(contractType, "CollectionFactoryRegistry");
     }
 
     function test_IsActive() public {

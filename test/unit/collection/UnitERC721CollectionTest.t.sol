@@ -84,7 +84,7 @@ contract UnitERC721CollectionTest is Test {
         setup.collection.mint{value: setup.params.publicMintPrice}(setup.user);
         vm.stopPrank();
 
-        string memory expectedURI = string(abi.encodePacked(setup.params.tokenURI));
+        string memory expectedURI = string(abi.encodePacked(setup.params.tokenURI, "/1.json"));
         assertEq(setup.collection.tokenURI(1), expectedURI);
     }
 

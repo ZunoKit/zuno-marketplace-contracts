@@ -7,6 +7,7 @@ import {CollectionParams} from "src/types/ListingTypes.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 import {MockERC1155} from "test/mocks/MockERC1155.sol";
 import {Collection__InvalidAmount} from "src/errors/CollectionErrors.sol";
+import "src/errors/FeeErrors.sol";
 
 /**
  * @title BaseCollectionCoverageTest
@@ -111,7 +112,7 @@ contract BaseCollectionCoverageTest is Test {
         });
 
         vm.prank(CREATOR);
-        vm.expectRevert("Error message");
+        vm.expectRevert(Fee__InvalidRoyaltyFee.selector);
         new CoverageTestableBaseCollection(params);
     }
 
@@ -120,7 +121,7 @@ contract BaseCollectionCoverageTest is Test {
     // ============================================================================
 
     function test_GetDescription() public {
-        assertEq(testableCollection.getDescription(), "");
+        assertEq(testableCollection.getDescription(), "Test Description");
     }
 
     function test_GetMintPrice() public {
@@ -188,7 +189,7 @@ contract BaseCollectionCoverageTest is Test {
         addresses[0] = USER;
 
         vm.prank(USER);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), USER));
         testableCollection.addToAllowlist(addresses);
     }
 

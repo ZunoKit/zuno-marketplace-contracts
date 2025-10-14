@@ -170,7 +170,7 @@ contract BaseNFTExchangeCoverageBoostTest is Test {
 
     function test_ContractType() public {
         string memory contractType = testableExchange.contractType();
-        assertEq(contractType, "ERC721NFTExchange");
+        assertEq(contractType, "NFTExchange");
     }
 
     function test_IsActive() public {

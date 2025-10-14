@@ -7,6 +7,7 @@ import {MarketplaceAccessControl} from "src/core/access/MarketplaceAccessControl
 import {EmergencyManager} from "src/core/security/EmergencyManager.sol";
 import {MarketplaceValidator} from "src/core/validation/MarketplaceValidator.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
+import "src/errors/NFTExchangeErrors.sol";
 
 /**
  * @title SecurityIntegration
@@ -70,7 +71,7 @@ contract SecurityIntegrationTest is Test {
 
         // Only admin can pause
         vm.prank(attacker);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), attacker));
         emergencyManager.emergencyPause("Test pause");
         console2.log("Non-admin pause correctly rejected");
 
@@ -82,7 +83,7 @@ contract SecurityIntegrationTest is Test {
 
         // Operator cannot unpause (only admin)
         vm.prank(operator);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), operator));
         emergencyManager.emergencyUnpause();
         console2.log("Operator unpause correctly rejected");
 
@@ -143,7 +144,7 @@ contract SecurityIntegrationTest is Test {
 
         // Layer 1: Access Control prevents unauthorized actions
         vm.prank(attacker);
-        vm.expectRevert("Error message");
+        vm.expectRevert(); // AccessControlUnauthorizedAccount
         accessControl.grantRole(OPERATOR_ROLE, attacker);
         console2.log("Layer 1 (Access Control): Unauthorized role grant prevented");
 
@@ -239,7 +240,7 @@ contract SecurityIntegrationTest is Test {
 
         // Attacker's transaction fails (already sold)
         vm.prank(attacker);
-        vm.expectRevert("Error message");
+        vm.expectRevert(NFTExchange__NFTNotActive.selector);
         exchange.buyNFT{value: price}(listingId);
         console2.log("Front-running attempt fails (NFT already sold)");
 
@@ -255,13 +256,13 @@ contract SecurityIntegrationTest is Test {
 
         // Attacker tries to escalate to operator
         vm.prank(attacker);
-        vm.expectRevert("Error message");
+        vm.expectRevert(); // AccessControlUnauthorizedAccount
         accessControl.grantRole(OPERATOR_ROLE, attacker);
         console2.log("Self-grant operator role prevented");
 
         // Operator tries to escalate to admin
         vm.prank(operator);
-        vm.expectRevert("Error message");
+        vm.expectRevert(); // AccessControlUnauthorizedAccount
         accessControl.grantRole(ADMIN_ROLE, operator);
         console2.log("Operator escalation to admin prevented");
 
@@ -303,7 +304,7 @@ contract SecurityIntegrationTest is Test {
 
         // Test 4: Permission checks
         vm.prank(attacker);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), attacker));
         emergencyManager.emergencyPause("Test pause");
         console2.log("[PASS] Permission checks enforced");
 

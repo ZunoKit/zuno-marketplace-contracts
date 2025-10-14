@@ -78,7 +78,7 @@ contract EmergencyManagerTest is Test {
 
         // Test pause
         vm.expectEmit(true, false, false, true);
-        emit EmergencyPauseActivated(owner, block.timestamp, "Emergency pause");
+        emit EmergencyPauseActivated(owner, block.timestamp, "Security incident");
 
         emergencyManager.emergencyPause("Security incident");
 
@@ -89,7 +89,7 @@ contract EmergencyManagerTest is Test {
     function test_EmergencyPause_RevertNotOwner() public {
         vm.startPrank(user1);
 
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), user1));
         emergencyManager.emergencyPause("Unauthorized attempt");
     }
 
@@ -140,7 +140,7 @@ contract EmergencyManagerTest is Test {
         vm.stopPrank();
 
         vm.startPrank(user1);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), user1));
         emergencyManager.emergencyUnpause();
     }
 
@@ -170,7 +170,7 @@ contract EmergencyManagerTest is Test {
     function test_SetContractBlacklist_RevertNotOwner() public {
         vm.startPrank(user1);
 
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), user1));
         emergencyManager.setContractBlacklist(maliciousContract, true, "Malicious contract");
     }
 
@@ -215,7 +215,7 @@ contract EmergencyManagerTest is Test {
     function test_SetUserBlacklist_RevertNotOwner() public {
         vm.startPrank(user1);
 
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), user1));
         emergencyManager.setUserBlacklist(user2, true, "Blacklisted user");
     }
 

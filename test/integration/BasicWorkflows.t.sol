@@ -10,6 +10,7 @@ import "src/core/auction/EnglishAuction.sol";
 import "src/interfaces/IAuction.sol";
 import "test/mocks/MockERC721.sol";
 import "test/mocks/MockERC1155.sol";
+import "src/errors/NFTExchangeErrors.sol";
 
 /**
  * @title BasicWorkflows
@@ -292,21 +293,21 @@ contract BasicWorkflowsTest is Test {
         uint256 totalPrice = PRICE + takerFee;
         vm.deal(user2, totalPrice);
         bytes32 fakeListingId = erc721Exchange.getGeneratedListingId(address(mockERC721), TOKEN_ID, user1);
-        vm.expectRevert("Error message");
+        vm.expectRevert(NFTExchange__NFTNotActive.selector);
         erc721Exchange.buyNFT{value: totalPrice}(fakeListingId);
         vm.stopPrank();
 
         // Try to list without approval
         vm.startPrank(user1);
         mockERC721.setApprovalForAll(address(erc721Exchange), false); // remove approval for all
-        vm.expectRevert("Error message");
+        vm.expectRevert(NFTExchange__MarketplaceNotApproved.selector);
         erc721Exchange.listNFT(address(mockERC721), TOKEN_ID, PRICE, 86400);
         vm.stopPrank();
 
         // Try to list with zero price
         vm.startPrank(user1);
         mockERC721.setApprovalForAll(address(erc721Exchange), true); // re-enable approval
-        vm.expectRevert("Error message");
+        vm.expectRevert(NFTExchange__PriceMustBeGreaterThanZero.selector);
         erc721Exchange.listNFT(address(mockERC721), TOKEN_ID, 0, 86400);
         vm.stopPrank();
     }

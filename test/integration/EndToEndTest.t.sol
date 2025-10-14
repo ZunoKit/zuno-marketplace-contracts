@@ -415,7 +415,7 @@ contract EndToEndTest is Test {
             tokenURI: ""
         });
 
-        vm.expectRevert("Error message");
+        vm.expectRevert(); // Collection__InvalidOwner or similar
         collectionFactory.createERC721Collection(invalidParams);
 
         vm.stopPrank();

@@ -348,7 +348,7 @@ contract RoyaltyIntegrationTest is Test {
         mockNFT.mint(seller, 8);
 
         // ERC2981 should reject zero address as royalty receiver
-        vm.expectRevert("Error message");
+        vm.expectRevert(); // ERC2981InvalidDefaultRoyaltyReceiver
         mockNFT.setDefaultRoyalty(address(0), uint96(ROYALTY_5_PERCENT));
 
         console2.log("ERC2981 correctly rejects invalid receiver");

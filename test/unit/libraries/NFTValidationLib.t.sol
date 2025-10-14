@@ -78,7 +78,7 @@ contract NFTValidationLibTest is Test {
         NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC721(params);
 
         assertFalse(result.isValid);
-        assertEq(result.errorMessage, "");
+        assertEq(result.errorMessage, "Not the owner");
     }
 
     function test_ValidateERC721_NotApproved() public {
@@ -97,7 +97,7 @@ contract NFTValidationLibTest is Test {
         NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC721(params);
 
         assertFalse(result.isValid);
-        assertEq(result.errorMessage, "");
+        assertEq(result.errorMessage, "Not approved");
     }
 
     function test_ValidateERC721_ApprovedForAll() public {
@@ -129,7 +129,7 @@ contract NFTValidationLibTest is Test {
         NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC721(params);
 
         assertFalse(result.isValid);
-        assertEq(result.errorMessage, "");
+        assertEq(result.errorMessage, "Failed to get owner");
     }
 
     // ============================================================================
@@ -159,7 +159,7 @@ contract NFTValidationLibTest is Test {
         NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC1155(params);
 
         assertFalse(result.isValid);
-        assertEq(result.errorMessage, "");
+        assertEq(result.errorMessage, "Amount must be greater than zero");
     }
 
     function test_ValidateERC1155_InsufficientBalance() public {
@@ -174,7 +174,7 @@ contract NFTValidationLibTest is Test {
         NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC1155(params);
 
         assertFalse(result.isValid);
-        assertEq(result.errorMessage, "");
+        assertEq(result.errorMessage, "Insufficient balance");
     }
 
     function test_ValidateERC1155_NotApproved() public {
@@ -188,7 +188,7 @@ contract NFTValidationLibTest is Test {
         NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC1155(params);
 
         assertFalse(result.isValid);
-        assertEq(result.errorMessage, "");
+        assertEq(result.errorMessage, "Not approved");
     }
 
     function test_ValidateERC1155_InvalidToken() public {
@@ -203,7 +203,7 @@ contract NFTValidationLibTest is Test {
         NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateERC1155(params);
 
         assertFalse(result.isValid);
-        assertEq(result.errorMessage, "");
+        assertEq(result.errorMessage, "Failed to get balance");
     }
 
     // ============================================================================
@@ -237,7 +237,7 @@ contract NFTValidationLibTest is Test {
         NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateNFT(params);
 
         assertFalse(result.isValid);
-        assertEq(result.errorMessage, "");
+        assertEq(result.errorMessage, "Zero address provided");
     }
 
     function test_ValidateNFT_ZeroOwnerAddress() public {
@@ -247,7 +247,7 @@ contract NFTValidationLibTest is Test {
         NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateNFT(params);
 
         assertFalse(result.isValid);
-        assertEq(result.errorMessage, "");
+        assertEq(result.errorMessage, "Zero address provided");
     }
 
     function test_ValidateNFT_UnsupportedStandard() public {
@@ -257,7 +257,7 @@ contract NFTValidationLibTest is Test {
         NFTValidationLib.ValidationResult memory result = NFTValidationLib.validateNFT(params);
 
         assertFalse(result.isValid);
-        assertEq(result.errorMessage, "");
+        assertEq(result.errorMessage, "Unsupported NFT standard");
     }
 
     // ============================================================================

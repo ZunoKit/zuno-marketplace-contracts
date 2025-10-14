@@ -5,6 +5,7 @@ import {E2E_BaseSetup} from "./E2E_BaseSetup.sol";
 import {console2} from "lib/forge-std/src/Test.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
 import {AuctionType, AuctionStatus} from "src/types/AuctionTypes.sol";
+import "src/errors/AuctionErrors.sol";
 
 /**
  * @title E2E_Auctions
@@ -368,7 +369,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
 
         // Alice attempts to cancel auction with existing bids -> should revert
         vm.prank(alice);
-        vm.expectRevert("Error message");
+        vm.expectRevert(Auction__CannotCancelWithBids.selector);
         auctionFactory.cancelAuction(auctionId);
         console2.log("Step 3: Cancellation reverted as expected (bids exist)");
 

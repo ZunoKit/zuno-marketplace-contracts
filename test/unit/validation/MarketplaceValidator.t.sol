@@ -147,7 +147,7 @@ contract MarketplaceValidatorTest is Test {
         address newExchange = address(0x123);
 
         vm.prank(seller);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), seller));
         validator.registerExchange(newExchange, 0);
     }
 
