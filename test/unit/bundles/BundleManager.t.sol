@@ -10,6 +10,10 @@ import "test/mocks/MockERC20.sol";
 import "test/mocks/MockAdvancedFeeManager.sol";
 import "test/utils/TestHelpers.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import "src/errors/NFTExchangeErrors.sol";
+
+// Import Pausable error
+error EnforcedPause();
 
 contract BundleManagerTest is Test, TestHelpers, IERC1155Receiver {
     BundleManager public bundleManager;
@@ -137,7 +141,7 @@ contract BundleManagerTest is Test, TestHelpers, IERC1155Receiver {
         });
 
         vm.prank(seller);
-        vm.expectRevert("Error message"); // Should revert due to excessive discount (>50%)
+        vm.expectRevert(NFTExchange__PriceMustBeGreaterThanZero.selector); // Excessive discount (>50%)
         bundleManager.createBundle(
             items,
             5 ether,
@@ -324,7 +328,7 @@ contract BundleManagerTest is Test, TestHelpers, IERC1155Receiver {
     function testAccessControl() public {
         // Non-admin should not be able to pause
         vm.prank(seller);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), seller));
         bundleManager.pause();
     }
 
@@ -343,7 +347,7 @@ contract BundleManagerTest is Test, TestHelpers, IERC1155Receiver {
 
         // Should not be able to create bundle when paused
         vm.prank(seller);
-        vm.expectRevert("Error message");
+        vm.expectRevert(EnforcedPause.selector);
         bundleManager.createBundle(items, 1 ether, 0, address(0), block.timestamp + 7 days, "Test Bundle", "");
 
         vm.prank(admin);
