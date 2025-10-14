@@ -163,7 +163,7 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
         console2.log("Step 1: Alice (non-admin) attempts pause");
 
         vm.prank(alice);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         emergencyManager.emergencyPause("Unauthorized pause");
         console2.log("Step 2: Unauthorized pause correctly rejected");
 

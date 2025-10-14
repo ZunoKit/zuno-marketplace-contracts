@@ -349,12 +349,12 @@ contract ListingValidatorTest is Test, TestHelpers {
 
         // Non-admin should not be able to set validation settings
         vm.prank(user);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         validator.setValidationSettings(address(mockERC721), settings);
 
         // Non-admin should not be able to pause
         vm.prank(user);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         validator.pause();
     }
 }

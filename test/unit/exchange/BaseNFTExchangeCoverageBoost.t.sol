@@ -77,7 +77,7 @@ contract BaseNFTExchangeCoverageBoostTest is Test {
         address nonOwner = makeAddr("nonOwner");
 
         vm.prank(nonOwner);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         testableExchange.updateMarketplaceWallet(makeAddr("newWallet"));
     }
 
@@ -85,7 +85,7 @@ contract BaseNFTExchangeCoverageBoostTest is Test {
         address nonOwner = makeAddr("nonOwner");
 
         vm.prank(nonOwner);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         testableExchange.updateTakerFee(500);
     }
 

@@ -50,7 +50,7 @@ contract BaseAuctionCoverageBoostTest is AuctionTestHelpers {
         address nonOwner = makeAddr("nonOwner");
 
         vm.prank(nonOwner);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         testableAuction.setMarketplaceValidator(newValidator);
     }
 
@@ -108,7 +108,7 @@ contract BaseAuctionCoverageBoostTest is AuctionTestHelpers {
         address nonOwner = makeAddr("nonOwner");
 
         vm.prank(nonOwner);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         testableAuction.setMinAuctionDuration(1 hours);
     }
 
@@ -133,7 +133,7 @@ contract BaseAuctionCoverageBoostTest is AuctionTestHelpers {
         address nonOwner = makeAddr("nonOwner");
 
         vm.prank(nonOwner);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         testableAuction.emergencyResetNFTStatus(address(mockERC721), 1, SELLER);
     }
 
@@ -156,7 +156,7 @@ contract BaseAuctionCoverageBoostTest is AuctionTestHelpers {
         address nonOwner = makeAddr("nonOwner");
 
         vm.prank(nonOwner);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         testableAuction.setPaused(true);
     }
 
@@ -165,7 +165,7 @@ contract BaseAuctionCoverageBoostTest is AuctionTestHelpers {
 
         address nonOwner = makeAddr("nonOwner");
         vm.prank(nonOwner);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         testableAuction.setPaused(false);
     }
 

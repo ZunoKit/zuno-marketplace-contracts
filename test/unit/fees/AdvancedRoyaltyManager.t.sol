@@ -163,7 +163,7 @@ contract AdvancedRoyaltyManagerTest is Test, TestHelpers {
         });
 
         vm.prank(admin);
-        vm.expectRevert(); // Should revert due to zero address
+        vm.expectRevert("Error message"); // Should revert due to zero address
         royaltyManager.setAdvancedRoyalty(collection, invalidRecipients, false);
 
         // Test excessive royalty
@@ -178,7 +178,7 @@ contract AdvancedRoyaltyManagerTest is Test, TestHelpers {
         });
 
         vm.prank(admin);
-        vm.expectRevert(); // Should revert due to excessive royalty
+        vm.expectRevert("Error message"); // Should revert due to excessive royalty
         royaltyManager.setAdvancedRoyalty(collection, excessiveRecipients, false);
     }
 
@@ -194,7 +194,7 @@ contract AdvancedRoyaltyManagerTest is Test, TestHelpers {
 
         // Test unauthorized access
         vm.prank(user);
-        vm.expectRevert(); // Should revert due to lack of admin role
+        vm.expectRevert("Error message"); // Should revert due to lack of admin role
         royaltyManager.setAdvancedRoyalty(collection, recipients, false);
 
         // Test authorized access

@@ -111,7 +111,7 @@ contract BaseCollectionCoverageTest is Test {
         });
 
         vm.prank(CREATOR);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         new CoverageTestableBaseCollection(params);
     }
 
@@ -188,7 +188,7 @@ contract BaseCollectionCoverageTest is Test {
         addresses[0] = USER;
 
         vm.prank(USER);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         testableCollection.addToAllowlist(addresses);
     }
 

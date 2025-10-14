@@ -147,7 +147,7 @@ contract MarketplaceValidatorTest is Test {
         address newExchange = address(0x123);
 
         vm.prank(seller);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         validator.registerExchange(newExchange, 0);
     }
 

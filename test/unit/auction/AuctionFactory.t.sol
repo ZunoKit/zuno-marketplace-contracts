@@ -114,7 +114,7 @@ contract AuctionFactoryTest is AuctionTestHelpers {
         vm.startPrank(SELLER);
         mockERC721.setApprovalForAll(address(auctionFactory), true);
 
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         auctionFactory.createEnglishAuction(
             address(mockERC721), 1, 1, DEFAULT_START_PRICE, DEFAULT_RESERVE_PRICE, DEFAULT_DURATION
         );
@@ -399,7 +399,7 @@ contract AuctionFactoryTest is AuctionTestHelpers {
 
     function test_SetPaused_RevertIfNotOwner() public {
         vm.prank(BIDDER1);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         auctionFactory.setPaused(true);
     }
 
@@ -417,7 +417,7 @@ contract AuctionFactoryTest is AuctionTestHelpers {
 
     function test_SetMarketplaceWallet_RevertIfNotOwner() public {
         vm.prank(BIDDER1);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         auctionFactory.setMarketplaceWallet(address(0x999));
     }
 }

@@ -219,7 +219,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         vm.deal(bob, totalPrice - 1 ether); // Not enough ETH
 
         vm.prank(bob);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         erc721Exchange.buyNFT{value: totalPrice - 1 ether}(listingId);
         console2.log("  -> Transaction correctly reverted");
 
@@ -232,7 +232,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         // Scenario 2: Try to buy already sold NFT
         console2.log("Scenario 2: Already sold NFT");
         vm.prank(charlie);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         erc721Exchange.buyNFT{value: totalPrice}(listingId);
         console2.log("  -> Transaction correctly reverted");
 
@@ -246,7 +246,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         vm.warp(block.timestamp + 2 days);
 
         vm.prank(dave);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         erc721Exchange.buyNFT{value: totalPrice}(expiredListingId);
         console2.log("  -> Expired listing correctly rejected");
 

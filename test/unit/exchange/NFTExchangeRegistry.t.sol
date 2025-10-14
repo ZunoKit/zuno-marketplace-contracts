@@ -144,7 +144,7 @@ contract NFTExchangeRegistryTest is Test {
     function test_ListUnsupportedNFT_Reverts() public {
         address unsupportedContract = makeAddr("unsupported");
 
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         registry.listNFT(unsupportedContract, TOKEN_ID, 1, PRICE, DURATION);
     }
 
@@ -207,7 +207,7 @@ contract NFTExchangeRegistryTest is Test {
     function test_GetExchangeForNFT_Unsupported_Reverts() public {
         address unsupportedContract = makeAddr("unsupported");
 
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         registry.getExchangeForNFT(unsupportedContract);
     }
 

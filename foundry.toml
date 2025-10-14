@@ -12,7 +12,7 @@ remappings = [
     'forge-std=lib/forge-std/src'
 ]
 
-cache = false
+cache = true
 
 # Network configurations
 [rpc_endpoints]

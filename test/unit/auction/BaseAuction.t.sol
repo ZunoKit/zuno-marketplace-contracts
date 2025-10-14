@@ -362,12 +362,12 @@ contract BaseAuctionTest is AuctionTestHelpers {
 
         // Test that non-owner cannot set marketplace fee
         vm.prank(nonOwner);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         testableAuction.setMarketplaceFee(300);
 
         // Test that non-owner cannot set min bid increment
         vm.prank(nonOwner);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         testableAuction.setMinBidIncrement(300);
     }
 }
