@@ -113,7 +113,7 @@ contract BidManagementLibTest is Test {
         BidManagementLib.BidPlacementResult memory result = bidStorageTest.placeBid(params);
 
         assertFalse(result.success);
-        assertEq(result.errorMessage, "");
+        assertEq(result.errorMessage, "Invalid bidder address");
     }
 
     function testPlaceBid_SecondBid_Success() public {
