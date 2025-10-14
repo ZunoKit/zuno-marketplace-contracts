@@ -50,7 +50,7 @@ contract BaseAuctionCoverageBoostTest is AuctionTestHelpers {
         address nonOwner = makeAddr("nonOwner");
 
         vm.prank(nonOwner);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), nonOwner));
         testableAuction.setMarketplaceValidator(newValidator);
     }
 
@@ -108,7 +108,7 @@ contract BaseAuctionCoverageBoostTest is AuctionTestHelpers {
         address nonOwner = makeAddr("nonOwner");
 
         vm.prank(nonOwner);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), nonOwner));
         testableAuction.setMinAuctionDuration(1 hours);
     }
 
@@ -133,7 +133,7 @@ contract BaseAuctionCoverageBoostTest is AuctionTestHelpers {
         address nonOwner = makeAddr("nonOwner");
 
         vm.prank(nonOwner);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), nonOwner));
         testableAuction.emergencyResetNFTStatus(address(mockERC721), 1, SELLER);
     }
 
@@ -156,7 +156,7 @@ contract BaseAuctionCoverageBoostTest is AuctionTestHelpers {
         address nonOwner = makeAddr("nonOwner");
 
         vm.prank(nonOwner);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), nonOwner));
         testableAuction.setPaused(true);
     }
 
@@ -165,7 +165,7 @@ contract BaseAuctionCoverageBoostTest is AuctionTestHelpers {
 
         address nonOwner = makeAddr("nonOwner");
         vm.prank(nonOwner);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), nonOwner));
         testableAuction.setPaused(false);
     }
 

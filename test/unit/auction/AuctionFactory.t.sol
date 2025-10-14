@@ -10,6 +10,10 @@ import {AuctionType, AuctionStatus} from "src/types/AuctionTypes.sol";
 import {AuctionTestHelpers} from "test/utils/auction/AuctionTestHelpers.sol";
 import "src/errors/AuctionErrors.sol";
 
+// Import Pausable errors
+error EnforcedPause();
+error ExpectedPause();
+
 /**
  * @title AuctionFactoryTest
  * @notice Unit tests for AuctionFactory contract
@@ -114,7 +118,7 @@ contract AuctionFactoryTest is AuctionTestHelpers {
         vm.startPrank(SELLER);
         mockERC721.setApprovalForAll(address(auctionFactory), true);
 
-        vm.expectRevert("Error message");
+        vm.expectRevert(EnforcedPause.selector);
         auctionFactory.createEnglishAuction(
             address(mockERC721), 1, 1, DEFAULT_START_PRICE, DEFAULT_RESERVE_PRICE, DEFAULT_DURATION
         );
@@ -399,7 +403,7 @@ contract AuctionFactoryTest is AuctionTestHelpers {
 
     function test_SetPaused_RevertIfNotOwner() public {
         vm.prank(BIDDER1);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), BIDDER1));
         auctionFactory.setPaused(true);
     }
 
@@ -417,7 +421,7 @@ contract AuctionFactoryTest is AuctionTestHelpers {
 
     function test_SetMarketplaceWallet_RevertIfNotOwner() public {
         vm.prank(BIDDER1);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), BIDDER1));
         auctionFactory.setMarketplaceWallet(address(0x999));
     }
 }
