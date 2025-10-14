@@ -160,8 +160,8 @@ contract SimpleMarketplaceIntegrationTest is Test {
         // Mint test NFTs
         mockERC721.mint(user1, TOKEN_ID_1);
         mockERC721.mint(user1, TOKEN_ID_2);
-        mockERC1155.mint(user1, TOKEN_ID_1, 10, "");
-        mockERC1155.mint(user2, TOKEN_ID_2, 10, "");
+        mockERC1155.mint(user1, TOKEN_ID_1, 10);
+        mockERC1155.mint(user2, TOKEN_ID_2, 10);
 
         // Mint test ERC20 tokens
         mockERC20.mint(user1, 100 ether);
@@ -320,15 +320,15 @@ contract SimpleMarketplaceIntegrationTest is Test {
         console2.log("\n=== Test 5: Contract Deployment Verification ===");
 
         // Verify core contracts
-        assertTrue(address(validator) != address(0), "Validator not deployed");
-        assertTrue(address(exchangeRegistry) != address(0), "Exchange registry not deployed");
-        assertTrue(address(erc721Exchange) != address(0), "ERC721 exchange not deployed");
-        assertTrue(address(erc1155Exchange) != address(0), "ERC1155 exchange not deployed");
-        assertTrue(address(auctionFactory) != address(0), "Auction factory not deployed");
-        assertTrue(address(offerManager) != address(0), "Offer manager not deployed");
-        assertTrue(address(bundleManager) != address(0), "Bundle manager not deployed");
-        assertTrue(address(accessControl) != address(0), "Access control not deployed");
-        assertTrue(address(feeManager) != address(0), "Fee manager not deployed");
+        assertTrue(address(validator) != address(0));
+        assertTrue(address(exchangeRegistry) != address(0));
+        assertTrue(address(erc721Exchange) != address(0));
+        assertTrue(address(erc1155Exchange) != address(0));
+        assertTrue(address(auctionFactory) != address(0));
+        assertTrue(address(offerManager) != address(0));
+        assertTrue(address(bundleManager) != address(0));
+        assertTrue(address(accessControl) != address(0));
+        assertTrue(address(feeManager) != address(0));
 
         console2.log("All contracts deployed successfully");
     }

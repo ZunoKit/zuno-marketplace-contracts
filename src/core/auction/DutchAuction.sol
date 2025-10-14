@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {BaseAuction} from "./BaseAuction.sol";
+import {AuctionCreationParams, AuctionType, AuctionStatus} from "src/types/AuctionTypes.sol";
 import "src/events/AuctionEvents.sol";
 import "src/errors/AuctionErrors.sol";
 
@@ -75,7 +76,7 @@ contract DutchAuction is BaseAuction {
         uint256 defaultPriceDropPerHour = 500; // 5%
 
         // Create the auction using base functionality
-        AuctionParams memory params = AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: nftContract,
             tokenId: tokenId,
             amount: amount,
@@ -83,7 +84,9 @@ contract DutchAuction is BaseAuction {
             reservePrice: reservePrice,
             duration: duration,
             auctionType: AuctionType.DUTCH,
-            seller: seller
+            seller: seller,
+            bidIncrement: 0,
+            extendOnBid: false
         });
 
         auctionId = _createAuctionInternal(params);
@@ -122,7 +125,7 @@ contract DutchAuction is BaseAuction {
         }
 
         // Create the auction using base functionality
-        AuctionParams memory params = AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: nftContract,
             tokenId: tokenId,
             amount: amount,
@@ -130,7 +133,9 @@ contract DutchAuction is BaseAuction {
             reservePrice: reservePrice,
             duration: duration,
             auctionType: AuctionType.DUTCH,
-            seller: seller
+            seller: seller,
+            bidIncrement: 0,
+            extendOnBid: false
         });
 
         auctionId = _createAuctionInternal(params);

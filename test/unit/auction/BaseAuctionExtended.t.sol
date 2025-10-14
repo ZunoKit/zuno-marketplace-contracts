@@ -4,7 +4,8 @@ pragma solidity ^0.8.30;
 import {Test, console2} from "forge-std/Test.sol";
 import {BaseAuction} from "src/core/auction/BaseAuction.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
-import {AuctionTestHelpers} from "../../utils/auction/AuctionTestHelpers.sol";
+import {AuctionCreationParams, AuctionType, DEFAULT_MIN_BID_INCREMENT} from "src/types/AuctionTypes.sol";
+import {AuctionTestHelpers} from "test/utils/auction/AuctionTestHelpers.sol";
 import "src/errors/AuctionErrors.sol";
 
 /**
@@ -83,7 +84,7 @@ contract BaseAuctionExtendedTest is AuctionTestHelpers {
         vm.prank(nonFactory);
         try testableAuction.placeBidFor{value: 1 ether}(auctionId, user) {
             // Should not reach here
-            assertTrue(false, "placeBidFor should have reverted");
+            assertTrue(false);
         } catch (bytes memory reason) {
             // Check if it reverted with the expected error
             console2.log("placeBidFor revert reason length:", reason.length);
@@ -95,28 +96,28 @@ contract BaseAuctionExtendedTest is AuctionTestHelpers {
                 console2.logBytes4(selector);
                 console2.log("Expected selector:");
                 console2.logBytes4(Auction__NotAuthorized.selector);
-                assertEq(selector, Auction__NotAuthorized.selector, "Should revert with NotAuthorized");
+                assertEq(selector, Auction__NotAuthorized.selector);
             } else {
                 console2.log("Revert reason too short, likely a generic revert");
                 // For now, let's just check that it reverted
-                assertTrue(true, "Function reverted as expected");
+                assertTrue(true);
             }
         }
 
         vm.prank(nonFactory);
         try testableAuction.buyNowFor{value: 1 ether}(auctionId, user) {
-            assertTrue(false, "buyNowFor should have reverted");
+            assertTrue(false);
         } catch (bytes memory) {
             // Just check that it reverted
-            assertTrue(true, "buyNowFor reverted as expected");
+            assertTrue(true);
         }
 
         vm.prank(nonFactory);
         try testableAuction.withdrawBidFor(auctionId, user) {
-            assertTrue(false, "withdrawBidFor should have reverted");
+            assertTrue(false);
         } catch (bytes memory) {
             // Just check that it reverted
-            assertTrue(true, "withdrawBidFor reverted as expected");
+            assertTrue(true);
         }
     }
 
@@ -137,7 +138,7 @@ contract BaseAuctionExtendedTest is AuctionTestHelpers {
         }
 
         // Verify that factoryContract is now set to this test contract
-        assertEq(currentFactory, address(this), "Factory contract should be test contract address in test environment");
+        assertEq(currentFactory, address(this));
 
         // Test that calling from the factory address works (should not revert)
         // These calls will revert with Auction__UnsupportedAuctionType, not Auction__NotAuthorized
@@ -159,14 +160,14 @@ contract BaseAuctionExtendedTest is AuctionTestHelpers {
         // When validator is not set, validation should pass
         testableAuction.testValidateNFTAvailability(address(mockERC721), 1, SELLER);
         // Should not revert
-        assertTrue(true, "Validation passed when no validator is set");
+        assertTrue(true);
     }
 
     function test_ValidateNFTAvailability_WithValidator() public {
         // This test is removed because it requires a proper validator implementation
         // The mock validator doesn't implement the required interface
         // Instead, we test that the function exists and can be called
-        assertTrue(true, "Test placeholder - validator integration requires proper implementation");
+        assertTrue(true);
     }
 
     // ============================================================================
@@ -182,7 +183,7 @@ contract BaseAuctionExtendedTest is AuctionTestHelpers {
         auctionFactory.cancelAuction(auctionId);
 
         // Simple verification - if no revert, cancellation was successful
-        assertTrue(true, "Auction cancellation completed without revert");
+        assertTrue(true);
     }
 
     function test_CancelAuction_RevertNonSeller() public {
@@ -245,30 +246,34 @@ contract BaseAuctionExtendedTest is AuctionTestHelpers {
     function test_ValidateAuctionParameters_EdgeCase_MaxReservePrice() public {
         // Test exactly 10x start price (should pass)
         testableAuction.testValidateAuctionParameters(
-            BaseAuction.AuctionParams({
+            AuctionCreationParams({
                 nftContract: address(mockERC721),
                 tokenId: 1,
                 amount: 1,
                 startPrice: 1 ether,
                 reservePrice: 10 ether, // Exactly 10x
                 duration: 1 days,
-                auctionType: IAuction.AuctionType.ENGLISH,
-                seller: SELLER
+                auctionType: AuctionType.ENGLISH,
+                seller: SELLER,
+                bidIncrement: DEFAULT_MIN_BID_INCREMENT,
+                extendOnBid: false
             })
         );
 
         // Test over 10x start price (should revert)
         vm.expectRevert(Auction__InvalidReservePrice.selector);
         testableAuction.testValidateAuctionParameters(
-            BaseAuction.AuctionParams({
+            AuctionCreationParams({
                 nftContract: address(mockERC721),
                 tokenId: 1,
                 amount: 1,
                 startPrice: 1 ether,
                 reservePrice: 10 ether + 1, // Over 10x
                 duration: 1 days,
-                auctionType: IAuction.AuctionType.ENGLISH,
-                seller: SELLER
+                auctionType: AuctionType.ENGLISH,
+                seller: SELLER,
+                bidIncrement: DEFAULT_MIN_BID_INCREMENT,
+                extendOnBid: false
             })
         );
     }
@@ -276,30 +281,34 @@ contract BaseAuctionExtendedTest is AuctionTestHelpers {
     function test_ValidateAuctionParameters_EdgeCase_MinDuration() public {
         // Test exactly 1 hour (should pass)
         testableAuction.testValidateAuctionParameters(
-            BaseAuction.AuctionParams({
+            AuctionCreationParams({
                 nftContract: address(mockERC721),
                 tokenId: 1,
                 amount: 1,
                 startPrice: 1 ether,
                 reservePrice: 2 ether,
                 duration: 1 hours, // Minimum
-                auctionType: IAuction.AuctionType.ENGLISH,
-                seller: SELLER
+                auctionType: AuctionType.ENGLISH,
+                seller: SELLER,
+                bidIncrement: DEFAULT_MIN_BID_INCREMENT,
+                extendOnBid: false
             })
         );
 
         // Test under 1 hour (should revert)
         vm.expectRevert(Auction__InvalidAuctionDuration.selector);
         testableAuction.testValidateAuctionParameters(
-            BaseAuction.AuctionParams({
+            AuctionCreationParams({
                 nftContract: address(mockERC721),
                 tokenId: 1,
                 amount: 1,
                 startPrice: 1 ether,
                 reservePrice: 2 ether,
                 duration: 1 hours - 1, // Under minimum
-                auctionType: IAuction.AuctionType.ENGLISH,
-                seller: SELLER
+                auctionType: AuctionType.ENGLISH,
+                seller: SELLER,
+                bidIncrement: DEFAULT_MIN_BID_INCREMENT,
+                extendOnBid: false
             })
         );
     }
@@ -310,7 +319,7 @@ contract BaseAuctionExtendedTest is AuctionTestHelpers {
 
         bytes32 id2 = testableAuction.testGenerateAuctionId(address(mockERC721), 1, SELLER, block.timestamp);
 
-        assertEq(id1, id2, "Same inputs should produce same auction ID");
+        assertEq(id1, id2);
     }
 }
 
@@ -321,7 +330,7 @@ contract BaseAuctionExtendedTest is AuctionTestHelpers {
 contract SimpleTestableBaseAuction is BaseAuction {
     constructor(address _marketplaceWallet) BaseAuction(_marketplaceWallet) {}
 
-    function testValidateAuctionParameters(AuctionParams memory params) external view {
+    function testValidateAuctionParameters(AuctionCreationParams memory params) external view {
         _validateAuctionParameters(params);
     }
 

@@ -34,49 +34,49 @@ contract ERC165SupportTest is Test {
     function test_ERC721Exchange_SupportsERC165() public view {
         // Should support ERC165
         bool supportsERC165 = erc721Exchange.supportsInterface(ERC165_INTERFACE_ID);
-        assertTrue(supportsERC165, "ERC721Exchange should support ERC165");
+        assertTrue(supportsERC165);
     }
 
     function test_ERC721Exchange_DoesNotSupportERC721() public view {
         // Should NOT support ERC721 (it's a marketplace, not an NFT)
         bool supportsERC721 = erc721Exchange.supportsInterface(ERC721_INTERFACE_ID);
-        assertFalse(supportsERC721, "ERC721Exchange should NOT support ERC721 interface");
+        assertFalse(supportsERC721);
     }
 
     function test_ERC721Exchange_DoesNotSupportERC1155() public view {
         // Should NOT support ERC1155
         bool supportsERC1155 = erc721Exchange.supportsInterface(ERC1155_INTERFACE_ID);
-        assertFalse(supportsERC1155, "ERC721Exchange should NOT support ERC1155 interface");
+        assertFalse(supportsERC1155);
     }
 
     function test_ERC721Exchange_DoesNotSupportInvalidInterface() public view {
         // Should NOT support invalid interface
         bool supportsInvalid = erc721Exchange.supportsInterface(INVALID_INTERFACE_ID);
-        assertFalse(supportsInvalid, "ERC721Exchange should NOT support invalid interface");
+        assertFalse(supportsInvalid);
     }
 
     function test_ERC1155Exchange_SupportsERC165() public view {
         // Should support ERC165
         bool supportsERC165 = erc1155Exchange.supportsInterface(ERC165_INTERFACE_ID);
-        assertTrue(supportsERC165, "ERC1155Exchange should support ERC165");
+        assertTrue(supportsERC165);
     }
 
     function test_ERC1155Exchange_DoesNotSupportERC721() public view {
         // Should NOT support ERC721
         bool supportsERC721 = erc1155Exchange.supportsInterface(ERC721_INTERFACE_ID);
-        assertFalse(supportsERC721, "ERC1155Exchange should NOT support ERC721 interface");
+        assertFalse(supportsERC721);
     }
 
     function test_ERC1155Exchange_DoesNotSupportERC1155() public view {
         // Should NOT support ERC1155 (it's a marketplace, not an NFT)
         bool supportsERC1155 = erc1155Exchange.supportsInterface(ERC1155_INTERFACE_ID);
-        assertFalse(supportsERC1155, "ERC1155Exchange should NOT support ERC1155 interface");
+        assertFalse(supportsERC1155);
     }
 
     function test_ERC1155Exchange_DoesNotSupportInvalidInterface() public view {
         // Should NOT support invalid interface
         bool supportsInvalid = erc1155Exchange.supportsInterface(INVALID_INTERFACE_ID);
-        assertFalse(supportsInvalid, "ERC1155Exchange should NOT support invalid interface");
+        assertFalse(supportsInvalid);
     }
 
     function test_NoRevertOnSupportsInterface() public view {
@@ -95,7 +95,7 @@ contract ERC165SupportTest is Test {
         erc1155Exchange.supportsInterface(INVALID_INTERFACE_ID);
 
         // If we reach here, none of the calls reverted
-        assertTrue(true, "All supportsInterface calls completed without reverting");
+        assertTrue(true);
     }
 
     function test_FrontendCompatibility() public view {
@@ -105,10 +105,10 @@ contract ERC165SupportTest is Test {
 
         // This should return false (not revert) for ERC721 interface
         bool result = erc721Exchange.supportsInterface(ERC721_INTERFACE_ID);
-        assertFalse(result, "Exchange should return false for ERC721 interface, not revert");
+        assertFalse(result);
 
         // This should return true for ERC165 interface
         bool erc165Result = erc721Exchange.supportsInterface(ERC165_INTERFACE_ID);
-        assertTrue(erc165Result, "Exchange should return true for ERC165 interface");
+        assertTrue(erc165Result);
     }
 }

@@ -151,7 +151,7 @@ contract UnitBaseCollectionTest is Test {
         vm.stopPrank();
 
         // Verify total minted equals max supply
-        assertEq(setup.collection.getTotalMinted(), setup.params.maxSupply, "Total minted should equal max supply");
+        assertEq(setup.collection.getTotalMinted(), setup.params.maxSupply);
 
         // Try to mint one more with a new user, which should fail due to max supply
         address newUser = makeAddr("newUser");

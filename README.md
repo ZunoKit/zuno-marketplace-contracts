@@ -5,49 +5,68 @@
 [![Solidity](https://img.shields.io/badge/Solidity-^0.8.30-blue.svg)](https://docs.soliditylang.org/)
 [![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen.svg)](#testing)
 
-A production-ready, modular NFT marketplace smart contract system built with Foundry. Supports ERC721 & ERC1155 tokens with advanced trading features including auctions, offers, bundles, and comprehensive collection management.
+A production-ready, modular NFT marketplace smart contract system built with Foundry. Supports ERC721 & ERC1155 tokens with advanced trading features including auctions, offers, bundles, and comprehensive collection management with a unified Hub architecture for simplified frontend integration.
 
 ## ✨ Features
 
-- **Multi-token Support**: ERC721 and ERC1155 collections
-- **Advanced Trading**: Direct sales, auctions, offers, and bundles
-- **Collection Management**: Factory pattern for creating collections
-- **Fee System**: Configurable marketplace and royalty fees
-- **Access Control**: Role-based permissions and emergency controls
-- **Clean Architecture**: Modular, organized, and maintainable code
+- **Multi-token Support**: ERC721 and ERC1155 collections with automatic standard detection
+- **Advanced Trading**: Direct sales, English/Dutch auctions, offers, and bundle trading
+- **Hub Architecture**: Single entry point (MarketplaceHub) for all frontend interactions
+- **Collection Management**: Factory pattern with proxy deployments for gas-efficient collection creation
+- **Fee System**: Configurable marketplace fees and EIP-2981 royalty support
+- **Access Control**: Role-based permissions, timelock protection, and emergency controls
+- **Clean Architecture**: Modular contracts with separated concerns and type-safe operations
+- **Gas Optimized**: Minimal proxy pattern, efficient storage packing, and batch operations
 
 ## 🏗️ Architecture
 
-### Smart Contracts (17 Core Contracts)
+### Smart Contract Architecture
 
-#### Collections (4)
+#### Core Contracts
 
-- `ERC721Collection` / `ERC1155Collection` - NFT collections
-- `ERC721CollectionFactory` / `ERC1155CollectionFactory` - Collection creation
+**Hub & Registries**
+- `MarketplaceHub` - Single entry point for frontend, provides address discovery
+- `ExchangeRegistry` - Maps token standards to exchange contracts
+- `CollectionRegistry` - Maps token types to factory contracts
+- `FeeRegistry` - Unified fee calculations across platform
+- `AuctionRegistry` - Maps auction types to implementation contracts
 
-#### Exchange (3)
+**Exchange Layer**
+- `BaseNFTExchange` - Abstract base with common trading logic
+- `ERC721NFTExchange` / `ERC1155NFTExchange` - Token-specific implementations
+- `NFTExchangeFactory` - Creates exchange instances
+- `NFTExchangeRegistry` - Manages exchange instances
 
-- `ERC721NFTExchange` / `ERC1155NFTExchange` - Trading logic
-- `NFTExchangeRegistry` - Exchange management
+**Collection System**
+- `ERC721Collection` / `ERC1155Collection` - NFT collection contracts
+- `ERC721CollectionFactory` / `ERC1155CollectionFactory` - Gas-efficient collection deployment
+- `ERC721CollectionImplementation` / `ERC1155CollectionImplementation` - Proxy implementations
+- `CollectionVerifier` - Collection verification and validation
 
-#### Marketplace (3)
+**Auction System**
+- `BaseAuction` - Common auction logic
+- `EnglishAuction` / `DutchAuction` - Auction type implementations
+- `EnglishAuctionImplementation` / `DutchAuctionImplementation` - Proxy implementations
+- `AuctionFactory` - Creates auction instances with minimal proxy pattern
 
-- `AdvancedListingManager` - Complex listing logic
-- `OfferManager` - Offer system
-- `BundleManager` - Bundle trading
+**Trading Features**
+- `AdvancedListingManager` - Orchestrates complex listing types
+- `OfferManager` - NFT and collection offer management
+- `BundleManager` - Multi-NFT bundle trading
 
-#### Management (3)
+**Fee & Royalty Management**
+- `BaseFee` - Core fee calculations
+- `AdvancedFeeManager` - Marketplace fee configuration
+- `AdvancedRoyaltyManager` - EIP-2981 royalty distribution
 
-- `AdvancedFeeManager` - Fee management
-- `AdvancedRoyaltyManager` - Royalty system
-- `EmergencyManager` - Emergency controls
+**Security & Access Control**
+- `MarketplaceAccessControl` - Role-based permissions (Admin, Operator, User)
+- `EmergencyManager` - Emergency pause/unpause functionality
+- `MarketplaceTimelock` - 48-hour delay for critical operations
+- `ListingValidator` - Input validation and sanity checks
 
-#### Access & Validation (4)
-
-- `MarketplaceAccessControl` - Role-based access
-- `CollectionVerifier` - Collection validation
-- `ListingValidator` - Listing validation
-- `ListingHistoryTracker` - History tracking
+**Analytics & History**
+- `ListingHistoryTracker` - Transaction history and analytics
 
 ### Frontend
 
@@ -104,25 +123,49 @@ pnpm format
 
 ```
 zuno-marketplace-contracts/
-├── src/contracts/
-│   ├── core/                # Core marketplace contracts
-│   │   ├── collection/      # ERC721/ERC1155 collections
-│   │   ├── exchange/        # Trading logic
-│   │   ├── auction/         # Auction mechanisms
-│   │   ├── fees/           # Fee & royalty management
-│   │   ├── access/         # Access control
-│   │   └── validation/     # Input validation
-│   ├── libraries/          # Utility libraries
-│   ├── interfaces/         # Contract interfaces
-│   ├── events/            # Event definitions
-│   └── errors/            # Custom errors
-├── script/                # Deployment scripts
-├── test/                  # Comprehensive test suite
-│   ├── unit/             # Unit tests
-│   ├── integration/      # Integration tests
-│   └── mocks/           # Mock contracts
-├── lib/                  # Dependencies (git submodules)
-└── foundry.toml         # Foundry configuration
+├── src/
+│   ├── core/                 # Core marketplace contracts
+│   │   ├── auction/          # English & Dutch auction implementations
+│   │   ├── bundles/          # Bundle trading functionality
+│   │   ├── collection/       # Collection verification & management
+│   │   ├── exchange/         # ERC721/ERC1155 exchange contracts
+│   │   ├── factory/          # Factory contracts for collections & auctions
+│   │   ├── fees/             # Fee & royalty management
+│   │   ├── listing/          # Advanced listing management
+│   │   ├── offers/           # Offer system
+│   │   ├── proxy/            # Proxy implementations for gas efficiency
+│   │   ├── security/         # Emergency & timelock controls
+│   │   ├── access/           # Role-based access control
+│   │   ├── analytics/        # History tracking & analytics
+│   │   └── validation/       # Input validation & verification
+│   ├── router/               # MarketplaceHub entry point
+│   ├── registry/             # Registry contracts for mappings
+│   ├── common/               # Base contracts & shared logic
+│   ├── libraries/            # Reusable utility libraries
+│   ├── interfaces/           # Contract interfaces
+│   ├── types/                # Type definitions & structs
+│   ├── events/               # Event definitions
+│   └── errors/               # Custom error definitions
+├── script/
+│   └── deploy/               # Deployment scripts
+│       └── DeployAll.s.sol   # Complete deployment script
+├── test/
+│   ├── unit/                 # Unit tests for each contract
+│   ├── integration/          # Cross-contract integration tests
+│   ├── e2e/                  # End-to-end workflow tests
+│   ├── gas/                  # Gas optimization tests
+│   ├── deploy/               # Deployment tests
+│   └── utils/                # Test helpers & utilities
+├── docs/                     # Documentation
+│   ├── user-guide.md         # Frontend integration guide
+│   ├── architecture/         # Architecture documentation
+│   ├── api/                  # API documentation
+│   └── security/             # Security documentation
+├── lib/                      # External dependencies (git submodules)
+├── .cursor/rules/            # Cursor AI development rules
+├── foundry.toml              # Foundry configuration
+├── Makefile                  # Build & deployment shortcuts
+└── CLAUDE.md                 # Claude AI assistant guidelines
 ```
 
 ## 🧪 Testing
@@ -205,11 +248,13 @@ make deploy-all-local    # Deploy to local network
 ### Contract Deployment
 
 ```bash
-# Deploy to testnet (Sepolia)
-forge script script/DeployExchanges.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast --verify
+# Deploy EVERYTHING with one command (recommended)
+forge script script/deploy/DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast --verify
 
-# Deploy to mainnet
-forge script script/DeployExchanges.s.sol --rpc-url $MAINNET_RPC_URL --broadcast --verify
+# Output shows MarketplaceHub address - that's the ONLY address frontend needs!
+
+# Alternative: Deploy to mainnet
+forge script script/deploy/DeployAll.s.sol --rpc-url $MAINNET_RPC_URL --broadcast --verify
 ```
 
 ### Integration Examples
@@ -238,37 +283,49 @@ exchange.createListing(
 
 ### Frontend Integration (MarketplaceHub)
 
-The frontend only needs the `MarketplaceHub` address. Initialize once, cache addresses, and call core
-contracts directly. See detailed guide in `docs/user-guide.md`.
+The frontend only needs the `MarketplaceHub` address - everything else is discoverable through it.
 
 ```typescript
 // config.ts
-export const MARKETPLACE_HUB = "0x...";
+export const MARKETPLACE_HUB = "0x..."; // ONLY address needed
 
-// Initialize Hub and cache addresses
+// Initialize Hub
 import { ethers, Contract } from "ethers";
 import MarketplaceHubABI from "./abis/MarketplaceHub.json";
 
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
 const hub = new Contract(MARKETPLACE_HUB, MarketplaceHubABI, provider);
 
-// Get all addresses once
-const addresses = await hub.getAllAddresses();
+// Get all contract addresses (cache these)
+const {
+  erc721Exchange,
+  erc1155Exchange,
+  erc721Factory,
+  erc1155Factory,
+  englishAuction,
+  dutchAuction,
+  auctionFactory,
+  feeRegistry,
+  bundleManager,
+  offerManager
+} = await hub.getAllAddresses();
 
-// Auto-detect exchange for an NFT and list directly on the exchange
+// Auto-detect exchange for any NFT
 const exchangeAddr = await hub.getExchangeFor(nftAddress);
 const exchange = new Contract(exchangeAddr, ExchangeABI, signer);
+
+// List NFT with automatic exchange selection
 await exchange.listNFT(nftAddress, tokenId, ethers.parseEther("1.0"), 86400);
 
-// Helper: calculate fees
-const fees = await hub.calculateFees(
-  nftAddress,
-  tokenId,
-  ethers.parseEther("1.0")
-);
+// Calculate fees before purchase
+const fees = await hub.calculateFees(nftAddress, tokenId, salePrice);
+console.log(`Total price: ${fees.totalPrice}, Platform fee: ${fees.platformFee}`);
+
+// Verify collection before interaction
+const { isValid, tokenType } = await hub.verifyCollection(collectionAddress);
 ```
 
-More examples (React hook, end-to-end flows) in `docs/user-guide.md`.
+See comprehensive guide with React hooks, TypeScript types, and feature examples in `docs/user-guide.md` and `FE-GUIDE.md`.
 
 ### Core Features
 

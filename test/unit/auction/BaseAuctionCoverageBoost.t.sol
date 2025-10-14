@@ -5,7 +5,8 @@ import {Test, console2} from "forge-std/Test.sol";
 import {BaseAuction} from "src/core/auction/BaseAuction.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
 import {IMarketplaceValidator} from "src/interfaces/IMarketplaceValidator.sol";
-import {AuctionTestHelpers} from "../../utils/auction/AuctionTestHelpers.sol";
+import {AuctionCreationParams, AuctionType, DEFAULT_MIN_BID_INCREMENT} from "src/types/AuctionTypes.sol";
+import {AuctionTestHelpers} from "test/utils/auction/AuctionTestHelpers.sol";
 import {MarketplaceValidator} from "src/core/validation/MarketplaceValidator.sol";
 import "src/errors/AuctionErrors.sol";
 
@@ -116,7 +117,7 @@ contract BaseAuctionCoverageBoostTest is AuctionTestHelpers {
         testableAuction.emergencyResetNFTStatus(address(mockERC721), 1, SELLER);
 
         // Should not revert - function should handle validator calls gracefully
-        assertTrue(true, "Emergency reset completed");
+        assertTrue(true);
     }
 
     function test_EmergencyResetNFTStatus_NoValidator() public {
@@ -125,7 +126,7 @@ contract BaseAuctionCoverageBoostTest is AuctionTestHelpers {
 
         // Should not revert even without validator
         auctionNoValidator.emergencyResetNFTStatus(address(mockERC721), 1, SELLER);
-        assertTrue(true, "Emergency reset completed without validator");
+        assertTrue(true);
     }
 
     function test_EmergencyResetNFTStatus_RevertNotOwner() public {
@@ -278,15 +279,17 @@ contract BaseAuctionCoverageBoostTest is AuctionTestHelpers {
     // ============================================================================
 
     function test_ValidateAuctionParameters_ZeroAddress() public {
-        BaseAuction.AuctionParams memory params = BaseAuction.AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: address(0), // Zero address
             tokenId: 1,
             amount: 1,
             startPrice: 1 ether,
             reservePrice: 2 ether,
             duration: 1 days,
-            auctionType: IAuction.AuctionType.ENGLISH,
-            seller: SELLER
+            auctionType: AuctionType.ENGLISH,
+            seller: SELLER,
+            bidIncrement: DEFAULT_MIN_BID_INCREMENT,
+            extendOnBid: false
         });
 
         vm.expectRevert(Auction__ZeroAddress.selector);
@@ -294,15 +297,17 @@ contract BaseAuctionCoverageBoostTest is AuctionTestHelpers {
     }
 
     function test_ValidateAuctionParameters_ExcessiveReservePrice() public {
-        BaseAuction.AuctionParams memory params = BaseAuction.AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: address(mockERC721),
             tokenId: 1,
             amount: 1,
             startPrice: 1 ether,
             reservePrice: 11 ether, // More than 10x start price
             duration: 1 days,
-            auctionType: IAuction.AuctionType.ENGLISH,
-            seller: SELLER
+            auctionType: AuctionType.ENGLISH,
+            seller: SELLER,
+            bidIncrement: DEFAULT_MIN_BID_INCREMENT,
+            extendOnBid: false
         });
 
         vm.expectRevert(Auction__InvalidReservePrice.selector);
@@ -313,15 +318,17 @@ contract BaseAuctionCoverageBoostTest is AuctionTestHelpers {
         // Set very short minimum duration for testing
         testableAuction.setMinAuctionDuration(1 hours);
 
-        BaseAuction.AuctionParams memory params = BaseAuction.AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: address(mockERC721),
             tokenId: 1,
             amount: 1,
             startPrice: 1 ether,
             reservePrice: 2 ether,
             duration: 30 minutes, // Too short
-            auctionType: IAuction.AuctionType.ENGLISH,
-            seller: SELLER
+            auctionType: AuctionType.ENGLISH,
+            seller: SELLER,
+            bidIncrement: DEFAULT_MIN_BID_INCREMENT,
+            extendOnBid: false
         });
 
         vm.expectRevert(Auction__InvalidAuctionDuration.selector);
@@ -329,15 +336,17 @@ contract BaseAuctionCoverageBoostTest is AuctionTestHelpers {
     }
 
     function test_ValidateAuctionParameters_DurationTooLong() public {
-        BaseAuction.AuctionParams memory params = BaseAuction.AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: address(mockERC721),
             tokenId: 1,
             amount: 1,
             startPrice: 1 ether,
             reservePrice: 2 ether,
             duration: 31 days, // Too long (default max is 30 days)
-            auctionType: IAuction.AuctionType.ENGLISH,
-            seller: SELLER
+            auctionType: AuctionType.ENGLISH,
+            seller: SELLER,
+            bidIncrement: DEFAULT_MIN_BID_INCREMENT,
+            extendOnBid: false
         });
 
         vm.expectRevert(Auction__InvalidAuctionDuration.selector);
@@ -434,7 +443,7 @@ contract CoverageTestableBaseAuction is BaseAuction {
         _notifyValidatorAuctionSettled(nftContract, tokenId, oldOwner, newOwner);
     }
 
-    function testValidateAuctionParameters(AuctionParams memory params) external view {
+    function testValidateAuctionParameters(AuctionCreationParams memory params) external view {
         _validateAuctionParameters(params);
     }
 

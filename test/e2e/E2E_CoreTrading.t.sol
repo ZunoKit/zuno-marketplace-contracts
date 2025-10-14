@@ -18,8 +18,8 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         console2.log("\n=== Test: Complete ERC721 Trading Journey ===");
 
         // Step 1: Alice creates a collection
-        address collection = createERC721Collection(alice, "Alice NFTs", "ALICE");
-        assertFalse(collection == address(0), "Collection creation failed");
+        address collection = createERC721Collection(alice, "Test Collection", "TEST");
+        assertFalse(collection == address(0));
 
         // Step 2: Alice mints an NFT
         vm.prank(alice);

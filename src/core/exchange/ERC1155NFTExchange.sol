@@ -110,13 +110,13 @@ contract ERC1155NFTExchange is BaseNFTExchange {
     }
 
     // Function to buy an ERC-1155 NFT (entire listing)
-    function buyNFT(bytes32 m_listingId) public payable onlyActiveListing(m_listingId) {
+    function buyNFT(bytes32 m_listingId) public payable onlyActiveListing(m_listingId) nonReentrant {
         Listing storage s_listing = s_listings[m_listingId];
         _executePurchase(m_listingId, s_listing.amount);
     }
 
     // Function to buy a partial amount of ERC-1155 NFT
-    function buyNFT(bytes32 m_listingId, uint256 m_amount) public payable onlyActiveListing(m_listingId) {
+    function buyNFT(bytes32 m_listingId, uint256 m_amount) public payable onlyActiveListing(m_listingId) nonReentrant {
         if (m_amount == 0) {
             revert NFTExchange__AmountMustBeGreaterThanZero();
         }
@@ -138,8 +138,16 @@ contract ERC1155NFTExchange is BaseNFTExchange {
 
         (address m_royaltyReceiver, uint256 m_royalty) =
             getRoyaltyInfo(s_listing.contractAddress, s_listing.tokenId, m_proportionalPrice);
-        uint256 m_takerFee = (m_proportionalPrice * s_takerFee) / BPS_DENOMINATOR;
-        uint256 m_realityPrice = m_proportionalPrice + m_royalty + m_takerFee;
+        
+        uint256 m_takerFee;
+        uint256 m_realityPrice;
+        
+        unchecked {
+            // Safe: takerFee is always <= 10000 (basis points)
+            m_takerFee = (m_proportionalPrice * s_takerFee) / BPS_DENOMINATOR;
+            // Safe: addition of valid amounts
+            m_realityPrice = m_proportionalPrice + m_royalty + m_takerFee;
+        }
 
         if (msg.value < m_realityPrice) {
             revert NFTExchange__InsufficientPayment();

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import "../types/ListingTypes.sol";
+import "src/types/ListingTypes.sol";
 
 /**
  * @title AdvancedListingEvents

@@ -55,11 +55,11 @@ contract EdgeCasesAndIntegrationTest is Test {
 
         // Deploy test tokens
         erc721Token = new MockERC721("Test ERC721", "T721");
-        erc1155Token = new MockERC1155("Test ERC1155", "");
+        erc1155Token = new MockERC1155("Test ERC1155", "T1155");
 
         // Mint tokens to owner
         erc721Token.mint(owner, TOKEN_ID);
-        erc1155Token.mint(owner, TOKEN_ID, AMOUNT, "");
+        erc1155Token.mint(owner, TOKEN_ID, AMOUNT);
 
         vm.stopPrank();
     }
@@ -100,18 +100,18 @@ contract EdgeCasesAndIntegrationTest is Test {
 
         // Create new exchange
         address initialExchange = nftExchangeFactory.createExchange(NFTExchangeFactory.ExchangeType.ERC721);
-        assertTrue(initialExchange != address(0), "Exchange should be created");
-        assertTrue(nftExchangeFactory.isValidExchange(initialExchange), "Exchange should be valid");
+        assertTrue(initialExchange != address(0));
+        assertTrue(nftExchangeFactory.isValidExchange(initialExchange));
 
         // Remove exchange
         nftExchangeFactory.removeExchange(initialExchange);
-        assertFalse(nftExchangeFactory.isValidExchange(initialExchange), "Exchange should be removed");
+        assertFalse(nftExchangeFactory.isValidExchange(initialExchange));
 
         // Create new exchange
         address newExchange = nftExchangeFactory.createExchange(NFTExchangeFactory.ExchangeType.ERC721);
-        assertTrue(newExchange != address(0), "New exchange should be created");
-        assertTrue(nftExchangeFactory.isValidExchange(newExchange), "New exchange should be valid");
-        assertTrue(newExchange != initialExchange, "New exchange should be different from old one");
+        assertTrue(newExchange != address(0));
+        assertTrue(nftExchangeFactory.isValidExchange(newExchange));
+        assertTrue(newExchange != initialExchange);
         vm.stopPrank();
     }
 

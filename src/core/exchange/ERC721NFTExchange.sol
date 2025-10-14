@@ -72,8 +72,8 @@ contract ERC721NFTExchange is BaseNFTExchange {
     // Function to batch list ERC-721 NFTs (same collection)
     function batchListNFT(
         address m_contractAddress,
-        uint256[] memory m_tokenIds,
-        uint256[] memory m_prices,
+        uint256[] calldata m_tokenIds,
+        uint256[] calldata m_prices,
         uint256 m_listingDuration
     ) public {
         if (m_tokenIds.length == 0 && m_prices.length == 0) {
@@ -107,20 +107,30 @@ contract ERC721NFTExchange is BaseNFTExchange {
                 revert NFTExchange__NotTheOwner();
             }
         }
-        for (uint256 i = 0; i < m_tokenIds.length; i++) {
+        uint256 length = m_tokenIds.length;
+        for (uint256 i; i < length;) {
             bytes32 listingId = _generateListingId(m_contractAddress, m_tokenIds[i], msg.sender);
             _createListing(m_contractAddress, m_tokenIds[i], m_prices[i], m_listingDuration, 1, listingId);
             emit NFTListed(listingId, m_contractAddress, m_tokenIds[i], msg.sender, m_prices[i]);
+            unchecked { ++i; }
         }
     }
 
     // Function to buy an ERC-721 NFT
-    function buyNFT(bytes32 m_listingId) public payable onlyActiveListing(m_listingId) {
+    function buyNFT(bytes32 m_listingId) public payable onlyActiveListing(m_listingId) nonReentrant {
         Listing storage s_listing = s_listings[m_listingId];
         (address m_royaltyReceiver, uint256 m_royalty) =
             getRoyaltyInfo(s_listing.contractAddress, s_listing.tokenId, s_listing.price);
-        uint256 m_takerFee = (s_listing.price * s_takerFee) / BPS_DENOMINATOR;
-        uint256 m_realityPrice = s_listing.price + m_royalty + m_takerFee;
+        
+        uint256 m_takerFee;
+        uint256 m_realityPrice;
+        
+        unchecked {
+            // Safe: takerFee is always <= 10000 (basis points)
+            m_takerFee = (s_listing.price * s_takerFee) / BPS_DENOMINATOR;
+            // Safe: addition of valid amounts
+            m_realityPrice = s_listing.price + m_royalty + m_takerFee;
+        }
 
         if (msg.value < m_realityPrice) {
             revert NFTExchange__InsufficientPayment();
@@ -162,7 +172,7 @@ contract ERC721NFTExchange is BaseNFTExchange {
     }
 
     // Function to batch buy ERC-721 NFTs (same collection)
-    function batchBuyNFT(bytes32[] memory m_listingIds) public payable {
+    function batchBuyNFT(bytes32[] calldata m_listingIds) public payable nonReentrant {
         if (m_listingIds.length == 0) revert NFTExchange__ArrayLengthMismatch();
 
         address contractAddress = s_listings[m_listingIds[0]].contractAddress;

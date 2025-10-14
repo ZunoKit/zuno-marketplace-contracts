@@ -46,7 +46,7 @@ import {ListingHistoryTracker} from "src/core/analytics/ListingHistoryTracker.so
 import {CollectionParams} from "src/types/ListingTypes.sol";
 
 // Hub Architecture
-import {MarketplaceHub} from "src/router/MarketplaceHub.sol";
+import {UserHub} from "src/router/UserHub.sol";
 import {ExchangeRegistry} from "src/registry/ExchangeRegistry.sol";
 import {CollectionRegistry} from "src/registry/CollectionRegistry.sol";
 import {FeeRegistry} from "src/registry/FeeRegistry.sol";
@@ -97,7 +97,7 @@ abstract contract E2E_BaseSetup is Test {
     ListingHistoryTracker public historyTracker;
 
     // Hub Architecture
-    MarketplaceHub public hub;
+    UserHub public userHub;
     ExchangeRegistry public hubExchangeRegistry;
     CollectionRegistry public hubCollectionRegistry;
     FeeRegistry public hubFeeRegistry;
@@ -162,7 +162,7 @@ abstract contract E2E_BaseSetup is Test {
         // dutchAuction.setMarketplaceWallet(marketplaceWallet);
 
         _configureContracts();
-        _deployMarketplaceHub();
+        _deployUserHub();
         vm.stopPrank();
 
         // Setup test data
@@ -294,7 +294,7 @@ abstract contract E2E_BaseSetup is Test {
         console2.log("Contracts configured");
     }
 
-    function _deployMarketplaceHub() internal {
+    function _deployUserHub() internal {
         // Deploy registries
         hubExchangeRegistry = new ExchangeRegistry(admin);
         hubCollectionRegistry = new CollectionRegistry(admin);
@@ -302,8 +302,7 @@ abstract contract E2E_BaseSetup is Test {
         hubAuctionRegistry = new AuctionRegistry(admin);
 
         // Deploy hub with real managers from setup
-        hub = new MarketplaceHub(
-            admin,
+        userHub = new UserHub(
             address(hubExchangeRegistry),
             address(hubCollectionRegistry),
             address(hubFeeRegistry),
@@ -325,7 +324,7 @@ abstract contract E2E_BaseSetup is Test {
         hubAuctionRegistry.updateAuctionFactory(address(auctionFactory));
         vm.stopPrank();
 
-        console2.log("MarketplaceHub deployed:", address(hub));
+        console2.log("UserHub deployed:", address(userHub));
     }
 
     function _setupTestData() internal {
@@ -505,7 +504,7 @@ abstract contract E2E_BaseSetup is Test {
         // Update our tracked remaining amount to reflect the purchase
         _listedAmountById[listingId] = remainingAmount - amount;
 
-        console2.log("Buyer", buyer, "purchased");
+        console2.log("Buyer", buyer);
         console2.log("  amount:", amount, "totalPrice:", totalPrice);
     }
 
@@ -541,7 +540,7 @@ abstract contract E2E_BaseSetup is Test {
         uint256 expectedMarketplaceFee,
         uint256 expectedRoyalty
     ) internal {
-        assertApproxEqAbs(before.buyer - afterSnapshot.buyer, expectedBuyerDecrease, 1e15, "Buyer balance incorrect");
+        assertApproxEqAbs(before.buyer - afterSnapshot.buyer, expectedBuyerDecrease, 1e15);
         assertApproxEqAbs(
             afterSnapshot.seller - before.seller, expectedSellerIncrease, 1e15, "Seller balance incorrect"
         );
@@ -561,14 +560,14 @@ abstract contract E2E_BaseSetup is Test {
 
     function assertNFTOwner(address collection, uint256 tokenId, address expectedOwner) internal {
         address actualOwner = ERC721Collection(collection).ownerOf(tokenId);
-        assertEq(actualOwner, expectedOwner, "NFT owner mismatch");
+        assertEq(actualOwner, expectedOwner);
     }
 
     function assertERC1155Balance(address collection, address owner, uint256 tokenId, uint256 expectedBalance)
         internal
     {
         uint256 actualBalance = ERC1155Collection(collection).balanceOf(owner, tokenId);
-        assertEq(actualBalance, expectedBalance, "ERC1155 balance mismatch");
+        assertEq(actualBalance, expectedBalance);
     }
 
     // ============================================================================
@@ -576,7 +575,7 @@ abstract contract E2E_BaseSetup is Test {
     // ============================================================================
 
     function logGasUsage(string memory operation, uint256 gasUsed) internal view {
-        console2.log(string.concat(operation, " gas used:"), gasUsed);
+        console2.log(string.concat(operation), gasUsed);
     }
 
     // ============================================================================

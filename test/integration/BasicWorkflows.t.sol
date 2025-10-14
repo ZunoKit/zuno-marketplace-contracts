@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
+import {AuctionType} from "src/types/AuctionTypes.sol";
 import "src/core/validation/MarketplaceValidator.sol";
 import "src/core/exchange/ERC721NFTExchange.sol";
 import "src/core/exchange/ERC1155NFTExchange.sol";
@@ -121,7 +122,7 @@ contract BasicWorkflowsTest is Test {
             PRICE,
             PRICE / 2, // Lower reserve price so bid meets it
             3600,
-            IAuction.AuctionType.ENGLISH,
+            AuctionType.ENGLISH,
             user1
         );
         vm.stopPrank();
@@ -218,7 +219,7 @@ contract BasicWorkflowsTest is Test {
             PRICE,
             PRICE / 2, // Lower reserve price so bid meets it
             3600,
-            IAuction.AuctionType.ENGLISH,
+            AuctionType.ENGLISH,
             user1
         );
         vm.stopPrank();

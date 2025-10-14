@@ -8,9 +8,10 @@ import {DutchAuction} from "src/core/auction/DutchAuction.sol";
 import {EnglishAuctionImplementation} from "src/core/proxy/EnglishAuctionImplementation.sol";
 import {DutchAuctionImplementation} from "src/core/proxy/DutchAuctionImplementation.sol";
 import {AuctionFactory} from "src/core/factory/AuctionFactory.sol";
+import {AuctionType, AuctionStatus} from "src/types/AuctionTypes.sol";
 import {MarketplaceValidator} from "src/core/validation/MarketplaceValidator.sol";
-import {MockERC721} from "../../mocks/MockERC721.sol";
-import {MockERC1155} from "../../mocks/MockERC1155.sol";
+import {MockERC721} from "test/mocks/MockERC721.sol";
+import {MockERC1155} from "test/mocks/MockERC1155.sol";
 /**
  * @title AuctionTestHelpers
  * @notice Helper contract for auction testing
@@ -59,7 +60,7 @@ contract AuctionTestHelpers is Test {
     function setUpAuctionTests() public {
         // Deploy mock NFT contracts
         mockERC721 = new MockERC721("Test NFT", "TNFT");
-        mockERC1155 = new MockERC1155("Test ERC1155", "T1155");
+        mockERC1155 = new MockERC1155("Test ERC1155", "TERC1155");
 
         // Deploy MarketplaceValidator first
         marketplaceValidator = new MarketplaceValidator();
@@ -107,7 +108,7 @@ contract AuctionTestHelpers is Test {
 
         // Mint ERC1155 tokens to seller
         for (uint256 i = 1; i <= 10; i++) {
-            mockERC1155.mint(SELLER, i, 100, "");
+            mockERC1155.mint(SELLER, i, 100);
         }
         vm.stopPrank();
     }
@@ -285,9 +286,9 @@ contract AuctionTestHelpers is Test {
      * @param auctionId The auction ID
      * @param expectedStatus Expected auction status
      */
-    function assertAuctionStatus(bytes32 auctionId, IAuction.AuctionStatus expectedStatus) public {
+    function assertAuctionStatus(bytes32 auctionId, AuctionStatus expectedStatus) public {
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(expectedStatus), "Auction status mismatch");
+        assertEq(uint256(auction.status), uint256(expectedStatus));
     }
 
     /**
@@ -297,7 +298,7 @@ contract AuctionTestHelpers is Test {
      */
     function assertHighestBidder(bytes32 auctionId, address expectedBidder) public {
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(auction.highestBidder, expectedBidder, "Highest bidder mismatch");
+        assertEq(auction.highestBidder, expectedBidder);
     }
 
     /**
@@ -307,7 +308,7 @@ contract AuctionTestHelpers is Test {
      */
     function assertHighestBid(bytes32 auctionId, uint256 expectedAmount) public {
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(auction.highestBid, expectedAmount, "Highest bid amount mismatch");
+        assertEq(auction.highestBid, expectedAmount);
     }
 
     /**
@@ -318,9 +319,9 @@ contract AuctionTestHelpers is Test {
      */
     function assertNFTOwnership(address nftContract, uint256 tokenId, address expectedOwner) public {
         if (nftContract == address(mockERC721)) {
-            assertEq(mockERC721.ownerOf(tokenId), expectedOwner, "ERC721 ownership mismatch");
+            assertEq(mockERC721.ownerOf(tokenId), expectedOwner);
         } else {
-            assertGt(mockERC1155.balanceOf(expectedOwner, tokenId), 0, "ERC1155 balance should be > 0");
+            assertGt(mockERC1155.balanceOf(expectedOwner, tokenId), 0);
         }
     }
 
@@ -330,7 +331,7 @@ contract AuctionTestHelpers is Test {
      * @param expectedBalance Expected balance
      */
     function assertETHBalance(address account, uint256 expectedBalance) public {
-        assertEq(account.balance, expectedBalance, "ETH balance mismatch");
+        assertEq(account.balance, expectedBalance);
     }
 
     // ============================================================================

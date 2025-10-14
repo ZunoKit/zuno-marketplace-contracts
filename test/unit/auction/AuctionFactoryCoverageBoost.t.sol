@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {Test, console2} from "forge-std/Test.sol";
 import {AuctionFactory} from "src/core/factory/AuctionFactory.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
-import {AuctionTestHelpers} from "../../utils/auction/AuctionTestHelpers.sol";
+import {AuctionTestHelpers} from "test/utils/auction/AuctionTestHelpers.sol";
 import "src/errors/AuctionErrors.sol";
 
 // Import Pausable errors

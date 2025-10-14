@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "src/core/access/MarketplaceAccessControl.sol";
-import {Listing} from "../../types/ListingTypes.sol";
+import {Listing} from "src/types/ListingTypes.sol";
 import "src/errors/NFTExchangeErrors.sol";
 import "src/events/NFTExchangeEvents.sol";
 

@@ -8,8 +8,8 @@ import "src/core/auction/EnglishAuction.sol";
 import "src/core/auction/DutchAuction.sol";
 import "src/core/factory/AuctionFactory.sol";
 import "src/common/Fee.sol";
-import "../../mocks/MockERC721.sol";
-import "../../mocks/MockERC1155.sol";
+import "test/mocks/MockERC721.sol";
+import "test/mocks/MockERC1155.sol";
 
 /**
  * @title PaymentDistribution Test
@@ -41,8 +41,8 @@ contract PaymentDistributionTest is Test {
 
     function setUp() public {
         // Deploy mock NFT contracts
-        mockERC721 = new MockERC721("Test NFT", "TEST");
-        mockERC1155 = new MockERC1155("Test NFT", "TEST");
+        mockERC721 = new MockERC721("Test NFT", "TNFT");
+        mockERC1155 = new MockERC1155("Test NFT", "TNFT");
 
         // Deploy exchange contracts
         erc721Exchange = new ERC721NFTExchange();
@@ -108,7 +108,7 @@ contract PaymentDistributionTest is Test {
         );
 
         // Verify NFT ownership transferred
-        assertEq(mockERC721.ownerOf(1), BUYER, "Buyer should own the NFT");
+        assertEq(mockERC721.ownerOf(1), BUYER);
     }
 
     function test_ERC721_BuyNFT_WithRoyalty_PaymentsDistributedCorrectly() public {
@@ -196,7 +196,7 @@ contract PaymentDistributionTest is Test {
         );
 
         // Verify NFT ownership transferred
-        assertEq(mockERC1155.balanceOf(BUYER, 1), 5, "Buyer should own the NFTs");
+        assertEq(mockERC1155.balanceOf(BUYER, 1), 5);
     }
 
     // ============================================================================
@@ -250,7 +250,7 @@ contract PaymentDistributionTest is Test {
         );
 
         // Verify NFT ownership
-        assertEq(mockERC721.ownerOf(1), BIDDER1, "Winner should own the NFT");
+        assertEq(mockERC721.ownerOf(1), BIDDER1);
     }
 
     // ============================================================================
@@ -289,19 +289,19 @@ contract PaymentDistributionTest is Test {
         // When BIDDER1 bid thirdBid and became highest bidder, their pending refunds were cleared
         // But when BIDDER2 bid fourthBid, BIDDER1's thirdBid becomes refundable
         uint256 bidder1Refund = auctionFactory.getPendingRefund(auctionId, BIDDER1);
-        assertEq(bidder1Refund, thirdBid, "BIDDER1 should have refund from third bid (outbid by BIDDER2's fourth bid)");
+        assertEq(bidder1Refund, thirdBid);
 
         // Check pending refunds for BIDDER2 (should have 0 because they are currently highest bidder)
         // When BIDDER2 bid fourthBid and became highest bidder again, their pending refunds were cleared
         // This prevents the double-withdraw bug
         uint256 bidder2Refund = auctionFactory.getPendingRefund(auctionId, BIDDER2);
-        assertEq(bidder2Refund, 0, "BIDDER2 should have NO refunds when they are highest bidder");
+        assertEq(bidder2Refund, 0);
 
         // Withdraw refunds
         uint256 bidder1BalanceBefore = BIDDER1.balance;
         vm.prank(BIDDER1);
         auctionFactory.withdrawBid(auctionId);
-        assertEq(BIDDER1.balance, bidder1BalanceBefore + bidder1Refund, "BIDDER1 should receive accumulated refunds");
+        assertEq(BIDDER1.balance, bidder1BalanceBefore + bidder1Refund);
     }
 
     // ============================================================================

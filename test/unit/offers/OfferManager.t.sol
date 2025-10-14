@@ -5,8 +5,8 @@ import "forge-std/Test.sol";
 import "src/core/offers/OfferManager.sol";
 import "src/core/access/MarketplaceAccessControl.sol";
 import "src/core/fees/AdvancedFeeManager.sol";
-import "../../utils/TestHelpers.sol";
-import "../../mocks/MockERC20.sol";
+import "test/utils/TestHelpers.sol";
+import "test/mocks/MockERC20.sol";
 
 contract OfferManagerTest is Test, TestHelpers {
     OfferManager public offerManager;
@@ -216,10 +216,10 @@ contract OfferManagerTest is Test, TestHelpers {
         uint256 balanceBefore = offerer.balance;
 
         vm.expectEmit(true, true, false, true);
-        emit OfferCancelled(offerId, offerer, "Changed mind");
+        emit OfferCancelled(offerId, offerer, "Cancel reason");
 
         // Cancel offer
-        offerManager.cancelOffer(offerId, "Changed mind");
+        offerManager.cancelOffer(offerId, "Cancel reason");
 
         // Verify offer status
         (,,,,, OfferManager.OfferStatus status) = offerManager.nftOffers(offerId);
@@ -290,7 +290,7 @@ contract OfferManagerTest is Test, TestHelpers {
         // Try to cancel as different user
         vm.prank(seller);
         vm.expectRevert();
-        offerManager.cancelOffer(offerId, "Unauthorized");
+        offerManager.cancelOffer(offerId, "Cancel reason");
     }
 
     function testOfferExpiration() public {
@@ -493,7 +493,7 @@ contract OfferManagerTest is Test, TestHelpers {
             offerManager.createNFTOffer{value: offerAmount}(collection, 2, address(0), offerAmount, expiration);
 
         // Cancel one offer
-        offerManager.cancelOffer(offerId2, "Test cancellation");
+        offerManager.cancelOffer(offerId2, "Cancel reason");
 
         vm.stopPrank();
 
@@ -537,7 +537,7 @@ contract OfferManagerTest is Test, TestHelpers {
 
         vm.prank(offerer);
         vm.expectRevert();
-        offerManager.cancelOffer(nonExistentOfferId, "Test");
+        offerManager.cancelOffer(nonExistentOfferId, "Cancel reason");
     }
 
     function testCancelAlreadyCancelledOffer() public {
@@ -549,11 +549,11 @@ contract OfferManagerTest is Test, TestHelpers {
         // Create and cancel offer
         bytes32 offerId =
             offerManager.createNFTOffer{value: offerAmount}(collection, tokenId, address(0), offerAmount, expiration);
-        offerManager.cancelOffer(offerId, "First cancellation");
+        offerManager.cancelOffer(offerId, "Cancel reason");
 
         // Try to cancel again
         vm.expectRevert();
-        offerManager.cancelOffer(offerId, "Second cancellation");
+        offerManager.cancelOffer(offerId, "Cancel reason");
 
         vm.stopPrank();
     }

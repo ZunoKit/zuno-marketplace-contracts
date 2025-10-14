@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 import {E2E_BaseSetup} from "./E2E_BaseSetup.sol";
 import {console2} from "lib/forge-std/src/Test.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
+import {AuctionType, AuctionStatus} from "src/types/AuctionTypes.sol";
 
 /**
  * @title E2E_Auctions
@@ -38,7 +39,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
             1 ether, // starting price
             2 ether, // reserve price
             AUCTION_DURATION, // duration
-            IAuction.AuctionType.ENGLISH, // auction type
+            AuctionType.ENGLISH, // auction type
             alice // seller
         );
         vm.stopPrank();
@@ -122,7 +123,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
             2 ether, // starting price
             0.5 ether, // ending price (reserve price)
             AUCTION_DURATION, // duration
-            IAuction.AuctionType.DUTCH, // auction type
+            AuctionType.DUTCH, // auction type
             alice // seller
         );
         vm.stopPrank();
@@ -130,7 +131,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
 
         // Step 2: Get initial price
         uint256 initialPrice = dutchAuction.getCurrentPrice(auctionId);
-        assertEq(initialPrice, 2 ether, "Initial price should be starting price");
+        assertEq(initialPrice, 2 ether);
         console2.log("Step 2: Initial price:", initialPrice);
 
         // Step 3: Fast forward to 6 hours (price should still be above reserve)
@@ -139,8 +140,8 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
         console2.log("Step 3: Price after 6 hours:", midPrice);
 
         // Verify price dropped but is still above reserve
-        assertLt(midPrice, initialPrice, "Price should have decreased");
-        assertGt(midPrice, 0.5 ether, "Price should be above ending price");
+        assertLt(midPrice, initialPrice);
+        assertGt(midPrice, 0.5 ether);
 
         // Step 4: Bob buys at current price
         BalanceSnapshot memory balancesBefore = snapshotBalances(bob, alice, dutchAuction.marketplaceWallet(), eve);
@@ -180,7 +181,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
 
         // Create auction
         bytes32 auctionId = englishAuction.createAuction(
-            address(mockERC721), 3, 1, 1 ether, 1.5 ether, AUCTION_DURATION, IAuction.AuctionType.ENGLISH, alice
+            address(mockERC721), 3, 1, 1 ether, 1.5 ether, AUCTION_DURATION, AuctionType.ENGLISH, alice
         );
         vm.stopPrank();
         console2.log("Step 1: Auction with royalty NFT created");
@@ -231,15 +232,15 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
         mockERC721.approve(address(englishAuction), 12);
 
         bytes32 auction1 = englishAuction.createAuction(
-            address(mockERC721), 10, 1, 1 ether, 1.5 ether, AUCTION_DURATION, IAuction.AuctionType.ENGLISH, alice
+            address(mockERC721), 10, 1, 1 ether, 1.5 ether, AUCTION_DURATION, AuctionType.ENGLISH, alice
         );
 
         bytes32 auction2 = englishAuction.createAuction(
-            address(mockERC721), 11, 1, 2 ether, 2.5 ether, AUCTION_DURATION, IAuction.AuctionType.ENGLISH, alice
+            address(mockERC721), 11, 1, 2 ether, 2.5 ether, AUCTION_DURATION, AuctionType.ENGLISH, alice
         );
 
         bytes32 auction3 = englishAuction.createAuction(
-            address(mockERC721), 12, 1, 0.5 ether, 0.8 ether, AUCTION_DURATION, IAuction.AuctionType.ENGLISH, alice
+            address(mockERC721), 12, 1, 0.5 ether, 0.8 ether, AUCTION_DURATION, AuctionType.ENGLISH, alice
         );
         vm.stopPrank();
         console2.log("Step 1: 3 concurrent auctions created");
@@ -295,7 +296,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
         vm.startPrank(alice);
         mockERC721.approve(address(englishAuction), 20);
         bytes32 auctionId = englishAuction.createAuction(
-            address(mockERC721), 20, 1, 1 ether, 1.5 ether, AUCTION_DURATION, IAuction.AuctionType.ENGLISH, alice
+            address(mockERC721), 20, 1, 1 ether, 1.5 ether, AUCTION_DURATION, AuctionType.ENGLISH, alice
         );
         vm.stopPrank();
         console2.log("Step 1: Auction created");
@@ -316,14 +317,14 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
         // Check if auction extended
         auction = englishAuction.getAuction(auctionId);
         uint256 newEndTime = auction.endTime;
-        assertGt(newEndTime, originalEndTime, "Auction should be extended");
+        assertGt(newEndTime, originalEndTime);
         console2.log("Step 4: Auction extended to:", newEndTime);
 
         // Fast forward past original end but before new end
         vm.warp(originalEndTime + 1);
 
         // Verify auction still active
-        assertTrue(englishAuction.isAuctionActive(auctionId), "Auction should still be active");
+        assertTrue(englishAuction.isAuctionActive(auctionId));
         console2.log("Step 5: Auction still active after original end time");
 
         // Fast forward past new end time
@@ -398,7 +399,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
             1 ether, // starting price
             5 ether, // high reserve price
             AUCTION_DURATION,
-            IAuction.AuctionType.ENGLISH,
+            AuctionType.ENGLISH,
             alice
         );
         vm.stopPrank();
@@ -427,7 +428,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
 
         // Charlie should be refunded
         uint256 charlieBalance = charlie.balance;
-        assertGt(charlieBalance, 0, "Highest bidder should be refunded");
+        assertGt(charlieBalance, 0);
         console2.log("Step 5: Highest bidder refunded");
 
         console2.log("=== Reserve Price Not Met: SUCCESS ===\n");
@@ -453,7 +454,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
             10 ether, // starting price
             1 ether, // ending price (reserve price)
             AUCTION_DURATION, // duration
-            IAuction.AuctionType.DUTCH, // auction type
+            AuctionType.DUTCH, // auction type
             alice // seller
         );
         vm.stopPrank();
@@ -464,7 +465,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
 
         // Price should be at floor
         uint256 finalPrice = dutchAuction.getCurrentPrice(auctionId);
-        assertEq(finalPrice, 1 ether, "Price should reach floor");
+        assertEq(finalPrice, 1 ether);
         console2.log("Step 2: Price reached floor:", finalPrice);
 
         // Bob buys at floor price at end time
@@ -476,7 +477,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
         // Fast forward past auction end; price query remains at floor for ended auction
         vm.warp(block.timestamp + 1 days);
         uint256 postAuctionPrice = dutchAuction.getCurrentPrice(auctionId);
-        assertEq(postAuctionPrice, 1 ether, "Price should not go below floor");
+        assertEq(postAuctionPrice, 1 ether);
         console2.log("Step 4: Price stays at floor after auction end");
 
         console2.log("=== Dutch Auction Price Floor: SUCCESS ===\n");

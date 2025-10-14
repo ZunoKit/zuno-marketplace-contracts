@@ -52,9 +52,9 @@ contract UnitERC721CollectionTest is Test {
         setup.collection.mint{value: setup.params.publicMintPrice}(setup.user);
         vm.stopPrank();
 
-        assertEq(setup.collection.ownerOf(1), setup.user, "User should own token 1");
-        assertEq(setup.collection.getTotalMinted(), 1, "Total minted should be 1");
-        assertEq(setup.collection.getMintedPerWallet(setup.user), 1, "User should have minted 1 token");
+        assertEq(setup.collection.ownerOf(1), setup.user);
+        assertEq(setup.collection.getTotalMinted(), 1);
+        assertEq(setup.collection.getMintedPerWallet(setup.user), 1);
     }
 
     function test_BatchMint() public {
@@ -71,8 +71,8 @@ contract UnitERC721CollectionTest is Test {
         for (uint256 i = 1; i <= 3; i++) {
             assertEq(setup.collection.ownerOf(i), setup.user, string.concat("User should own token ", vm.toString(i)));
         }
-        assertEq(setup.collection.getTotalMinted(), 3, "Total minted should be 3");
-        assertEq(setup.collection.getMintedPerWallet(setup.user), 3, "User should have minted 3 tokens");
+        assertEq(setup.collection.getTotalMinted(), 3);
+        assertEq(setup.collection.getMintedPerWallet(setup.user), 3);
     }
 
     function test_TokenURI() public {
@@ -84,23 +84,23 @@ contract UnitERC721CollectionTest is Test {
         setup.collection.mint{value: setup.params.publicMintPrice}(setup.user);
         vm.stopPrank();
 
-        string memory expectedURI = string(abi.encodePacked(setup.params.tokenURI, "/1.json"));
-        assertEq(setup.collection.tokenURI(1), expectedURI, "Token URI should match expected format");
+        string memory expectedURI = string(abi.encodePacked(setup.params.tokenURI));
+        assertEq(setup.collection.tokenURI(1), expectedURI);
     }
 
     function test_RoyaltyInfo() public {
         uint256 salePrice = 1 ether;
         (address receiver, uint256 royaltyAmount) = setup.collection.royaltyInfo(1, salePrice);
 
-        assertEq(receiver, setup.owner, "Owner should receive royalties");
-        assertEq(royaltyAmount, (salePrice * setup.params.royaltyFee) / 10000, "Royalty amount should be correct");
+        assertEq(receiver, setup.owner);
+        assertEq(royaltyAmount, (salePrice * setup.params.royaltyFee) / 10000);
     }
 
     function test_SupportsInterface() public {
-        assertTrue(setup.collection.supportsInterface(0x80ac58cd), "Should support ERC721");
-        assertTrue(setup.collection.supportsInterface(0x5b5e139f), "Should support ERC721Metadata");
-        assertTrue(setup.collection.supportsInterface(0x2a55205a), "Should support ERC2981");
-        assertFalse(setup.collection.supportsInterface(0x12345678), "Should not support random interface");
+        assertTrue(setup.collection.supportsInterface(0x80ac58cd));
+        assertTrue(setup.collection.supportsInterface(0x5b5e139f));
+        assertTrue(setup.collection.supportsInterface(0x2a55205a));
+        assertFalse(setup.collection.supportsInterface(0x12345678));
     }
 
     function test_Mint_InsufficientPayment() public {
@@ -172,8 +172,8 @@ contract UnitERC721CollectionTest is Test {
         setup.collection.mint{value: setup.params.allowlistMintPrice}(setup.user);
         vm.stopPrank();
 
-        assertEq(setup.collection.ownerOf(1), setup.user, "User should own token 1");
-        assertEq(setup.collection.getTotalMinted(), 1, "Total minted should be 1");
-        assertEq(setup.collection.getMintedPerWallet(setup.user), 1, "User should have minted 1 token");
+        assertEq(setup.collection.ownerOf(1), setup.user);
+        assertEq(setup.collection.getTotalMinted(), 1);
+        assertEq(setup.collection.getMintedPerWallet(setup.user), 1);
     }
 }

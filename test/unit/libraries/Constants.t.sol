@@ -185,7 +185,7 @@ contract ConstantsTest is Test {
 
         for (uint256 i = 0; i < statuses.length; i++) {
             for (uint256 j = i + 1; j < statuses.length; j++) {
-                assertNotEq(statuses[i], statuses[j], "Status constants must be unique");
+                assertNotEq(statuses[i], statuses[j]);
             }
         }
     }
@@ -221,7 +221,7 @@ contract ConstantsTest is Test {
 
         for (uint256 i = 0; i < interfaceIds.length; i++) {
             for (uint256 j = i + 1; j < interfaceIds.length; j++) {
-                assertNotEq(uint32(interfaceIds[i]), uint32(interfaceIds[j]), "Interface IDs must be unique");
+                assertNotEq(uint32(interfaceIds[i]), uint32(interfaceIds[j]));
             }
         }
     }

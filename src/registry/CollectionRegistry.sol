@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ICollectionRegistry} from "../interfaces/registry/ICollectionRegistry.sol";
+import {ICollectionRegistry} from "src/interfaces/registry/ICollectionRegistry.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**

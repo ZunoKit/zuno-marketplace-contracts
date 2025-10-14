@@ -38,8 +38,8 @@ contract RoyaltyLibTest is Test {
 
     function setUp() public {
         // Deploy test contracts
-        mockERC721 = new MockERC721("Test NFT", "TEST");
-        mockERC1155 = new MockERC1155("Test ERC1155", "TEST1155");
+        mockERC721 = new MockERC721("Test NFT", "TNFT");
+        mockERC1155 = new MockERC1155("Test ERC1155", "T1155");
         feeContract = new Fee(OWNER, ROYALTY_FEE);
         baseCollection = new TestableBaseCollection();
         erc2981Contract = new MockERC2981Contract();
@@ -50,7 +50,7 @@ contract RoyaltyLibTest is Test {
         mockERC721.mint(USER, TOKEN_ID);
 
         vm.prank(OWNER);
-        mockERC1155.mint(USER, TOKEN_ID, 1, "");
+        mockERC1155.mint(USER, TOKEN_ID, 1);
 
         // Setup base collection
         baseCollection.setRoyaltyFee(ROYALTY_FEE);

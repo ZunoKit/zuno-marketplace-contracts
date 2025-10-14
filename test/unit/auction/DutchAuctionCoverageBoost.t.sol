@@ -4,7 +4,8 @@ pragma solidity ^0.8.30;
 import {Test, console2} from "forge-std/Test.sol";
 import {DutchAuction} from "src/core/auction/DutchAuction.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
-import {AuctionTestHelpers} from "../../utils/auction/AuctionTestHelpers.sol";
+import {AuctionStatus} from "src/types/AuctionTypes.sol";
+import {AuctionTestHelpers} from "test/utils/auction/AuctionTestHelpers.sol";
 import "src/errors/AuctionErrors.sol";
 
 /**
@@ -134,7 +135,7 @@ contract DutchAuctionCoverageBoostTest is AuctionTestHelpers {
 
         // Auction should be settled
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint8(auction.status), uint8(IAuction.AuctionStatus.SETTLED));
+        assertEq(uint8(auction.status), uint8(AuctionStatus.SETTLED));
     }
 
     function test_BuyNow_WithExcessPayment_LargeAmount() public {
@@ -167,7 +168,7 @@ contract DutchAuctionCoverageBoostTest is AuctionTestHelpers {
 
         // Should succeed
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint8(auction.status), uint8(IAuction.AuctionStatus.SETTLED));
+        assertEq(uint8(auction.status), uint8(AuctionStatus.SETTLED));
     }
 
     function test_BuyNow_JustBeforeAuctionEnd() public {
@@ -185,7 +186,7 @@ contract DutchAuctionCoverageBoostTest is AuctionTestHelpers {
 
         // Should succeed
         auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint8(auction.status), uint8(IAuction.AuctionStatus.SETTLED));
+        assertEq(uint8(auction.status), uint8(AuctionStatus.SETTLED));
     }
 
     // ============================================================================

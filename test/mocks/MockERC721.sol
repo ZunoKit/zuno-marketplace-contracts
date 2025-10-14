@@ -95,7 +95,7 @@ contract MockERC721 is ERC721, ERC2981, Ownable {
      * @param tokenId Token ID to burn
      */
     function burn(uint256 tokenId) external {
-        require(ownerOf(tokenId) == msg.sender || owner() == msg.sender, "MockERC721: caller is not owner");
+        require(ownerOf(tokenId) == msg.sender || owner() == msg.sender);
         _burn(tokenId);
     }
 
