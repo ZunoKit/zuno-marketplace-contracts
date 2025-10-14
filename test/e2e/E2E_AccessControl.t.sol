@@ -107,14 +107,14 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
         // Step 1: Non-admin attempts to grant role
         console2.log("Step 1: Attacker attempts to grant role");
         vm.prank(attacker);
-        vm.expectRevert("Error message");
+        vm.expectRevert(); // AccessControlUnauthorizedAccount
         accessControl.grantRole(OPERATOR_ROLE, attacker);
         console2.log("  -> Correctly rejected");
 
         // Step 2: Regular user attempts to revoke admin role
         console2.log("Step 2: Regular user attempts to revoke admin role");
         vm.prank(alice);
-        vm.expectRevert("Error message");
+        vm.expectRevert(); // AccessControlUnauthorizedAccount
         accessControl.revokeRole(ADMIN_ROLE, admin);
         console2.log("  -> Correctly rejected");
 
@@ -125,7 +125,7 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
         // Step 4: Non-admin attempts emergency pause
         console2.log("Step 4: Non-admin attempts emergency pause");
         vm.prank(attacker);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), attacker));
         emergencyManager.emergencyPause("Unauthorized pause attempt");
         console2.log("  -> Correctly rejected");
 
@@ -156,7 +156,7 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
         // Step 3: Lower roles cannot grant roles
         console2.log("Step 3: Operator attempts to grant role");
         vm.prank(alice);
-        vm.expectRevert("Error message");
+        vm.expectRevert(); // AccessControlUnauthorizedAccount
         accessControl.grantRole(MODERATOR_ROLE, charlie);
         console2.log("  -> Correctly rejected");
 
@@ -260,7 +260,7 @@ contract E2E_AccessControlTest is E2E_BaseSetup {
 
         // Regular user cannot pause
         vm.prank(alice);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), alice));
         emergencyManager.emergencyPause("Non-admin pause attempt");
         console2.log("  -> Non-admin cannot pause");
 

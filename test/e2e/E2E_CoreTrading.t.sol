@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {E2E_BaseSetup} from "./E2E_BaseSetup.sol";
 import {console2} from "forge-std/Test.sol";
+import "src/errors/NFTExchangeErrors.sol";
 
 /**
  * @title E2E_CoreTrading
@@ -219,7 +220,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         vm.deal(bob, totalPrice - 1 ether); // Not enough ETH
 
         vm.prank(bob);
-        vm.expectRevert("Error message");
+        vm.expectRevert(NFTExchange__InsufficientPayment.selector);
         erc721Exchange.buyNFT{value: totalPrice - 1 ether}(listingId);
         console2.log("  -> Transaction correctly reverted");
 
@@ -232,7 +233,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         // Scenario 2: Try to buy already sold NFT
         console2.log("Scenario 2: Already sold NFT");
         vm.prank(charlie);
-        vm.expectRevert("Error message");
+        vm.expectRevert(NFTExchange__NFTNotActive.selector);
         erc721Exchange.buyNFT{value: totalPrice}(listingId);
         console2.log("  -> Transaction correctly reverted");
 
@@ -246,7 +247,7 @@ contract E2E_CoreTradingTest is E2E_BaseSetup {
         vm.warp(block.timestamp + 2 days);
 
         vm.prank(dave);
-        vm.expectRevert("Error message");
+        vm.expectRevert(NFTExchange__ListingExpired.selector);
         erc721Exchange.buyNFT{value: totalPrice}(expiredListingId);
         console2.log("  -> Expired listing correctly rejected");
 
