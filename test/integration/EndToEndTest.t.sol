@@ -145,7 +145,7 @@ contract EndToEndTest is Test {
 
         // Create ERC721 collection
         testCollection = collectionFactory.createERC721Collection(params);
-        assertNotEq(testCollection, address(0), "Collection should be created");
+        assertNotEq(testCollection, address(0));
 
         // Request verification for collection
         string[] memory tags = new string[](0);
@@ -173,7 +173,7 @@ contract EndToEndTest is Test {
         allowlistUsers[2] = owner;
 
         (bool success,) = testCollection.call(abi.encodeWithSignature("addToAllowlist(address[])", allowlistUsers));
-        assertTrue(success, "Adding to allowlist should succeed");
+        assertTrue(success);
 
         vm.stopPrank();
 
@@ -199,16 +199,16 @@ contract EndToEndTest is Test {
 
         // Update mint stage
         (bool success,) = testCollection.call(abi.encodeWithSignature("updateMintStage()"));
-        assertTrue(success, "Updating mint stage should succeed");
+        assertTrue(success);
 
         // Mint NFT during public stage
         (success,) = testCollection.call{value: 0.1 ether}(abi.encodeWithSignature("mint(address)", user1));
-        assertTrue(success, "Minting should succeed");
+        assertTrue(success);
 
         // Approve exchange for listing
         (success,) =
             testCollection.call(abi.encodeWithSignature("setApprovalForAll(address,bool)", erc721Exchange, true));
-        assertTrue(success, "Approval should succeed");
+        assertTrue(success);
 
         // List NFT and capture listing ID from events
         vm.recordLogs();
@@ -240,7 +240,7 @@ contract EndToEndTest is Test {
                 break;
             }
         }
-        assertTrue(foundListingEvent, "Should find NFTListed event");
+        assertTrue(foundListingEvent);
 
         vm.stopPrank();
 
@@ -279,7 +279,7 @@ contract EndToEndTest is Test {
 
         vm.startPrank(user1);
         (bool success,) = testCollection.call{value: 0.1 ether}(abi.encodeWithSignature("mint(address)", user1));
-        assertTrue(success, "Minting should succeed");
+        assertTrue(success);
         vm.stopPrank();
 
         console2.log("\n=== Test 4: Offer System ===");
@@ -303,14 +303,14 @@ contract EndToEndTest is Test {
         // Approve offer manager
         (success,) =
             testCollection.call(abi.encodeWithSignature("setApprovalForAll(address,bool)", address(offerManager), true));
-        assertTrue(success, "Approval should succeed");
+        assertTrue(success);
 
         // Get offer ID (simplified - in real scenario would get from events)
         bytes32 offerId = keccak256(abi.encodePacked(testCollection, uint256(1), user2, block.timestamp));
 
         // Accept offer (this would need the actual offer ID from the creation event)
         // For now, just verify the offer was created
-        assertTrue(true, "Offer creation completed");
+        assertTrue(true);
 
         vm.stopPrank();
 
@@ -329,14 +329,14 @@ contract EndToEndTest is Test {
         // Mint 3 NFTs
         for (uint256 i = 1; i <= 3; i++) {
             (bool mintSuccess,) = testCollection.call{value: 0.1 ether}(abi.encodeWithSignature("mint(address)", user1));
-            assertTrue(mintSuccess, "Minting should succeed");
+            assertTrue(mintSuccess);
         }
 
         // Approve bundle manager
         (bool approvalSuccess,) = testCollection.call(
             abi.encodeWithSignature("setApprovalForAll(address,bool)", address(bundleManager), true)
         );
-        assertTrue(approvalSuccess, "Approval should succeed");
+        assertTrue(approvalSuccess);
 
         // Create bundle items
         BundleManager.BundleItem[] memory items = new BundleManager.BundleItem[](3);
@@ -386,8 +386,8 @@ contract EndToEndTest is Test {
         gasUsed = gasStart - gasleft();
         console2.log("NFT Minting Gas:", gasUsed);
 
-        assertTrue(success, "Minting should succeed");
-        assertTrue(gasUsed < 300000, "Minting gas should be reasonable");
+        assertTrue(success);
+        assertTrue(gasUsed < 300000);
 
         console2.log("Gas usage within acceptable limits");
     }
@@ -415,7 +415,7 @@ contract EndToEndTest is Test {
             tokenURI: ""
         });
 
-        vm.expectRevert();
+        vm.expectRevert(); // Collection__InvalidOwner or similar
         collectionFactory.createERC721Collection(invalidParams);
 
         vm.stopPrank();

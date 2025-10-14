@@ -364,7 +364,7 @@ contract BaseNFTExchangeTest is Test {
         uint256 newFee = 300;
 
         vm.prank(buyer);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), buyer));
         exchange.updateTakerFee(newFee);
     }
 

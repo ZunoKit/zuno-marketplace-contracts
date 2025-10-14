@@ -71,7 +71,7 @@ contract MockAdvancedFeeManager is Ownable {
      * @param _feeRecipient New fee recipient address
      */
     function setFeeRecipient(address _feeRecipient) external onlyOwner {
-        require(_feeRecipient != address(0), "MockAdvancedFeeManager: zero address");
+        require(_feeRecipient != address(0));
         address oldRecipient = feeRecipient;
         feeRecipient = _feeRecipient;
         emit FeeRecipientUpdated(oldRecipient, _feeRecipient);
@@ -82,7 +82,7 @@ contract MockAdvancedFeeManager is Ownable {
      * @param _platformFeePercentage New platform fee percentage in basis points
      */
     function setPlatformFeePercentage(uint256 _platformFeePercentage) external onlyOwner {
-        require(_platformFeePercentage <= 1000, "MockAdvancedFeeManager: fee too high"); // Max 10%
+        require(_platformFeePercentage <= 1000); // Max 10%
         uint256 oldFee = platformFeePercentage;
         platformFeePercentage = _platformFeePercentage;
         emit PlatformFeeUpdated(oldFee, _platformFeePercentage);
@@ -93,7 +93,7 @@ contract MockAdvancedFeeManager is Ownable {
      * @param _royaltyFeePercentage New royalty fee percentage in basis points
      */
     function setRoyaltyFeePercentage(uint256 _royaltyFeePercentage) external onlyOwner {
-        require(_royaltyFeePercentage <= 1000, "MockAdvancedFeeManager: fee too high"); // Max 10%
+        require(_royaltyFeePercentage <= 1000); // Max 10%
         uint256 oldFee = royaltyFeePercentage;
         royaltyFeePercentage = _royaltyFeePercentage;
         emit RoyaltyFeeUpdated(oldFee, _royaltyFeePercentage);
@@ -106,9 +106,9 @@ contract MockAdvancedFeeManager is Ownable {
      * @param percentage Royalty percentage in basis points
      */
     function setCollectionRoyalty(address collection, address recipient, uint256 percentage) external onlyOwner {
-        require(collection != address(0), "MockAdvancedFeeManager: zero collection address");
-        require(recipient != address(0), "MockAdvancedFeeManager: zero recipient address");
-        require(percentage <= 1000, "MockAdvancedFeeManager: fee too high"); // Max 10%
+        require(collection != address(0));
+        require(recipient != address(0));
+        require(percentage <= 1000); // Max 10%
 
         collectionRoyaltyRecipients[collection] = recipient;
         collectionRoyaltyPercentages[collection] = percentage;

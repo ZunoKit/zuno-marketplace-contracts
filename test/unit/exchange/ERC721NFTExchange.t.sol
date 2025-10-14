@@ -523,7 +523,7 @@ contract ERC721NFTExchangeTest is Test {
 
         // Try to list without approval - should revert
         vm.prank(seller);
-        vm.expectRevert();
+        vm.expectRevert(NFTExchange__MarketplaceNotApproved.selector);
         exchange.listNFT(address(nftContract), 10, price, duration);
     }
 
@@ -531,7 +531,7 @@ contract ERC721NFTExchangeTest is Test {
     function test_ListNFT_NonExistentToken() public {
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        vm.expectRevert();
+        vm.expectRevert(NFTExchange__NotTheOwner.selector);
         exchange.listNFT(address(nftContract), 999, price, duration);
     }
 
@@ -539,7 +539,7 @@ contract ERC721NFTExchangeTest is Test {
     function test_ListNFT_InvalidContract() public {
         uint256 price = 1 ether;
         uint256 duration = 1 days;
-        vm.expectRevert();
+        vm.expectRevert(); // call will revert without data for zero address
         exchange.listNFT(address(0), 1, price, duration);
     }
 

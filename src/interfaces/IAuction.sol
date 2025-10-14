@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {AuctionType, AuctionStatus} from "src/types/AuctionTypes.sol";
+
 /**
  * @title IAuction
  * @notice Interface for auction contracts
@@ -8,23 +10,8 @@ pragma solidity ^0.8.30;
  */
 interface IAuction {
     // ============================================================================
-    // ENUMS AND STRUCTS
+    // STRUCTS
     // ============================================================================
-
-    enum AuctionStatus {
-        PENDING, // Auction created but not started
-        ACTIVE, // Auction is currently running
-        ENDED, // Auction time has ended
-        CANCELLED, // Auction was cancelled
-        SETTLED // Auction has been settled
-
-    }
-
-    enum AuctionType {
-        ENGLISH, // Ascending price auction
-        DUTCH // Descending price auction
-
-    }
 
     struct Auction {
         bytes32 auctionId; // Unique auction identifier

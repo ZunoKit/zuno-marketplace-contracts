@@ -5,7 +5,8 @@ import "forge-std/Test.sol";
 import "src/core/fees/AdvancedRoyaltyManager.sol";
 import "src/core/access/MarketplaceAccessControl.sol";
 import "src/common/Fee.sol";
-import "../../utils/TestHelpers.sol";
+import "test/utils/TestHelpers.sol";
+import "src/errors/FeeErrors.sol";
 
 contract AdvancedRoyaltyManagerTest is Test, TestHelpers {
     AdvancedRoyaltyManager public royaltyManager;
@@ -163,7 +164,7 @@ contract AdvancedRoyaltyManagerTest is Test, TestHelpers {
         });
 
         vm.prank(admin);
-        vm.expectRevert(); // Should revert due to zero address
+        vm.expectRevert(Fee__InvalidOwner.selector); // Should revert due to zero address
         royaltyManager.setAdvancedRoyalty(collection, invalidRecipients, false);
 
         // Test excessive royalty
@@ -178,7 +179,7 @@ contract AdvancedRoyaltyManagerTest is Test, TestHelpers {
         });
 
         vm.prank(admin);
-        vm.expectRevert(); // Should revert due to excessive royalty
+        vm.expectRevert(Fee__InvalidRoyaltyFee.selector); // Should revert due to excessive royalty
         royaltyManager.setAdvancedRoyalty(collection, excessiveRecipients, false);
     }
 
@@ -194,7 +195,7 @@ contract AdvancedRoyaltyManagerTest is Test, TestHelpers {
 
         // Test unauthorized access
         vm.prank(user);
-        vm.expectRevert(); // Should revert due to lack of admin role
+        vm.expectRevert(Fee__InvalidOwner.selector); // Should revert due to lack of admin role
         royaltyManager.setAdvancedRoyalty(collection, recipients, false);
 
         // Test authorized access

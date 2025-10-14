@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {EnglishAuction} from "../auction/EnglishAuction.sol";
+import {EnglishAuction} from "src/core/auction/EnglishAuction.sol";
 
 /**
  * @title EnglishAuctionImplementation

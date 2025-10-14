@@ -5,8 +5,12 @@ import "forge-std/Test.sol";
 import "src/core/offers/OfferManager.sol";
 import "src/core/access/MarketplaceAccessControl.sol";
 import "src/core/fees/AdvancedFeeManager.sol";
-import "../../utils/TestHelpers.sol";
-import "../../mocks/MockERC20.sol";
+import "test/utils/TestHelpers.sol";
+import "test/mocks/MockERC20.sol";
+import "src/errors/NFTExchangeErrors.sol";
+
+// Import Pausable error
+error EnforcedPause();
 
 contract OfferManagerTest is Test, TestHelpers {
     OfferManager public offerManager;
@@ -216,10 +220,10 @@ contract OfferManagerTest is Test, TestHelpers {
         uint256 balanceBefore = offerer.balance;
 
         vm.expectEmit(true, true, false, true);
-        emit OfferCancelled(offerId, offerer, "Changed mind");
+        emit OfferCancelled(offerId, offerer, "Cancel reason");
 
         // Cancel offer
-        offerManager.cancelOffer(offerId, "Changed mind");
+        offerManager.cancelOffer(offerId, "Cancel reason");
 
         // Verify offer status
         (,,,,, OfferManager.OfferStatus status) = offerManager.nftOffers(offerId);
@@ -238,15 +242,15 @@ contract OfferManagerTest is Test, TestHelpers {
         vm.startPrank(offerer);
 
         // Test invalid collection (zero address)
-        vm.expectRevert();
+        vm.expectRevert(NFTExchange__InvalidCollection.selector);
         offerManager.createNFTOffer{value: offerAmount}(address(0), tokenId, address(0), offerAmount, expiration);
 
         // Test invalid amount (zero)
-        vm.expectRevert();
+        vm.expectRevert(NFTExchange__InvalidPrice.selector);
         offerManager.createNFTOffer{value: 0}(collection, tokenId, address(0), 0, expiration);
 
         // Test invalid expiration (too short)
-        vm.expectRevert();
+        vm.expectRevert(NFTExchange__InvalidDuration.selector);
         offerManager.createNFTOffer{value: offerAmount}(
             collection,
             tokenId,
@@ -256,7 +260,7 @@ contract OfferManagerTest is Test, TestHelpers {
         );
 
         // Test invalid expiration (too long)
-        vm.expectRevert();
+        vm.expectRevert(NFTExchange__InvalidDuration.selector);
         offerManager.createNFTOffer{value: offerAmount}(
             collection,
             tokenId,
@@ -266,7 +270,7 @@ contract OfferManagerTest is Test, TestHelpers {
         );
 
         // Test incorrect ETH amount
-        vm.expectRevert();
+        vm.expectRevert(NFTExchange__InvalidPrice.selector);
         offerManager.createNFTOffer{value: 0.5 ether}(
             collection,
             tokenId,
@@ -289,8 +293,8 @@ contract OfferManagerTest is Test, TestHelpers {
 
         // Try to cancel as different user
         vm.prank(seller);
-        vm.expectRevert();
-        offerManager.cancelOffer(offerId, "Unauthorized");
+        vm.expectRevert(NFTExchange__InvalidOwner.selector);
+        offerManager.cancelOffer(offerId, "Cancel reason");
     }
 
     function testOfferExpiration() public {
@@ -321,7 +325,7 @@ contract OfferManagerTest is Test, TestHelpers {
         vm.startPrank(offerer);
 
         // Test invalid quantity (zero)
-        vm.expectRevert();
+        vm.expectRevert(NFTExchange__InvalidQuantity.selector);
         offerManager.createCollectionOffer{value: 0}(
             collection,
             address(0),
@@ -331,7 +335,7 @@ contract OfferManagerTest is Test, TestHelpers {
         );
 
         // Test invalid quantity (too high)
-        vm.expectRevert();
+        vm.expectRevert(NFTExchange__InvalidQuantity.selector);
         offerManager.createCollectionOffer{value: 101 ether}(
             collection,
             address(0),
@@ -350,7 +354,7 @@ contract OfferManagerTest is Test, TestHelpers {
         vm.startPrank(offerer);
 
         // Test invalid quantity (too high for trait offers)
-        vm.expectRevert();
+        vm.expectRevert(NFTExchange__InvalidQuantity.selector);
         offerManager.createTraitOffer{value: 51 ether}(
             collection,
             "Background",
@@ -362,7 +366,7 @@ contract OfferManagerTest is Test, TestHelpers {
         );
 
         // Test empty trait type
-        vm.expectRevert();
+        vm.expectRevert(NFTExchange__InvalidParameters.selector);
         offerManager.createTraitOffer{value: offerAmount}(
             collection,
             "", // Empty trait type
@@ -374,7 +378,7 @@ contract OfferManagerTest is Test, TestHelpers {
         );
 
         // Test empty trait value
-        vm.expectRevert();
+        vm.expectRevert(NFTExchange__InvalidParameters.selector);
         offerManager.createTraitOffer{value: offerAmount}(
             collection,
             "Background",
@@ -493,7 +497,7 @@ contract OfferManagerTest is Test, TestHelpers {
             offerManager.createNFTOffer{value: offerAmount}(collection, 2, address(0), offerAmount, expiration);
 
         // Cancel one offer
-        offerManager.cancelOffer(offerId2, "Test cancellation");
+        offerManager.cancelOffer(offerId2, "Cancel reason");
 
         vm.stopPrank();
 
@@ -536,8 +540,8 @@ contract OfferManagerTest is Test, TestHelpers {
         bytes32 nonExistentOfferId = keccak256("nonexistent");
 
         vm.prank(offerer);
-        vm.expectRevert();
-        offerManager.cancelOffer(nonExistentOfferId, "Test");
+        vm.expectRevert(NFTExchange__InvalidListing.selector);
+        offerManager.cancelOffer(nonExistentOfferId, "Cancel reason");
     }
 
     function testCancelAlreadyCancelledOffer() public {
@@ -549,11 +553,11 @@ contract OfferManagerTest is Test, TestHelpers {
         // Create and cancel offer
         bytes32 offerId =
             offerManager.createNFTOffer{value: offerAmount}(collection, tokenId, address(0), offerAmount, expiration);
-        offerManager.cancelOffer(offerId, "First cancellation");
+        offerManager.cancelOffer(offerId, "Cancel reason");
 
         // Try to cancel again
-        vm.expectRevert();
-        offerManager.cancelOffer(offerId, "Second cancellation");
+        vm.expectRevert(NFTExchange__InvalidListing.selector);
+        offerManager.cancelOffer(offerId, "Cancel reason");
 
         vm.stopPrank();
     }
@@ -630,7 +634,7 @@ contract OfferManagerTest is Test, TestHelpers {
 
         // Try to create offer while paused
         vm.prank(offerer);
-        vm.expectRevert();
+        vm.expectRevert(EnforcedPause.selector);
         offerManager.createNFTOffer{value: offerAmount}(collection, tokenId + 1, address(0), offerAmount, expiration);
 
         // Unpause

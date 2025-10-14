@@ -64,7 +64,7 @@ contract MockERC20 is ERC20, Ownable {
      * @param amounts Array of amounts to mint
      */
     function batchMint(address[] memory recipients, uint256[] memory amounts) external {
-        require(recipients.length == amounts.length, "MockERC20: arrays length mismatch");
+        require(recipients.length == amounts.length);
         for (uint256 i = 0; i < recipients.length; i++) {
             _mint(recipients[i], amounts[i]);
         }

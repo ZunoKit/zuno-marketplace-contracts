@@ -10,6 +10,8 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "src/core/access/MarketplaceAccessControl.sol";
 import "src/core/fees/AdvancedFeeManager.sol";
+// Import Offer types from centralized location
+// Note: OfferManager has its own Offer struct with different fields, keeping local version
 import "src/errors/NFTExchangeErrors.sol";
 import "src/events/NFTExchangeEvents.sol";
 

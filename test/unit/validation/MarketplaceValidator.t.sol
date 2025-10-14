@@ -7,7 +7,7 @@ import "src/core/factory/AuctionFactory.sol";
 import {NFTExchangeFactory} from "src/core/factory/NFTExchangeFactory.sol";
 import "src/errors/MarketplaceValidatorErrors.sol";
 import "src/errors/AuctionErrors.sol";
-import "../mocks/MockERC721.sol";
+import "test/mocks/MockERC721.sol";
 import "src/core/exchange/ERC721NFTExchange.sol";
 import "src/core/exchange/ERC1155NFTExchange.sol";
 import "src/core/exchange/ERC721NFTExchange.sol";
@@ -31,7 +31,7 @@ contract MarketplaceValidatorTest is Test {
         validator = new MarketplaceValidator();
 
         // Deploy mock NFT as owner
-        mockNFT = new MockERC721("Test NFT", "TEST");
+        mockNFT = new MockERC721("Test NFT", "TNFT");
 
         // Mint NFTs to seller
         mockNFT.mint(seller, 1);
@@ -147,7 +147,7 @@ contract MarketplaceValidatorTest is Test {
         address newExchange = address(0x123);
 
         vm.prank(seller);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), seller));
         validator.registerExchange(newExchange, 0);
     }
 

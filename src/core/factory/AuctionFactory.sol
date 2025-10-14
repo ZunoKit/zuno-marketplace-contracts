@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {EnglishAuctionImplementation} from "../proxy/EnglishAuctionImplementation.sol";
-import {DutchAuctionImplementation} from "../proxy/DutchAuctionImplementation.sol";
+import {EnglishAuctionImplementation} from "src/core/proxy/EnglishAuctionImplementation.sol";
+import {DutchAuctionImplementation} from "src/core/proxy/DutchAuctionImplementation.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
+import {AuctionType, AuctionCreationParams} from "src/types/AuctionTypes.sol";
 import {IMarketplaceValidator} from "src/interfaces/IMarketplaceValidator.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -54,17 +55,6 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
     // STRUCTS
     // ============================================================================
 
-    /// @notice Struct to group auction creation parameters
-    struct AuctionCreationParams {
-        address nftContract;
-        uint256 tokenId;
-        uint256 amount;
-        uint256 startPrice;
-        uint256 reservePrice;
-        uint256 duration;
-        address seller;
-    }
-
     /// @notice Struct for Dutch auction specific parameters
     struct DutchAuctionParams {
         AuctionCreationParams baseParams;
@@ -85,7 +75,7 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
         bytes32 indexed auctionId,
         address indexed auctionContract,
         address indexed seller,
-        IAuction.AuctionType auctionType
+        AuctionType auctionType
     );
 
     // ============================================================================
@@ -131,7 +121,10 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
             startPrice: startPrice,
             reservePrice: reservePrice,
             duration: duration,
-            seller: msg.sender
+            auctionType: AuctionType.ENGLISH,
+            seller: msg.sender,
+            bidIncrement: 500, // Default 5%
+            extendOnBid: false
         });
 
         // Validate NFT availability before creating auction
@@ -168,7 +161,10 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
                 startPrice: startPrice,
                 reservePrice: reservePrice,
                 duration: duration,
-                seller: msg.sender
+                auctionType: AuctionType.DUTCH,
+                seller: msg.sender,
+                bidIncrement: 0, // Not used in Dutch auction
+                extendOnBid: false
             }),
             priceDropPerHour: priceDropPerHour
         });
@@ -483,9 +479,9 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @return auctionId The created auction ID
      */
     function _createEnglishAuctionInternal(AuctionCreationParams memory params) internal returns (bytes32 auctionId) {
-        address auctionProxy = _deployAuctionProxy(IAuction.AuctionType.ENGLISH);
-        auctionId = _initializeAuction(auctionProxy, params, IAuction.AuctionType.ENGLISH);
-        _registerAuction(auctionId, auctionProxy, IAuction.AuctionType.ENGLISH);
+        address auctionProxy = _deployAuctionProxy(AuctionType.ENGLISH);
+        auctionId = _initializeAuction(auctionProxy, params, AuctionType.ENGLISH);
+        _registerAuction(auctionId, auctionProxy, AuctionType.ENGLISH);
         return auctionId;
     }
 
@@ -495,9 +491,9 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @return auctionId The created auction ID
      */
     function _createDutchAuctionInternal(DutchAuctionParams memory params) internal returns (bytes32 auctionId) {
-        address auctionProxy = _deployAuctionProxy(IAuction.AuctionType.DUTCH);
+        address auctionProxy = _deployAuctionProxy(AuctionType.DUTCH);
         auctionId = _initializeDutchAuction(auctionProxy, params);
-        _registerAuction(auctionId, auctionProxy, IAuction.AuctionType.DUTCH);
+        _registerAuction(auctionId, auctionProxy, AuctionType.DUTCH);
         return auctionId;
     }
 
@@ -506,10 +502,10 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @param auctionType Type of auction to deploy
      * @return proxyAddress Address of deployed proxy
      */
-    function _deployAuctionProxy(IAuction.AuctionType auctionType) internal returns (address proxyAddress) {
-        if (auctionType == IAuction.AuctionType.ENGLISH) {
+    function _deployAuctionProxy(AuctionType auctionType) internal returns (address proxyAddress) {
+        if (auctionType == AuctionType.ENGLISH) {
             proxyAddress = Clones.clone(englishAuctionImplementation);
-        } else if (auctionType == IAuction.AuctionType.DUTCH) {
+        } else if (auctionType == AuctionType.DUTCH) {
             proxyAddress = Clones.clone(dutchAuctionImplementation);
         } else {
             revert Auction__UnsupportedAuctionType();
@@ -526,7 +522,7 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
     function _initializeAuction(
         address proxyAddress,
         AuctionCreationParams memory params,
-        IAuction.AuctionType auctionType
+        AuctionType auctionType
     ) internal returns (bytes32 auctionId) {
         EnglishAuctionImplementation(proxyAddress).initialize(marketplaceWallet);
 
@@ -572,7 +568,7 @@ contract AuctionFactory is Ownable, Pausable, ReentrancyGuard {
      * @param auctionContract The auction contract address
      * @param auctionType The type of auction
      */
-    function _registerAuction(bytes32 auctionId, address auctionContract, IAuction.AuctionType auctionType) internal {
+    function _registerAuction(bytes32 auctionId, address auctionContract, AuctionType auctionType) internal {
         auctionToContract[auctionId] = auctionContract;
         allAuctionIds.push(auctionId);
         userAuctions[msg.sender].push(auctionId);

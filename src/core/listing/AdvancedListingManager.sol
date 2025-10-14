@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/interfaces/IERC2981.sol";
 
-import "../../types/ListingTypes.sol";
+import "src/types/ListingTypes.sol";
 import "src/errors/AdvancedListingErrors.sol";
 import "src/events/AdvancedListingEvents.sol";
 import "src/core/access/MarketplaceAccessControl.sol";
@@ -206,11 +206,11 @@ contract AdvancedListingManager is Ownable, ReentrancyGuard, Pausable {
         listing.status = ListingStatus.ACTIVE;
         listing.seller = msg.sender;
         listing.nftContract = nftContract;
-        listing.tokenId = tokenId;
-        listing.quantity = quantity;
-        listing.price = price;
-        listing.startTime = block.timestamp;
-        listing.endTime = block.timestamp + duration;
+        listing.tokenId = uint96(tokenId);
+        listing.quantity = uint32(quantity);
+        listing.price = uint96(price);
+        listing.startTime = uint64(block.timestamp);
+        listing.endTime = uint64(block.timestamp + duration);
         listing.acceptOffers = acceptOffers;
 
         // Update mappings
@@ -265,11 +265,11 @@ contract AdvancedListingManager is Ownable, ReentrancyGuard, Pausable {
         listing.status = ListingStatus.ACTIVE;
         listing.seller = msg.sender;
         listing.nftContract = nftContract;
-        listing.tokenId = tokenId;
-        listing.quantity = quantity;
-        listing.price = params.startingPrice;
-        listing.startTime = block.timestamp;
-        listing.endTime = block.timestamp + params.duration;
+        listing.tokenId = uint96(tokenId);
+        listing.quantity = uint32(quantity);
+        listing.price = uint96(params.startingPrice);
+        listing.startTime = uint64(block.timestamp);
+        listing.endTime = uint64(block.timestamp + params.duration);
         listing.acceptOffers = false; // Auctions don't accept direct offers
 
         // Store auction parameters
@@ -337,11 +337,11 @@ contract AdvancedListingManager is Ownable, ReentrancyGuard, Pausable {
         listing.status = ListingStatus.ACTIVE;
         listing.seller = msg.sender;
         listing.nftContract = nftContract;
-        listing.tokenId = tokenId;
-        listing.quantity = quantity;
-        listing.price = params.startingPrice;
-        listing.startTime = block.timestamp;
-        listing.endTime = block.timestamp + params.duration;
+        listing.tokenId = uint96(tokenId);
+        listing.quantity = uint32(quantity);
+        listing.price = uint96(params.startingPrice);
+        listing.startTime = uint64(block.timestamp);
+        listing.endTime = uint64(block.timestamp + params.duration);
         listing.acceptOffers = false;
 
         // Store Dutch auction parameters
@@ -688,14 +688,14 @@ contract AdvancedListingManager is Ownable, ReentrancyGuard, Pausable {
         uint256 oldEndTime = listing.endTime;
 
         if (newPrice > 0) {
-            listing.price = newPrice;
+            listing.price = uint96(newPrice);
         }
 
         if (newEndTime > 0) {
             if (newEndTime <= block.timestamp) {
                 revert AdvancedListing__InvalidTimeParams();
             }
-            listing.endTime = newEndTime;
+            listing.endTime = uint64(newEndTime);
         }
 
         emit ListingUpdated(

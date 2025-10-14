@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ERC721NFTExchange} from "../exchange/ERC721NFTExchange.sol";
-import {ERC1155NFTExchange} from "../exchange/ERC1155NFTExchange.sol";
+import {ERC721NFTExchange} from "src/core/exchange/ERC721NFTExchange.sol";
+import {ERC1155NFTExchange} from "src/core/exchange/ERC1155NFTExchange.sol";
 import "src/errors/NFTExchangeErrors.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";

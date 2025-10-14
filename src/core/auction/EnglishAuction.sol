@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {BaseAuction} from "./BaseAuction.sol";
+import {AuctionCreationParams, AuctionType, AuctionStatus} from "src/types/AuctionTypes.sol";
 import "src/events/AuctionEvents.sol";
 import "src/errors/AuctionErrors.sol";
 
@@ -71,7 +72,7 @@ contract EnglishAuction is BaseAuction {
         }
 
         // Create the auction using base functionality
-        AuctionParams memory params = AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: nftContract,
             tokenId: tokenId,
             amount: amount,
@@ -79,7 +80,9 @@ contract EnglishAuction is BaseAuction {
             reservePrice: reservePrice,
             duration: duration,
             auctionType: auctionType,
-            seller: seller
+            seller: seller,
+            bidIncrement: 0,
+            extendOnBid: false
         });
 
         auctionId = _createAuctionInternal(params);
@@ -112,7 +115,7 @@ contract EnglishAuction is BaseAuction {
      * @notice Not applicable for English auctions
      * @dev This function reverts as English auctions use bidding, not direct purchase
      */
-    function buyNow(bytes32 auctionId) external payable override {
+    function buyNow(bytes32) external payable override {
         revert Auction__UnsupportedAuctionType();
     }
 

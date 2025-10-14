@@ -43,8 +43,8 @@ contract CollectionNameSymbolTest is Test {
         // Cast to ERC721Collection and verify name and symbol
         ERC721Collection collection = ERC721Collection(collectionAddress);
         
-        assertEq(collection.name(), "Test ERC721 Collection", "ERC721: Name not stored correctly");
-        assertEq(collection.symbol(), "T721", "ERC721: Symbol not stored correctly");
+        assertEq(collection.name(), "Test ERC721 Collection");
+        assertEq(collection.symbol(), "T721");
     }
     
     function test_ERC1155_NameAndSymbolAreStoredCorrectly() public {
@@ -71,8 +71,8 @@ contract CollectionNameSymbolTest is Test {
         // Cast to ERC1155Collection and verify name and symbol
         ERC1155Collection collection = ERC1155Collection(collectionAddress);
         
-        assertEq(collection.name(), "Test ERC1155 Collection", "ERC1155: Name not stored correctly");
-        assertEq(collection.symbol(), "T1155", "ERC1155: Symbol not stored correctly");
+        assertEq(collection.name(), "Test ERC1155 Collection");
+        assertEq(collection.symbol(), "T1155");
     }
     
     function test_MultipleCollectionsHaveDifferentNamesAndSymbols() public {
@@ -125,6 +125,6 @@ contract CollectionNameSymbolTest is Test {
         assertEq(col2.symbol(), "SC");
         
         // Ensure they are different
-        assertTrue(collection1 != collection2, "Collections should have different addresses");
+        assertTrue(collection1 != collection2);
     }
 }

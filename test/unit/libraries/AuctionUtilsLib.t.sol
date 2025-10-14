@@ -23,7 +23,7 @@ contract AuctionUtilsLibTest is Test {
     uint256 public amount = 1;
 
     function setUp() public {
-        mockERC721 = new MockERC721("Test NFT", "TEST");
+        mockERC721 = new MockERC721("Test NFT", "TNFT");
         mockERC1155 = new MockERC1155("Test 1155", "T1155");
 
         // Mint tokens to seller

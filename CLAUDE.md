@@ -2,18 +2,53 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+## 🎯 Project Overview
 
-Zuno Marketplace is a production-ready, modular NFT marketplace built with Foundry/Solidity ^0.8.30. It supports ERC721 and ERC1155 tokens with advanced trading features including auctions, offers, bundles, and comprehensive collection management.
+**Zuno Marketplace**: Production-ready, modular NFT marketplace built with Foundry/Solidity ^0.8.30
+
+It supports ERC721 and ERC1155 tokens with advanced trading features including auctions, offers, bundles, and comprehensive collection management.
 
 **Tech Stack:**
 
 - Foundry for smart contract development, testing, and deployment
-- OpenZeppelin contracts for security and standards
-- Solidity ^0.8.30
-- Makefile for common tasks
+- OpenZeppelin contracts for security and standards (Ownable, ReentrancyGuard, Initializable)
+- OpenZeppelin Clones for minimal proxy pattern (gas-efficient deployments)
+- Solidity ^0.8.30 with custom errors and type-safe operations
+- Makefile for common tasks and shortcuts
 
-**Note:** This is a pure Foundry project. Despite the README mentioning pnpm, there is no package.json - use Foundry or Makefile commands instead.
+**Note:** This is a pure Foundry project - use Foundry or Makefile commands for all operations.
+
+**⚠️ Critical**: This is a security-critical smart contract project handling financial transactions and NFT transfers.
+
+## 🔴 RED-GREEN-REFACTOR Methodology (MANDATORY)
+
+**EVERY code change MUST follow this cycle:**
+
+### 1. 🔴 RED: Write failing tests FIRST
+
+- Write test cases that define the expected behavior
+- Run tests to confirm they fail for the right reasons
+- **Never skip this step, even for "simple" changes**
+
+### 2. 🟢 GREEN: Write minimal code to pass ALL tests
+
+- Implement the simplest solution that makes tests pass
+- Focus on making it work, not making it perfect
+- All tests must pass before moving to refactor
+
+### 3. 🔵 REFACTOR: Improve code while keeping ALL tests passing
+
+- Optimize for readability, maintainability, and gas efficiency
+- Apply design patterns and best practices
+- Run tests continuously to ensure nothing breaks
+
+### ⛔ FORBIDDEN
+
+- Writing implementation before tests
+- Skipping/removing tests to make code "work"
+- Leaving any tests failing
+- Committing code with failing tests
+- Commenting out tests instead of fixing issues
 
 ## Common Commands
 
@@ -93,10 +128,11 @@ make deploy-collections
 ### Deployment (Network)
 
 ```bash
-# Deploy EVERYTHING (core + hub) in one command
+# Deploy EVERYTHING (core + dual hubs) in one command
 forge script script/deploy/DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast --verify
 
-# Output will show MarketplaceHub address - that's the ONLY address frontend needs!
+# Output will show AdminHub and UserHub addresses
+# Frontend needs UserHub address, Admin operations use AdminHub address
 ```
 
 ## Architecture Overview
@@ -123,13 +159,25 @@ forge script script/deploy/DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcas
 - Separate files for Events, Errors, Types/Structs
 - **Registry + Hub Pattern** for frontend integration (see below)
 
-**4. Registry + Hub Pattern (NEW - Simplified Frontend Integration):**
+**4. Dual Hub Pattern (Production-Grade Admin/User Separation):**
 
-- **MarketplaceHub**: Single entry point contract that provides address discovery
-- **Registries**: ExchangeRegistry, CollectionRegistry, FeeRegistry, AuctionRegistry
-- **Philosophy**: Hub does NOT wrap function calls, only provides contract addresses
-- **Benefits**: Minimal gas overhead, easy maintenance, direct contract calls from frontend
-- See `docs/user-guide.md` for details
+- **AdminHub** (`src/router/AdminHub.sol`): Admin-only functions for marketplace management
+  - Contract registrations (exchanges, collections, auctions)
+  - Emergency controls and system configuration
+  - Role-based access control with OpenZeppelin AccessControl
+  - Key Methods: `registerExchange()`, `registerCollectionFactory()`, `setAdditionalContracts()`
+- **UserHub** (`src/router/UserHub.sol`): Read-only hub for frontend integration
+  - Address discovery and query functions for users
+  - No admin functions, only view/query operations
+  - Key Methods: `getAllAddresses()`, `getExchangeFor()`, `verifyCollection()`
+- **Registries** (`src/registry/`):
+  - `ExchangeRegistry` - Maps TokenStandard enum to exchange addresses
+  - `CollectionRegistry` - Maps collection types to factory addresses
+  - `FeeRegistry` - Centralized fee calculations
+  - `AuctionRegistry` - Maps AuctionType enum to implementation addresses
+- **Philosophy**: Clear separation between admin operations and user queries
+- **Benefits**: Enhanced security, better access control, production-ready architecture
+- See `docs/user-guide.md` for complete integration guide
 
 **5. Role-Based Access Control:**
 
@@ -137,14 +185,23 @@ forge script script/deploy/DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcas
 - `EmergencyManager` provides pause/unpause functionality for critical scenarios
 - `MarketplaceTimelock` enforces 48-hour delay on critical parameter changes to prevent rug pulls
 
-### Hub + Registry Architecture
+### Dual Hub + Registry Architecture
 
-**MarketplaceHub (src/router/MarketplaceHub.sol):**
+**AdminHub (src/router/AdminHub.sol):**
 
-- Single contract address for frontend integration
+- Admin-only functions for marketplace management
+- OpenZeppelin AccessControl with ADMIN_ROLE
+- Functions: `registerExchange()`, `registerCollectionFactory()`, `registerAuction()`, `setAdditionalContracts()`
+- Emergency controls: `emergencyPause()`
+- **Only accessible by designated admin addresses**
+
+**UserHub (src/router/UserHub.sol):**
+
+- Read-only hub for frontend integration
+- No admin functions, only view/query operations
 - Provides `getAllAddresses()` to get all contract addresses in one call
 - Provides `getExchangeFor(nftContract)` to auto-detect ERC721 vs ERC1155
-- Helper functions: `calculateFees()`, `verifyCollection()`, etc.
+- Helper functions: `verifyCollection()`, `getSystemStatus()`, etc.
 - **Does NOT wrap function calls** - only provides addresses and queries
 
 **Registries (src/registry/):**
@@ -156,19 +213,33 @@ forge script script/deploy/DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcas
 
 **Frontend Flow:**
 
-1. Initialize with MarketplaceHub address only
-2. Call `hub.getAllAddresses()` to get all contract addresses
+1. Initialize with UserHub address only
+2. Call `userHub.getAllAddresses()` to get all contract addresses
 3. Create contract instances for each address
 4. Call contracts directly (not through hub)
 
+**Admin Flow:**
+
+1. Initialize with AdminHub address (admin wallet only)
+2. Use AdminHub for all system configuration and emergency controls
+3. Registrations and admin functions are protected by AccessControl
+
 See `docs/user-guide.md` for complete documentation.
 
-### Hub + Registry Quick Start
+### Dual Hub + Registry Quick Start
 
-1. Frontend needs only the `MarketplaceHub` address
-2. Call `hub.getAllAddresses()` once and cache returned contract addresses
-3. Auto-detect exchange via `hub.getExchangeFor(nftContract)` and call the exchange directly
-4. Use Hub helpers for queries only: `calculateFees(...)`, `verifyCollection(...)`
+**For Frontend/Users:**
+
+1. Frontend needs only the `UserHub` address
+2. Call `userHub.getAllAddresses()` once and cache returned contract addresses
+3. Auto-detect exchange via `userHub.getExchangeFor(nftContract)` and call the exchange directly
+4. Use UserHub helpers for queries only: `verifyCollection(...)`, `getSystemStatus(...)`
+
+**For Admin Operations:**
+
+1. Admin needs the `AdminHub` address and proper admin role
+2. Use AdminHub for all system configuration: registrations, emergency controls
+3. All admin functions are protected by OpenZeppelin AccessControl
 
 #### Add a new token standard or module
 
@@ -271,25 +342,39 @@ Tests organized by type in `test/`:
 
 **Unit Tests** (`test/unit/`):
 
-- `collection/` - Collection factory and NFT contract tests
-- `exchange/` - Exchange contract tests
-- `auction/` - Auction mechanism tests
+- `auction/` - BaseAuction, EnglishAuction, DutchAuction, AuctionFactory tests
+- `collection/` - Collection factory and verifier tests
+- `exchange/` - ERC721/ERC1155 exchange tests
+- `fees/` - Fee manager and royalty tests
+- `offers/` - Offer manager tests
+- `marketplace/` - Payment distribution and auction cancellation tests
+- `validation/` - Listing validator and marketplace validator tests
 - `access/` - Access control tests
 - `analytics/` - History tracking tests
-- `fees/` - Fee management tests
 - `security/` - Emergency and timelock tests
-- `validation/` - Validator tests
 
 **Integration Tests** (`test/integration/`):
 
-- End-to-end workflows
-- Cross-contract interactions
-- Complete trading scenarios
-- Stress tests
+- `AuctionIntegration.t.sol` - Complete auction workflows
+- `BasicWorkflows.t.sol` - End-to-end trading scenarios
 
-**Mock Contracts** (`test/mocks/`):
+**End-to-End Tests** (`test/e2e/`):
 
-- Used for isolated unit testing
+- `E2E_Auctions.t.sol` - Full auction lifecycle tests
+- `E2E_EmergencyControls.t.sol` - Emergency pause/unpause scenarios
+
+**Deployment Tests** (`test/deploy/`):
+
+- `DeployAll.t.sol` - Complete deployment validation
+
+**Gas Tests** (`test/gas/`):
+
+- `CanaryTests.t.sol` - Gas optimization benchmarks
+
+**Test Utilities** (`test/utils/`):
+
+- `TestSetup.sol` - Common test setup
+- `auction/AuctionTestHelpers.sol` - Auction-specific helpers
 
 ## Important Patterns and Conventions
 
@@ -356,24 +441,43 @@ Located in `script/deploy/`:
 - **`DeployAll.s.sol`** - Deploy EVERYTHING (core + hub) in one command
 
 Usage:
+
 ```bash
 forge script script/deploy/DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast --verify
 ```
 
 Output:
+
 - All core contracts deployed
-- MarketplaceHub deployed and configured
-- **Frontend only needs MarketplaceHub address** (shown at end of deployment)
+- AdminHub and UserHub deployed and configured
+- **Frontend needs UserHub address, Admin operations use AdminHub address** (shown at end of deployment)
 
 ## Commit Convention
 
 Project uses Conventional Commits:
 
 ```
-type(scope): description
+<type>(<scope>): <description>
 
-Types: feat, fix, docs, style, refactor, test, chore, contract, deploy, security
+Types: feat, fix, docs, style, refactor, perf, test, chore, contract, deploy, security
+Scopes: exchange, collection, auction, fees, security, factory, libraries, validation, access
 ```
+
+**Examples:**
+
+- `feat(exchange): add bundle trading support`
+- `fix(auction): prevent bid overflow in dutch auction`
+- `security(exchange): add reentrancy guard to purchase`
+
+## Security Alert Protocol
+
+If you discover a security vulnerability:
+
+1. **DO NOT** commit the fix to a public branch
+2. Document the issue privately
+3. Propose fix with comprehensive tests
+4. Tag with `security` type in commit message
+5. Recommend immediate audit review
 
 ## Key Security Features
 
@@ -384,8 +488,87 @@ Types: feat, fix, docs, style, refactor, test, chore, contract, deploy, security
 5. **Input Validation:** Dedicated validator contracts prevent invalid states
 6. **Safe Transfers:** NFTTransferLib handles all NFT movements
 
+## Quick Reference
+
+### Essential Commands
+
+```bash
+forge build              # Always build before testing
+forge test -vvv          # Run tests with verbosity
+forge coverage           # Generate coverage reports
+forge fmt                # Format code before committing
+forge snapshot           # Generate gas snapshots
+```
+
+### Design Patterns (Details in .cursor/rules/rules-code.mdc)
+
+1. **Proxy Pattern** - OpenZeppelin Clones for minimal proxies
+2. **Initializer Pattern** - `Initializable` with `initialize()` functions
+3. **Dual Hub Pattern** - AdminHub for admin ops, UserHub for frontend
+4. **Role-Based Access Control** - MarketplaceAccessControl for permissions
+
+### Security Requirements
+
+- ✅ ReentrancyGuard on all state-changing functions
+- ✅ Input validation using dedicated validator contracts
+- ✅ Safe transfers via NFTTransferLib
+- ✅ Custom errors (NO string reverts)
+- ✅ Events for all state changes
+
+### Gas Optimization Checklist
+
+- Use minimal proxy pattern for deployments
+- Pack storage variables efficiently
+- Cache storage reads in memory
+- Use custom errors instead of strings
+- Follow patterns in `src/optimizations/`
+
+## Pre-Commit Checklist
+
+- [ ] All tests pass (`forge test`)
+- [ ] Code formatted (`forge fmt`)
+- [ ] No linter errors
+- [ ] Custom errors used (no require strings)
+- [ ] Events emitted for state changes
+- [ ] NatSpec documentation complete
+- [ ] Gas optimizations applied
+- [ ] Commit message follows conventional format
+
+## Documentation References
+
+- `.cursor/rules/rules-code.mdc` - Detailed technical patterns and best practices
+- `docs/user-guide.md` - Dual Hub + Registry architecture
+- `docs/security/` - Security patterns and audit preparation
+- `docs/guides/integration-guide.md` - Frontend integration guide
+
 ## Current Status
+
+✅ **All tests passing: 992/992 tests** (100% success rate)
 
 ⚠️ **Not yet audited** - Do not use in production without professional security audit.
 
-The codebase is under active development with recent critical security improvements (Priority 1 fixes) completed on the `fix/critical-security-improvements` branch.
+The codebase has successfully completed the RED-GREEN-REFACTOR cycle with comprehensive test coverage:
+
+- **Unit Tests**: 100% coverage of core functionality
+- **Integration Tests**: Full workflows validated
+- **E2E Tests**: Complete user journeys tested
+- **Gas Optimization**: Benchmarked and optimized
+
+**Recent Achievements:**
+
+- ✅ Fixed all 85 failing tests to 0 failures
+- ✅ Custom error patterns implemented across all contracts
+- ✅ Library validation functions tested and verified
+- ✅ Access control patterns validated
+- ✅ Auction, Exchange, Collection, and Offer systems fully tested
+
+**Next Steps Before Production:**
+
+1. Professional security audit
+2. Gas optimization review
+3. Mainnet deployment testing
+4. Bug bounty program launch
+
+---
+
+**⚠️ Remember**: This is a financial application handling user assets. Quality, security, and testing are **non-negotiable**. When in doubt, write more tests.

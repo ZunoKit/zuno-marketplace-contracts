@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {E2E_BaseSetup} from "../e2e/E2E_BaseSetup.sol";
+import {E2E_BaseSetup} from "test/e2e/E2E_BaseSetup.sol";
 
 /**
  * @title CanaryTests
@@ -20,7 +20,7 @@ contract CanaryTests is E2E_BaseSetup {
         // Expected gas: ~610,000 (from baseline snapshot)
 
         // Step 1: Create collection
-        address collection = createERC721Collection(alice, "Alice NFTs", "ALICE");
+        address collection = createERC721Collection(alice, "Test Collection", "TEST");
 
         // Step 2: Mint NFT
         vm.prank(alice);
@@ -52,7 +52,7 @@ contract CanaryTests is E2E_BaseSetup {
         // Expected gas: ~700,000-1,900,000 (from baseline snapshot)
 
         // Create collection with high royalty
-        address collection = createERC721Collection(alice, "High Royalty NFTs", "HRNFT");
+        address collection = createERC721Collection(alice, "Test Collection", "TEST");
 
         // Set high royalty (10%)
         vm.prank(alice);
@@ -93,7 +93,7 @@ contract CanaryTests is E2E_BaseSetup {
         // Expected gas: ~610,000 (from baseline snapshot)
 
         // Create collection
-        address collection = createERC721Collection(alice, "Lifecycle NFTs", "LIFECYCLE");
+        address collection = createERC721Collection(alice, "Test Collection", "TEST");
 
         // Mint NFT
         vm.prank(alice);
@@ -123,7 +123,7 @@ contract CanaryTests is E2E_BaseSetup {
         // Expected gas: ~3,000,000+ (from baseline snapshot)
 
         // Create collection
-        address collection = createERC721Collection(alice, "Batch NFTs", "BATCH");
+        address collection = createERC721Collection(alice, "Test Collection", "TEST");
 
         // Mint multiple NFTs
         uint256 batchSize = 10;
@@ -169,7 +169,7 @@ contract CanaryTests is E2E_BaseSetup {
         // Expected gas: High (from baseline snapshot)
 
         // Create collection
-        address collection = createERC721Collection(alice, "Stress NFTs", "STRESS");
+        address collection = createERC721Collection(alice, "Test Collection", "TEST");
 
         // Mint many NFTs
         uint256 stressSize = 20;

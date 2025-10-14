@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {DutchAuction} from "../auction/DutchAuction.sol";
+import {DutchAuction} from "src/core/auction/DutchAuction.sol";
 
 /**
  * @title DutchAuctionImplementation

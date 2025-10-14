@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 import "forge-std/Test.sol";
 import "src/core/fees/AdvancedFeeManager.sol";
 import "src/core/access/MarketplaceAccessControl.sol";
+import {FeeConfig, UserVolumeData, FeeTier, CollectionFeeOverride, VIPStatus} from "src/types/FeeTypes.sol";
 import "src/errors/FeeErrors.sol";
 
 contract AdvancedFeeManagerTest is Test {
@@ -39,16 +40,16 @@ contract AdvancedFeeManagerTest is Test {
         feeManager = new AdvancedFeeManager(address(accessControl), feeRecipient);
 
         // Grant roles
-        accessControl.grantRoleWithReason(accessControl.OPERATOR_ROLE(), operator, "Test operator");
+        accessControl.grantRoleSimple(accessControl.OPERATOR_ROLE(), operator);
 
-        accessControl.grantRoleWithReason(accessControl.ADMIN_ROLE(), admin, "Test admin");
+        accessControl.grantRoleSimple(accessControl.ADMIN_ROLE(), admin);
 
         vm.stopPrank();
     }
 
     function testInitialConfiguration() public {
         // Check initial fee configuration
-        AdvancedFeeManager.FeeConfig memory config = feeManager.getBaseFeeConfig();
+        FeeConfig memory config = feeManager.getBaseFeeConfig();
 
         assertEq(config.makerFee, 250); // 2.5%
         assertEq(config.takerFee, 250); // 2.5%
@@ -100,13 +101,13 @@ contract AdvancedFeeManagerTest is Test {
         feeManager.updateUserVolume(user1, tradeVolume);
 
         // Check volume data
-        AdvancedFeeManager.UserVolumeData memory volumeData = feeManager.getUserVolumeData(user1);
+        UserVolumeData memory volumeData = feeManager.getUserVolumeData(user1);
         assertEq(volumeData.totalVolume, tradeVolume);
         assertEq(volumeData.tradeCount, 1);
         assertEq(volumeData.last30DaysVolume, tradeVolume);
 
         // Check fee tier (should still be Bronze - tier 0)
-        AdvancedFeeManager.FeeTier memory tier = feeManager.getUserFeeTier(user1);
+        FeeTier memory tier = feeManager.getUserFeeTier(user1);
         assertEq(tier.tierId, 0);
         assertEq(tier.discountBps, 0);
 
@@ -120,7 +121,7 @@ contract AdvancedFeeManagerTest is Test {
         feeManager.updateUserVolume(user1, 15 ether);
 
         // Check tier upgrade
-        AdvancedFeeManager.FeeTier memory tier = feeManager.getUserFeeTier(user1);
+        FeeTier memory tier = feeManager.getUserFeeTier(user1);
         assertEq(tier.tierId, 1); // Silver tier
         assertEq(tier.discountBps, 50); // 0.5% discount
 
@@ -139,7 +140,7 @@ contract AdvancedFeeManagerTest is Test {
         vm.startPrank(admin);
 
         // Set collection override
-        AdvancedFeeManager.CollectionFeeOverride memory feeOverride = AdvancedFeeManager.CollectionFeeOverride({
+        CollectionFeeOverride memory feeOverride = CollectionFeeOverride({
             makerFeeOverride: 200, // 2% instead of 2.5%
             takerFeeOverride: 200,
             discountBps: 25, // Additional 0.25% discount
@@ -166,7 +167,7 @@ contract AdvancedFeeManagerTest is Test {
         vm.startPrank(admin);
 
         // Set VIP status
-        AdvancedFeeManager.VIPStatus memory vipData = AdvancedFeeManager.VIPStatus({
+        VIPStatus memory vipData = VIPStatus({
             isVIP: true,
             vipDiscountBps: 100, // 1% VIP discount
             vipExpiryTimestamp: block.timestamp + 30 days,
@@ -190,7 +191,7 @@ contract AdvancedFeeManagerTest is Test {
     function testUpdateBaseFeeConfig() public {
         vm.startPrank(admin);
 
-        AdvancedFeeManager.FeeConfig memory newConfig = AdvancedFeeManager.FeeConfig({
+        FeeConfig memory newConfig = FeeConfig({
             makerFee: 300, // 3%
             takerFee: 200, // 2%
             listingFee: 0.001 ether,
@@ -205,7 +206,7 @@ contract AdvancedFeeManagerTest is Test {
         feeManager.updateBaseFeeConfig(newConfig);
 
         // Verify update
-        AdvancedFeeManager.FeeConfig memory config = feeManager.getBaseFeeConfig();
+        FeeConfig memory config = feeManager.getBaseFeeConfig();
         assertEq(config.makerFee, 300);
         assertEq(config.takerFee, 200);
         assertEq(config.listingFee, 0.001 ether);
@@ -227,12 +228,12 @@ contract AdvancedFeeManagerTest is Test {
         feeManager.batchUpdateUserVolumes(users, volumes);
 
         // Check user1 tier (25 ETH = Silver tier)
-        AdvancedFeeManager.FeeTier memory tier1 = feeManager.getUserFeeTier(user1);
+        FeeTier memory tier1 = feeManager.getUserFeeTier(user1);
         assertEq(tier1.tierId, 1); // Silver tier
         assertEq(tier1.discountBps, 50); // 0.5% discount
 
         // Check user2 tier (100 ETH = Gold tier)
-        AdvancedFeeManager.FeeTier memory tier2 = feeManager.getUserFeeTier(user2);
+        FeeTier memory tier2 = feeManager.getUserFeeTier(user2);
         assertEq(tier2.tierId, 2); // Gold tier
         assertEq(tier2.discountBps, 100); // 1% discount
 
@@ -303,7 +304,7 @@ contract AdvancedFeeManagerTest is Test {
     function testInvalidFeeParams() public {
         vm.startPrank(admin);
 
-        AdvancedFeeManager.FeeConfig memory invalidConfig = AdvancedFeeManager.FeeConfig({
+        FeeConfig memory invalidConfig = FeeConfig({
             makerFee: 1500, // 15% - too high
             takerFee: 200,
             listingFee: 0,

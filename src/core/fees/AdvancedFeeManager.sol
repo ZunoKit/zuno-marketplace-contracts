@@ -5,6 +5,14 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "src/core/access/MarketplaceAccessControl.sol";
+import {
+    FeeConfig,
+    FeeTierConfig,
+    FeeTier,
+    CollectionFeeOverride,
+    UserVolumeData,
+    VIPStatus
+} from "src/types/FeeTypes.sol";
 import "src/errors/FeeErrors.sol";
 import "src/events/FeeEvents.sol";
 
@@ -50,71 +58,10 @@ contract AdvancedFeeManager is Ownable, ReentrancyGuard, Pausable {
     uint256 public constant EMERGENCY_FEE_CAP = 1000; // 10%
 
     // ============================================================================
-    // STRUCTS
+    // STRUCTS - Now imported from src/types/FeeTypes.sol
     // ============================================================================
-
-    /**
-     * @notice Base fee configuration structure
-     */
-    struct FeeConfig {
-        uint256 makerFee; // Fee paid by seller (basis points)
-        uint256 takerFee; // Fee paid by buyer (basis points)
-        uint256 listingFee; // Fixed fee for creating listings (wei)
-        uint256 auctionFee; // Additional fee for auctions (basis points)
-        uint256 bundleFee; // Additional fee for bundle sales (basis points)
-        bool isActive; // Whether fees are active
-    }
-
-    /**
-     * @notice Fee tier configuration
-     */
-    struct FeeTierConfig {
-        uint256 volumeThreshold; // Minimum volume to reach this tier (wei)
-        uint256 discountBps; // Discount in basis points (e.g., 100 = 1%)
-        string tierName; // Human-readable tier name
-        bool isActive; // Whether this tier is active
-    }
-
-    /**
-     * @notice User's current fee tier
-     */
-    struct FeeTier {
-        uint256 tierId; // Current tier ID
-        uint256 discountBps; // Current discount in basis points
-        uint256 lastUpdated; // Last time tier was updated
-    }
-
-    /**
-     * @notice Collection-specific fee override
-     */
-    struct CollectionFeeOverride {
-        uint256 makerFeeOverride; // Override maker fee (basis points)
-        uint256 takerFeeOverride; // Override taker fee (basis points)
-        uint256 discountBps; // Additional discount for this collection
-        bool hasOverride; // Whether override is active
-        bool isVerified; // Whether collection is verified (for discounts)
-        uint256 setAt; // When override was set
-    }
-
-    /**
-     * @notice User volume tracking data
-     */
-    struct UserVolumeData {
-        uint256 totalVolume; // Total trading volume (wei)
-        uint256 last30DaysVolume; // Volume in last 30 days (wei)
-        uint256 lastTradeTimestamp; // Last trade timestamp
-        uint256 tradeCount; // Total number of trades
-    }
-
-    /**
-     * @notice VIP status configuration
-     */
-    struct VIPStatus {
-        bool isVIP; // Whether user has VIP status
-        uint256 vipDiscountBps; // VIP-specific discount (basis points)
-        uint256 vipExpiryTimestamp; // When VIP status expires
-        string vipTier; // VIP tier name
-    }
+    // Using FeeConfig, FeeTierConfig, FeeTier, CollectionFeeOverride, 
+    // UserVolumeData, VIPStatus from FeeTypes.sol
 
     // ============================================================================
     // EVENTS

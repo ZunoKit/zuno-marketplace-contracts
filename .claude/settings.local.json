@@ -34,7 +34,8 @@
       "Bash(do echo \"=== $dir ===\")",
       "Bash(ls:*)",
       "Bash(done)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(forge script:*)"
     ],
     "deny": [],
     "ask": []

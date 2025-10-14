@@ -109,7 +109,7 @@ contract AdvancedMarketplaceScenariosTest is Test {
         // Setup test data
         for (uint256 i = 1; i <= 10; i++) {
             mockERC721.mint(user1, i);
-            mockERC1155.mint(user1, i, 100, "");
+            mockERC1155.mint(user1, i, 100);
         }
 
         mockERC20.mint(user1, 1000 ether);

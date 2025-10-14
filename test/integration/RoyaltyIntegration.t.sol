@@ -177,7 +177,7 @@ contract RoyaltyIntegrationTest is Test {
         uint256 creatorBalanceAfter = creator.balance;
         uint256 expectedRoyalty = (NFT_PRICE * ROYALTY_10_PERCENT) / 10000;
 
-        assertApproxEqAbs(creatorBalanceAfter - creatorBalanceBefore, expectedRoyalty, 1e15, "Max royalty not paid");
+        assertApproxEqAbs(creatorBalanceAfter - creatorBalanceBefore, expectedRoyalty, 1e15);
 
         console2.log("Maximum royalty (10%) paid correctly");
         console2.log("=== Royalty Rate Validation: SUCCESS ===\n");
@@ -210,7 +210,7 @@ contract RoyaltyIntegrationTest is Test {
         uint256 creatorBalanceAfter = creator.balance;
 
         // No royalty should be paid
-        assertEq(creatorBalanceAfter, creatorBalanceBefore, "No royalty should be paid");
+        assertEq(creatorBalanceAfter, creatorBalanceBefore);
 
         console2.log("Zero royalty case handled correctly");
         console2.log("=== Zero Royalty Edge Case: SUCCESS ===\n");
@@ -284,12 +284,12 @@ contract RoyaltyIntegrationTest is Test {
 
         RoyaltyLib.RoyaltyInfo memory info = RoyaltyLib.getRoyaltyInfo(params);
 
-        assertTrue(info.hasRoyalty, "Should detect royalty");
-        assertEq(info.source, "ERC2981", "Should use ERC2981 first");
+        assertTrue(info.hasRoyalty);
+        assertEq(info.source, "ERC2981");
         console2.log("Royalty source:", info.source);
 
         // Test 2: Falls back to Fee contract if ERC2981 not available
-        SimpleERC721 nftWithoutERC2981 = new SimpleERC721("Test", "TST");
+        SimpleERC721 nftWithoutERC2981 = new SimpleERC721("Test", "TEST");
         nftWithoutERC2981.setFeeContract(address(feeContract));
         vm.prank(seller);
         nftWithoutERC2981.mint(seller, 1);
@@ -297,8 +297,8 @@ contract RoyaltyIntegrationTest is Test {
         params = RoyaltyLib.createRoyaltyParams(address(nftWithoutERC2981), 1, NFT_PRICE, 1000);
         info = RoyaltyLib.getRoyaltyInfo(params);
 
-        assertTrue(info.hasRoyalty, "Should detect royalty via fee contract");
-        assertEq(info.source, "Fee", "Should use Fee contract");
+        assertTrue(info.hasRoyalty);
+        assertEq(info.source, "Fee");
         console2.log("Fallback royalty source:", info.source);
 
         console2.log("=== Royalty Fallback Mechanism: SUCCESS ===\n");
@@ -329,7 +329,7 @@ contract RoyaltyIntegrationTest is Test {
 
             RoyaltyLib.RoyaltyInfo memory info = RoyaltyLib.getRoyaltyInfo(params);
 
-            assertEq(info.amount, expectedRoyalty, "Royalty amount incorrect for price");
+            assertEq(info.amount, expectedRoyalty);
             console2.log("Price:", prices[i], "Royalty:", expectedRoyalty);
         }
 
@@ -348,7 +348,7 @@ contract RoyaltyIntegrationTest is Test {
         mockNFT.mint(seller, 8);
 
         // ERC2981 should reject zero address as royalty receiver
-        vm.expectRevert();
+        vm.expectRevert(); // ERC2981InvalidDefaultRoyaltyReceiver
         mockNFT.setDefaultRoyalty(address(0), uint96(ROYALTY_5_PERCENT));
 
         console2.log("ERC2981 correctly rejects invalid receiver");
@@ -372,7 +372,7 @@ contract RoyaltyIntegrationTest is Test {
         RoyaltyLib.RoyaltyInfo memory info = RoyaltyLib.getRoyaltyInfo(params);
 
         // Should reject royalty above max rate
-        assertFalse(info.hasRoyalty, "Should reject royalty above max");
+        assertFalse(info.hasRoyalty);
         console2.log("Excessive royalty correctly rejected");
 
         console2.log("=== Royalty Exceeding Max Rate: SUCCESS ===\n");

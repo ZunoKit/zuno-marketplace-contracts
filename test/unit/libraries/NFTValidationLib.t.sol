@@ -32,8 +32,8 @@ contract NFTValidationLibTest is Test {
 
     function setUp() public {
         // Deploy test contracts
-        mockERC721 = new MockERC721("Test NFT", "TEST");
-        mockERC1155 = new MockERC1155("Test ERC1155", "TEST1155");
+        mockERC721 = new MockERC721("Test NFT", "TNFT");
+        mockERC1155 = new MockERC1155("Test ERC1155", "T1155");
         invalidNFT = new MockInvalidNFT();
 
         // Mint test tokens
@@ -41,7 +41,7 @@ contract NFTValidationLibTest is Test {
         mockERC721.mint(OWNER, TOKEN_ID);
 
         vm.prank(address(this));
-        mockERC1155.mint(OWNER, TOKEN_ID, 10, "");
+        mockERC1155.mint(OWNER, TOKEN_ID, 10);
 
         // Setup approvals
         vm.prank(OWNER);
@@ -414,7 +414,7 @@ contract NFTValidationLibTest is Test {
 
         // Mint tokens to owner
         vm.prank(address(this));
-        mockERC1155.mint(owner, tokenId, amount, "");
+        mockERC1155.mint(owner, tokenId, amount);
 
         // Approve spender
         vm.prank(owner);

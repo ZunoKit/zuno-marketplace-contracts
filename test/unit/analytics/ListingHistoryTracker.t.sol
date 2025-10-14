@@ -7,6 +7,7 @@ import "src/core/access/MarketplaceAccessControl.sol";
 import "test/mocks/MockERC721.sol";
 import "test/mocks/MockERC1155.sol";
 import "test/utils/TestHelpers.sol";
+import "src/errors/NFTExchangeErrors.sol";
 
 contract ListingHistoryTrackerTest is Test, TestHelpers {
     ListingHistoryTracker public tracker;
@@ -29,10 +30,10 @@ contract ListingHistoryTrackerTest is Test, TestHelpers {
         bytes32 pauserRole = accessControl.PAUSER_ROLE();
 
         vm.prank(admin);
-        accessControl.grantRoleWithReason(operatorRole, admin, "Test setup");
+        accessControl.grantRoleSimple(operatorRole, admin);
 
         vm.prank(admin);
-        accessControl.grantRoleWithReason(pauserRole, admin, "Test setup");
+        accessControl.grantRoleSimple(pauserRole, admin);
 
         // Deploy tracker
         vm.prank(admin);
@@ -85,7 +86,7 @@ contract ListingHistoryTrackerTest is Test, TestHelpers {
 
         // Non-admin should not be able to record transactions
         vm.prank(user);
-        vm.expectRevert();
+        vm.expectRevert(NFTExchange__NotTheOwner.selector);
         tracker.recordTransaction(
             address(mockERC721), 1, listingId, ListingHistoryTracker.TransactionType.LISTING_CREATED, seller, 1 ether
         );

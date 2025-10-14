@@ -92,38 +92,44 @@ Added new auction feature
 
 ## 🏗️ **ARCHITECTURE & STRUCTURE**
 
-### Project Organization
+### Project Organization (After Refactoring)
 
 ```
 src/
 ├── common/              # Base contracts (BaseNFTExchange, BaseCollection, Fee)
 ├── core/               # Core marketplace contracts
-│   ├── access/         # Access control (MarketplaceAccessControl)
-│   ├── analytics/      # Analytics tracking
-│   ├── auction/        # Auction mechanisms
-│   ├── collection/     # Collection contracts
-│   ├── exchange/       # Exchange contracts
-│   ├── factory/        # Factory contracts
-│   ├── fees/           # Fee management
-│   ├── listing/        # Listing management
+│   ├── auction/        # Auction implementations (English, Dutch)
+│   ├── bundles/        # Bundle trading functionality
+│   ├── collection/     # Collection verification & management
+│   ├── exchange/       # ERC721/ERC1155 exchange contracts
+│   ├── factory/        # Factory contracts for collections & auctions
+│   ├── fees/           # Fee & royalty management
+│   ├── listing/        # Advanced listing management
 │   ├── offers/         # Offer system
-│   ├── proxy/          # Proxy patterns
-│   ├── security/       # Security features
-│   └── validation/     # Validation logic
-├── libraries/          # Reusable libraries
+│   ├── proxy/          # Proxy implementations for gas efficiency
+│   ├── security/       # Emergency & timelock controls
+│   ├── access/         # Role-based access control
+│   ├── analytics/      # History tracking
+│   └── validation/     # Input validation
+├── router/             # AdminHub and UserHub entry points
+├── registry/           # Registry contracts for address mappings
+├── libraries/          # Reusable utility libraries
 ├── interfaces/         # Contract interfaces
-├── events/            # Event definitions
-├── errors/            # Custom error definitions
-└── types/             # Struct definitions
+├── types/              # Type definitions (structs, enums)
+├── events/             # Event definitions
+└── errors/             # Custom error definitions
 
 test/
-├── unit/              # Unit tests
-├── integration/       # Integration tests
-├── mocks/            # Mock contracts
-└── utils/            # Test helpers
+├── unit/               # Unit tests for each module
+├── integration/        # Cross-contract integration tests
+├── e2e/                # End-to-end workflow tests
+├── gas/                # Gas optimization tests
+├── deploy/             # Deployment tests
+└── utils/              # Test helpers and utilities
 
 script/
-└── deploy/           # Deployment scripts
+└── deploy/             # Deployment scripts
+    └── DeployAll.s.sol # Complete deployment script
 ```
 
 ### Import Conventions
@@ -776,6 +782,61 @@ contract ContractName {
 }
 ```
 
+## 🏛️ **DUAL HUB ARCHITECTURE PATTERN**
+
+### AdminHub vs UserHub Separation
+
+```solidity
+// ✅ CORRECT: AdminHub for admin operations only
+contract AdminHub is AccessControl {
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    // Admin-only functions
+    function registerExchange(TokenStandard standard, address exchange)
+        external onlyRole(ADMIN_ROLE) {
+        exchangeRegistry.registerExchange(standard, exchange);
+    }
+
+    function emergencyPause() external onlyRole(ADMIN_ROLE) {
+        // Emergency controls
+    }
+}
+
+// ✅ CORRECT: UserHub for read-only operations
+contract UserHub {
+    // No admin functions, only view/query operations
+    function getAllAddresses() external view returns (...) {
+        // Return contract addresses
+    }
+
+    function getExchangeFor(address nftContract) external view returns (address) {
+        // Auto-detect exchange
+    }
+}
+```
+
+### Integration Patterns
+
+```javascript
+// Frontend integration (UserHub only)
+const USER_HUB = "0x...";
+const userHub = new ethers.Contract(USER_HUB, UserHubABI, provider);
+const addresses = await userHub.getAllAddresses();
+
+// Admin integration (AdminHub only)
+const ADMIN_HUB = "0x...";
+const adminHub = new ethers.Contract(ADMIN_HUB, AdminHubABI, adminSigner);
+await adminHub.registerExchange(TokenStandard.ERC721, exchangeAddress);
+```
+
+### Benefits of Dual Hub Pattern
+
+1. **Enhanced Security**: Clear separation between admin and user operations
+2. **Better Access Control**: Admin functions protected by OpenZeppelin AccessControl
+3. **Production Ready**: Follows enterprise security patterns
+4. **Frontend Simplicity**: Users only need UserHub address
+5. **Admin Safety**: Admin operations isolated from user interactions
+
 ## 🎯 **CORE DEVELOPMENT PRINCIPLES**
 
 1. **Security First**: Always prioritize security over convenience
@@ -788,6 +849,7 @@ contract ContractName {
 8. **Clean Architecture**: Separate concerns (base, core, libraries)
 9. **Documentation**: Document all public/external functions
 10. **Upgradeable**: Use initializable patterns for upgradeability
+11. **Dual Hub Pattern**: Separate admin operations from user operations
 
 ## 🔍 **INTERFACE PATTERNS**
 
@@ -852,3 +914,10 @@ contract ERC721NFTExchange is IExchangeCore {
 ---
 
 **⚠️ Security Notice**: This is a smart contract project handling user assets. Always prioritize security, conduct thorough testing, and get professional audits before mainnet deployment.
+
+---
+
+## 🎓 Additional Resources
+
+- See `CLAUDE.md` for complete project architecture overview
+- See `docs/` for detailed documentation on specific topics

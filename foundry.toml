@@ -12,6 +12,8 @@ remappings = [
     'forge-std=lib/forge-std/src'
 ]
 
+cache = true
+
 # Network configurations
 [rpc_endpoints]
 localhost = "http://localhost:8545"

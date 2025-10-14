@@ -4,7 +4,8 @@ pragma solidity ^0.8.30;
 import {Test, console2} from "forge-std/Test.sol";
 import {BaseAuction} from "src/core/auction/BaseAuction.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
-import {AuctionTestHelpers} from "../../utils/auction/AuctionTestHelpers.sol";
+import {AuctionCreationParams, AuctionType, DEFAULT_MIN_BID_INCREMENT} from "src/types/AuctionTypes.sol";
+import {AuctionTestHelpers} from "test/utils/auction/AuctionTestHelpers.sol";
 import "src/errors/AuctionErrors.sol";
 
 /**
@@ -26,15 +27,17 @@ contract BaseAuctionTest is AuctionTestHelpers {
     // ============================================================================
 
     function test_ValidateAuctionParameters_Success() public {
-        BaseAuction.AuctionParams memory params = BaseAuction.AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: address(mockERC721),
             tokenId: 1,
             amount: 1,
             startPrice: 1 ether,
             reservePrice: 2 ether,
             duration: 1 days,
-            auctionType: IAuction.AuctionType.ENGLISH,
-            seller: SELLER
+            auctionType: AuctionType.ENGLISH,
+            seller: SELLER,
+            bidIncrement: DEFAULT_MIN_BID_INCREMENT,
+            extendOnBid: false
         });
 
         // Should not revert
@@ -42,15 +45,17 @@ contract BaseAuctionTest is AuctionTestHelpers {
     }
 
     function test_ValidateAuctionParameters_RevertZeroAddress() public {
-        BaseAuction.AuctionParams memory params = BaseAuction.AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: address(0), // Invalid
             tokenId: 1,
             amount: 1,
             startPrice: 1 ether,
             reservePrice: 2 ether,
             duration: 1 days,
-            auctionType: IAuction.AuctionType.ENGLISH,
-            seller: SELLER
+            auctionType: AuctionType.ENGLISH,
+            seller: SELLER,
+            bidIncrement: DEFAULT_MIN_BID_INCREMENT,
+            extendOnBid: false
         });
 
         vm.expectRevert(Auction__ZeroAddress.selector);
@@ -58,15 +63,17 @@ contract BaseAuctionTest is AuctionTestHelpers {
     }
 
     function test_ValidateAuctionParameters_RevertZeroStartPrice() public {
-        BaseAuction.AuctionParams memory params = BaseAuction.AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: address(mockERC721),
             tokenId: 1,
             amount: 1,
             startPrice: 0, // Invalid
             reservePrice: 2 ether,
             duration: 1 days,
-            auctionType: IAuction.AuctionType.ENGLISH,
-            seller: SELLER
+            auctionType: AuctionType.ENGLISH,
+            seller: SELLER,
+            bidIncrement: DEFAULT_MIN_BID_INCREMENT,
+            extendOnBid: false
         });
 
         vm.expectRevert(Auction__InvalidStartPrice.selector);
@@ -74,15 +81,17 @@ contract BaseAuctionTest is AuctionTestHelpers {
     }
 
     function test_ValidateAuctionParameters_RevertZeroAmount() public {
-        BaseAuction.AuctionParams memory params = BaseAuction.AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: address(mockERC721),
             tokenId: 1,
             amount: 0, // Invalid
             startPrice: 1 ether,
             reservePrice: 2 ether,
             duration: 1 days,
-            auctionType: IAuction.AuctionType.ENGLISH,
-            seller: SELLER
+            auctionType: AuctionType.ENGLISH,
+            seller: SELLER,
+            bidIncrement: DEFAULT_MIN_BID_INCREMENT,
+            extendOnBid: false
         });
 
         vm.expectRevert(Auction__InvalidAuctionParameters.selector);
@@ -90,15 +99,17 @@ contract BaseAuctionTest is AuctionTestHelpers {
     }
 
     function test_ValidateAuctionParameters_RevertInvalidDuration() public {
-        BaseAuction.AuctionParams memory params = BaseAuction.AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: address(mockERC721),
             tokenId: 1,
             amount: 1,
             startPrice: 1 ether,
             reservePrice: 2 ether,
             duration: 30 minutes, // Too short
-            auctionType: IAuction.AuctionType.ENGLISH,
-            seller: SELLER
+            auctionType: AuctionType.ENGLISH,
+            seller: SELLER,
+            bidIncrement: DEFAULT_MIN_BID_INCREMENT,
+            extendOnBid: false
         });
 
         vm.expectRevert(Auction__InvalidAuctionDuration.selector);
@@ -106,15 +117,17 @@ contract BaseAuctionTest is AuctionTestHelpers {
     }
 
     function test_ValidateAuctionParameters_RevertExcessiveReservePrice() public {
-        BaseAuction.AuctionParams memory params = BaseAuction.AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: address(mockERC721),
             tokenId: 1,
             amount: 1,
             startPrice: 1 ether,
             reservePrice: 15 ether, // More than 10x start price
             duration: 1 days,
-            auctionType: IAuction.AuctionType.ENGLISH,
-            seller: SELLER
+            auctionType: AuctionType.ENGLISH,
+            seller: SELLER,
+            bidIncrement: DEFAULT_MIN_BID_INCREMENT,
+            extendOnBid: false
         });
 
         vm.expectRevert(Auction__InvalidReservePrice.selector);
@@ -229,15 +242,17 @@ contract BaseAuctionTest is AuctionTestHelpers {
 
     function test_ValidateAuctionParameters_EdgeCases() public {
         // Test minimum valid duration (1 hour)
-        BaseAuction.AuctionParams memory params = BaseAuction.AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: address(mockERC721),
             tokenId: 1,
             amount: 1,
             startPrice: 1 ether,
             reservePrice: 2 ether,
             duration: 1 hours, // Minimum valid
-            auctionType: IAuction.AuctionType.ENGLISH,
-            seller: SELLER
+            auctionType: AuctionType.ENGLISH,
+            seller: SELLER,
+            bidIncrement: DEFAULT_MIN_BID_INCREMENT,
+            extendOnBid: false
         });
 
         // Should not revert
@@ -285,17 +300,17 @@ contract BaseAuctionTest is AuctionTestHelpers {
         // Test with different contracts
         bytes32 id1 = testableAuction.testGenerateAuctionId(address(mockERC721), 1, SELLER, block.timestamp);
         bytes32 id2 = testableAuction.testGenerateAuctionId(address(mockERC1155), 1, SELLER, block.timestamp);
-        assertTrue(id1 != id2, "Different contracts should generate different IDs");
+        assertTrue(id1 != id2);
 
         // Test with different token IDs
         id1 = testableAuction.testGenerateAuctionId(address(mockERC721), 1, SELLER, block.timestamp);
         id2 = testableAuction.testGenerateAuctionId(address(mockERC721), 2, SELLER, block.timestamp);
-        assertTrue(id1 != id2, "Different token IDs should generate different IDs");
+        assertTrue(id1 != id2);
 
         // Test with different sellers
         id1 = testableAuction.testGenerateAuctionId(address(mockERC721), 1, SELLER, block.timestamp);
         id2 = testableAuction.testGenerateAuctionId(address(mockERC721), 1, BIDDER1, block.timestamp);
-        assertTrue(id1 != id2, "Different sellers should generate different IDs");
+        assertTrue(id1 != id2);
     }
 
     function test_SetMarketplaceFee_BoundaryValues() public {
@@ -347,12 +362,12 @@ contract BaseAuctionTest is AuctionTestHelpers {
 
         // Test that non-owner cannot set marketplace fee
         vm.prank(nonOwner);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), nonOwner));
         testableAuction.setMarketplaceFee(300);
 
         // Test that non-owner cannot set min bid increment
         vm.prank(nonOwner);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), nonOwner));
         testableAuction.setMinBidIncrement(300);
     }
 }
@@ -364,7 +379,7 @@ contract BaseAuctionTest is AuctionTestHelpers {
 contract TestableBaseAuction is BaseAuction {
     constructor(address _marketplaceWallet) BaseAuction(_marketplaceWallet) {}
 
-    function testValidateAuctionParameters(AuctionParams memory params) external view {
+    function testValidateAuctionParameters(AuctionCreationParams memory params) external view {
         _validateAuctionParameters(params);
     }
 

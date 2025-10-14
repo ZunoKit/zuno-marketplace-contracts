@@ -7,6 +7,7 @@ import {MarketplaceAccessControl} from "src/core/access/MarketplaceAccessControl
 import {EmergencyManager} from "src/core/security/EmergencyManager.sol";
 import {MarketplaceValidator} from "src/core/validation/MarketplaceValidator.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
+import "src/errors/NFTExchangeErrors.sol";
 
 /**
  * @title SecurityIntegration
@@ -70,26 +71,26 @@ contract SecurityIntegrationTest is Test {
 
         // Only admin can pause
         vm.prank(attacker);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), attacker));
         emergencyManager.emergencyPause("Test pause");
         console2.log("Non-admin pause correctly rejected");
 
         // Admin can pause
         vm.prank(admin);
         emergencyManager.emergencyPause("Test pause");
-        assertTrue(emergencyManager.paused(), "Should be paused");
+        assertTrue(emergencyManager.paused());
         console2.log("Admin pause successful");
 
         // Operator cannot unpause (only admin)
         vm.prank(operator);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), operator));
         emergencyManager.emergencyUnpause();
         console2.log("Operator unpause correctly rejected");
 
         // Admin can unpause
         vm.prank(admin);
         emergencyManager.emergencyUnpause();
-        assertFalse(emergencyManager.paused(), "Should be unpaused");
+        assertFalse(emergencyManager.paused());
         console2.log("Admin unpause successful");
 
         console2.log("=== Access Control + Emergency Manager: SUCCESS ===\n");
@@ -128,7 +129,7 @@ contract SecurityIntegrationTest is Test {
         malicious.attack();
 
         // Verify only one purchase occurred (no reentrancy)
-        assertEq(mockNFT.ownerOf(1), address(malicious), "NFT should be transferred once");
+        assertEq(mockNFT.ownerOf(1), address(malicious));
 
         console2.log("Reentrancy prevented by secure transfer pattern");
         console2.log("=== Reentrancy Prevention: SUCCESS ===\n");
@@ -143,7 +144,7 @@ contract SecurityIntegrationTest is Test {
 
         // Layer 1: Access Control prevents unauthorized actions
         vm.prank(attacker);
-        vm.expectRevert();
+        vm.expectRevert(); // AccessControlUnauthorizedAccount
         accessControl.grantRole(OPERATOR_ROLE, attacker);
         console2.log("Layer 1 (Access Control): Unauthorized role grant prevented");
 
@@ -239,7 +240,7 @@ contract SecurityIntegrationTest is Test {
 
         // Attacker's transaction fails (already sold)
         vm.prank(attacker);
-        vm.expectRevert();
+        vm.expectRevert(NFTExchange__NFTNotActive.selector);
         exchange.buyNFT{value: price}(listingId);
         console2.log("Front-running attempt fails (NFT already sold)");
 
@@ -255,20 +256,20 @@ contract SecurityIntegrationTest is Test {
 
         // Attacker tries to escalate to operator
         vm.prank(attacker);
-        vm.expectRevert();
+        vm.expectRevert(); // AccessControlUnauthorizedAccount
         accessControl.grantRole(OPERATOR_ROLE, attacker);
         console2.log("Self-grant operator role prevented");
 
         // Operator tries to escalate to admin
         vm.prank(operator);
-        vm.expectRevert();
+        vm.expectRevert(); // AccessControlUnauthorizedAccount
         accessControl.grantRole(ADMIN_ROLE, operator);
         console2.log("Operator escalation to admin prevented");
 
         // Verify role hierarchy maintained
-        assertTrue(accessControl.hasRole(ADMIN_ROLE, admin), "Admin should have admin role");
-        assertTrue(accessControl.hasRole(OPERATOR_ROLE, operator), "Operator should have operator role");
-        assertFalse(accessControl.hasRole(OPERATOR_ROLE, attacker), "Attacker should have no roles");
+        assertTrue(accessControl.hasRole(ADMIN_ROLE, admin));
+        assertTrue(accessControl.hasRole(OPERATOR_ROLE, operator));
+        assertFalse(accessControl.hasRole(OPERATOR_ROLE, attacker));
         console2.log("Role hierarchy integrity verified");
 
         console2.log("=== Permission Escalation Prevention: SUCCESS ===\n");
@@ -284,18 +285,18 @@ contract SecurityIntegrationTest is Test {
         console2.log("\n=== Test: Comprehensive Security Audit ===");
 
         // Test 1: Access Control
-        assertTrue(accessControl.hasRole(ADMIN_ROLE, admin), "Admin role exists");
-        assertTrue(accessControl.hasRole(OPERATOR_ROLE, operator), "Operator role exists");
+        assertTrue(accessControl.hasRole(ADMIN_ROLE, admin));
+        assertTrue(accessControl.hasRole(OPERATOR_ROLE, operator));
         console2.log("[PASS] Access Control functional");
 
         // Test 2: Emergency Manager
-        assertFalse(emergencyManager.paused(), "Initially unpaused");
+        assertFalse(emergencyManager.paused());
         vm.prank(admin);
         emergencyManager.emergencyPause("Test pause");
-        assertTrue(emergencyManager.paused(), "Can pause");
+        assertTrue(emergencyManager.paused());
         vm.prank(admin);
         emergencyManager.emergencyUnpause();
-        assertFalse(emergencyManager.paused(), "Can unpause");
+        assertFalse(emergencyManager.paused());
         console2.log("[PASS] Emergency Manager functional");
 
         // Test 3: ReentrancyGuard (tested in separate test)
@@ -303,7 +304,7 @@ contract SecurityIntegrationTest is Test {
 
         // Test 4: Permission checks
         vm.prank(attacker);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), attacker));
         emergencyManager.emergencyPause("Test pause");
         console2.log("[PASS] Permission checks enforced");
 

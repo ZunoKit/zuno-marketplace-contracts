@@ -40,14 +40,8 @@ contract MarketplaceAccessControl is AccessControl, Ownable, ReentrancyGuard {
     // STATE VARIABLES
     // ============================================================================
 
-    /// @notice Mapping to track role assignment history
-    mapping(bytes32 => mapping(address => RoleAssignment[])) public roleHistory;
-
     /// @notice Mapping to track if a role is currently active
     mapping(bytes32 => bool) public activeRoles;
-
-    /// @notice Mapping to track role permissions
-    mapping(bytes32 => RolePermissions) public rolePermissions;
 
     /// @notice Maximum number of addresses that can have a role simultaneously
     mapping(bytes32 => uint256) public maxRoleMembers;
@@ -55,28 +49,6 @@ contract MarketplaceAccessControl is AccessControl, Ownable, ReentrancyGuard {
     /// @notice Current number of members for each role
     mapping(bytes32 => uint256) public currentRoleMembers;
 
-    // ============================================================================
-    // STRUCTS
-    // ============================================================================
-
-    /**
-     * @notice Structure to track role assignment history
-     */
-    struct RoleAssignment {
-        address assignedBy;
-        uint256 assignedAt;
-        uint256 revokedAt;
-        bool isActive;
-        string reason;
-    }
-
-    // RolePermissions struct is imported from MarketplaceAccessControlEvents.sol
-
-    // ============================================================================
-    // EVENTS
-    // ============================================================================
-
-    // Events are imported from MarketplaceAccessControlEvents.sol
 
     // ============================================================================
     // MODIFIERS
@@ -136,12 +108,11 @@ contract MarketplaceAccessControl is AccessControl, Ownable, ReentrancyGuard {
     // ============================================================================
 
     /**
-     * @notice Grants a role to an account with reason
+     * @notice Grants a role to an account
      * @param role Role to grant
      * @param account Account to grant role to
-     * @param reason Reason for granting the role
      */
-    function grantRoleWithReason(bytes32 role, address account, string calldata reason)
+    function grantRoleSimple(bytes32 role, address account)
         external
         onlyRole(ADMIN_ROLE)
         onlyActiveRole(role)
@@ -156,33 +127,18 @@ contract MarketplaceAccessControl is AccessControl, Ownable, ReentrancyGuard {
             revert MarketplaceAccessControl__RoleAlreadyGranted();
         }
 
-        // Grant the role
         _grantRole(role, account);
-
-        // Update role tracking
         currentRoleMembers[role]++;
 
-        // Record role assignment history
-        roleHistory[role][account].push(
-            RoleAssignment({
-                assignedBy: msg.sender,
-                assignedAt: block.timestamp,
-                revokedAt: 0,
-                isActive: true,
-                reason: reason
-            })
-        );
-
-        emit RoleGrantedWithReason(role, account, msg.sender, reason, block.timestamp);
+        emit RoleGrantedSimple(role, account, msg.sender, block.timestamp);
     }
 
     /**
-     * @notice Revokes a role from an account with reason
+     * @notice Revokes a role from an account
      * @param role Role to revoke
      * @param account Account to revoke role from
-     * @param reason Reason for revoking the role
      */
-    function revokeRoleWithReason(bytes32 role, address account, string calldata reason)
+    function revokeRoleSimple(bytes32 role, address account)
         external
         onlyRole(ADMIN_ROLE)
         nonReentrant
@@ -191,35 +147,12 @@ contract MarketplaceAccessControl is AccessControl, Ownable, ReentrancyGuard {
             revert MarketplaceAccessControl__RoleNotGranted();
         }
 
-        // Revoke the role
         _revokeRole(role, account);
-
-        // Update role tracking
         if (currentRoleMembers[role] > 0) {
             currentRoleMembers[role]--;
         }
 
-        // Mark previous active assignments as inactive
-        RoleAssignment[] storage assignments = roleHistory[role][account];
-        for (uint256 i = 0; i < assignments.length; i++) {
-            if (assignments[i].isActive) {
-                assignments[i].isActive = false;
-                assignments[i].revokedAt = block.timestamp;
-            }
-        }
-
-        // Add new revocation entry to history
-        roleHistory[role][account].push(
-            RoleAssignment({
-                assignedBy: msg.sender,
-                assignedAt: block.timestamp,
-                revokedAt: block.timestamp,
-                isActive: false,
-                reason: reason
-            })
-        );
-
-        emit RoleRevokedWithReason(role, account, msg.sender, reason, block.timestamp);
+        emit RoleRevokedSimple(role, account, msg.sender, block.timestamp);
     }
 
     /**
@@ -258,29 +191,6 @@ contract MarketplaceAccessControl is AccessControl, Ownable, ReentrancyGuard {
         emit RoleMemberLimitUpdated(role, oldLimit, maxMembers, msg.sender);
     }
 
-    // ============================================================================
-    // ROLE PERMISSION FUNCTIONS
-    // ============================================================================
-
-    /**
-     * @notice Updates permissions for a role
-     * @param role Role to update permissions for
-     * @param permissions New permissions structure
-     */
-    function updateRolePermissions(bytes32 role, RolePermissions calldata permissions)
-        external
-        onlyRole(ADMIN_ROLE)
-        nonReentrant
-    {
-        if (role == DEFAULT_ADMIN_ROLE || role == ADMIN_ROLE) {
-            revert MarketplaceAccessControl__CannotModifyAdminPermissions();
-        }
-
-        RolePermissions memory oldPermissions = rolePermissions[role];
-        rolePermissions[role] = permissions;
-
-        emit RolePermissionsUpdated(role, oldPermissions, permissions, msg.sender);
-    }
 
     /**
      * @notice Checks if an account has specific permission
@@ -312,128 +222,10 @@ contract MarketplaceAccessControl is AccessControl, Ownable, ReentrancyGuard {
         return false;
     }
 
-    // ============================================================================
-    // BATCH OPERATIONS
-    // ============================================================================
-
-    /**
-     * @notice Grants multiple roles to multiple accounts
-     * @param roles Array of roles to grant
-     * @param accounts Array of accounts to grant roles to
-     * @param reasons Array of reasons for each grant
-     */
-    function batchGrantRoles(bytes32[] calldata roles, address[] calldata accounts, string[] calldata reasons)
-        external
-        onlyRole(ADMIN_ROLE)
-        nonReentrant
-    {
-        uint256 length = roles.length;
-        if (length == 0 || length != accounts.length || length != reasons.length) {
-            revert MarketplaceAccessControl__ArrayLengthMismatch();
-        }
-
-        for (uint256 i = 0; i < length; i++) {
-            if (accounts[i] == address(0)) {
-                revert MarketplaceAccessControl__ZeroAddress();
-            }
-
-            if (!activeRoles[roles[i]]) {
-                revert MarketplaceAccessControl__RoleNotActive();
-            }
-
-            if (currentRoleMembers[roles[i]] >= maxRoleMembers[roles[i]]) {
-                revert MarketplaceAccessControl__RoleMemberLimitExceeded();
-            }
-
-            if (!hasRole(roles[i], accounts[i])) {
-                _grantRole(roles[i], accounts[i]);
-                currentRoleMembers[roles[i]]++;
-
-                roleHistory[roles[i]][accounts[i]].push(
-                    RoleAssignment({
-                        assignedBy: msg.sender,
-                        assignedAt: block.timestamp,
-                        revokedAt: 0,
-                        isActive: true,
-                        reason: reasons[i]
-                    })
-                );
-
-                emit RoleGrantedWithReason(roles[i], accounts[i], msg.sender, reasons[i], block.timestamp);
-            }
-        }
-
-        emit BatchRoleOperationCompleted("GRANT", length, msg.sender, block.timestamp);
-    }
-
-    /**
-     * @notice Revokes multiple roles from multiple accounts
-     * @param roles Array of roles to revoke
-     * @param accounts Array of accounts to revoke roles from
-     * @param reasons Array of reasons for each revocation
-     */
-    function batchRevokeRoles(bytes32[] calldata roles, address[] calldata accounts, string[] calldata reasons)
-        external
-        onlyRole(ADMIN_ROLE)
-        nonReentrant
-    {
-        uint256 length = roles.length;
-        if (length == 0 || length != accounts.length || length != reasons.length) {
-            revert MarketplaceAccessControl__ArrayLengthMismatch();
-        }
-
-        for (uint256 i = 0; i < length; i++) {
-            if (hasRole(roles[i], accounts[i])) {
-                _revokeRole(roles[i], accounts[i]);
-
-                if (currentRoleMembers[roles[i]] > 0) {
-                    currentRoleMembers[roles[i]]--;
-                }
-
-                // Mark previous active assignments as inactive
-                RoleAssignment[] storage assignments = roleHistory[roles[i]][accounts[i]];
-                for (uint256 j = 0; j < assignments.length; j++) {
-                    if (assignments[j].isActive) {
-                        assignments[j].isActive = false;
-                        assignments[j].revokedAt = block.timestamp;
-                    }
-                }
-
-                // Add new revocation entry to history
-                roleHistory[roles[i]][accounts[i]].push(
-                    RoleAssignment({
-                        assignedBy: msg.sender,
-                        assignedAt: block.timestamp,
-                        revokedAt: block.timestamp,
-                        isActive: false,
-                        reason: reasons[i]
-                    })
-                );
-
-                emit RoleRevokedWithReason(roles[i], accounts[i], msg.sender, reasons[i], block.timestamp);
-            }
-        }
-
-        emit BatchRoleOperationCompleted("REVOKE", length, msg.sender, block.timestamp);
-    }
 
     // ============================================================================
     // VIEW FUNCTIONS
     // ============================================================================
-
-    /**
-     * @notice Gets role assignment history for an account
-     * @param role Role to check
-     * @param account Account to check
-     * @return assignments Array of role assignments
-     */
-    function getRoleHistory(bytes32 role, address account)
-        external
-        view
-        returns (RoleAssignment[] memory assignments)
-    {
-        return roleHistory[role][account];
-    }
 
     /**
      * @notice Gets all active roles for an account
@@ -496,7 +288,7 @@ contract MarketplaceAccessControl is AccessControl, Ownable, ReentrancyGuard {
         activeRoles[PAUSER_ROLE] = true;
 
         // Set default member limits
-        maxRoleMembers[DEFAULT_ADMIN_ROLE] = 3; // Limited DEFAULT_ADMIN_ROLE members
+        maxRoleMembers[DEFAULT_ADMIN_ROLE] = 3;
         maxRoleMembers[ADMIN_ROLE] = 5;
         maxRoleMembers[MODERATOR_ROLE] = 10;
         maxRoleMembers[OPERATOR_ROLE] = 15;
@@ -505,93 +297,7 @@ contract MarketplaceAccessControl is AccessControl, Ownable, ReentrancyGuard {
         maxRoleMembers[PAUSER_ROLE] = 5;
 
         // Initialize current member counts
-        currentRoleMembers[DEFAULT_ADMIN_ROLE] = 1; // Deployer
-        currentRoleMembers[ADMIN_ROLE] = 1; // Deployer
-
-        // Set default permissions
-        _setDefaultPermissions();
-    }
-
-    /**
-     * @notice Sets default permissions for each role
-     */
-    function _setDefaultPermissions() internal {
-        // Admin permissions (can do everything)
-        rolePermissions[ADMIN_ROLE] = RolePermissions({
-            canManageRoles: true,
-            canEmergencyAction: true,
-            canUpdateFees: true,
-            canVerifyCollections: true,
-            canPauseContracts: true,
-            canModerateContent: true,
-            canAccessAnalytics: true,
-            maxActions: 0, // Unlimited
-            cooldownPeriod: 0
-        });
-
-        // Moderator permissions
-        rolePermissions[MODERATOR_ROLE] = RolePermissions({
-            canManageRoles: false,
-            canEmergencyAction: true,
-            canUpdateFees: false,
-            canVerifyCollections: true,
-            canPauseContracts: false,
-            canModerateContent: true,
-            canAccessAnalytics: true,
-            maxActions: 100,
-            cooldownPeriod: 1 hours
-        });
-
-        // Operator permissions
-        rolePermissions[OPERATOR_ROLE] = RolePermissions({
-            canManageRoles: false,
-            canEmergencyAction: false,
-            canUpdateFees: true,
-            canVerifyCollections: false,
-            canPauseContracts: false,
-            canModerateContent: false,
-            canAccessAnalytics: true,
-            maxActions: 50,
-            cooldownPeriod: 30 minutes
-        });
-
-        // Verifier permissions
-        rolePermissions[VERIFIER_ROLE] = RolePermissions({
-            canManageRoles: false,
-            canEmergencyAction: false,
-            canUpdateFees: false,
-            canVerifyCollections: true,
-            canPauseContracts: false,
-            canModerateContent: false,
-            canAccessAnalytics: false,
-            maxActions: 200,
-            cooldownPeriod: 15 minutes
-        });
-
-        // Emergency permissions
-        rolePermissions[EMERGENCY_ROLE] = RolePermissions({
-            canManageRoles: false,
-            canEmergencyAction: true,
-            canUpdateFees: false,
-            canVerifyCollections: false,
-            canPauseContracts: true,
-            canModerateContent: true,
-            canAccessAnalytics: true,
-            maxActions: 10,
-            cooldownPeriod: 6 hours
-        });
-
-        // Pauser permissions
-        rolePermissions[PAUSER_ROLE] = RolePermissions({
-            canManageRoles: false,
-            canEmergencyAction: false,
-            canUpdateFees: false,
-            canVerifyCollections: false,
-            canPauseContracts: true,
-            canModerateContent: false,
-            canAccessAnalytics: false,
-            maxActions: 20,
-            cooldownPeriod: 2 hours
-        });
+        currentRoleMembers[DEFAULT_ADMIN_ROLE] = 1;
+        currentRoleMembers[ADMIN_ROLE] = 1;
     }
 }

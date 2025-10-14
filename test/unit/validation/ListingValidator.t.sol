@@ -48,8 +48,8 @@ contract ListingValidatorTest is Test, TestHelpers {
             tokenId: 1,
             quantity: 1,
             price: 1 ether, // 1 ETH - within range (0.001 to 1000 ETH)
-            startTime: block.timestamp,
-            endTime: block.timestamp + 7 days, // 7 days - within range (1 hour to 30 days)
+            startTime: uint64(block.timestamp),
+            endTime: uint64(block.timestamp + 7 days), // 7 days - within range (1 hour to 30 days)
             minOfferPrice: 0.5 ether,
             acceptOffers: true,
             bundleId: bytes32(0),
@@ -83,8 +83,8 @@ contract ListingValidatorTest is Test, TestHelpers {
             tokenId: 1,
             quantity: 1,
             price: 0.0001 ether, // Price below minimum (0.001 ETH)
-            startTime: block.timestamp,
-            endTime: block.timestamp + 7 days,
+            startTime: uint64(block.timestamp),
+            endTime: uint64(block.timestamp + 7 days),
             minOfferPrice: 0.00005 ether,
             acceptOffers: true,
             bundleId: bytes32(0),
@@ -114,8 +114,8 @@ contract ListingValidatorTest is Test, TestHelpers {
             tokenId: 1,
             quantity: 1,
             price: 0, // Invalid price
-            startTime: block.timestamp,
-            endTime: block.timestamp + 7 days,
+            startTime: uint64(block.timestamp),
+            endTime: uint64(block.timestamp + 7 days),
             minOfferPrice: 0,
             acceptOffers: true,
             bundleId: bytes32(0),
@@ -138,8 +138,8 @@ contract ListingValidatorTest is Test, TestHelpers {
             tokenId: 1,
             quantity: 1,
             price: 1 ether,
-            startTime: block.timestamp,
-            endTime: block.timestamp + 30 minutes, // Too short duration (less than 1 hour minimum)
+            startTime: uint64(block.timestamp),
+            endTime: uint64(block.timestamp + 30 minutes), // Too short duration (less than 1 hour minimum)
             minOfferPrice: 0.5 ether,
             acceptOffers: true,
             bundleId: bytes32(0),
@@ -162,8 +162,8 @@ contract ListingValidatorTest is Test, TestHelpers {
             tokenId: 1,
             quantity: 5,
             price: 1 ether, // 1 ETH - within range
-            startTime: block.timestamp,
-            endTime: block.timestamp + 7 days, // 7 days - within range
+            startTime: uint64(block.timestamp),
+            endTime: uint64(block.timestamp + 7 days), // 7 days - within range
             minOfferPrice: 0.5 ether,
             acceptOffers: true,
             bundleId: bytes32(0),
@@ -194,8 +194,8 @@ contract ListingValidatorTest is Test, TestHelpers {
             tokenId: 1,
             quantity: 1,
             price: 1 ether,
-            startTime: block.timestamp,
-            endTime: block.timestamp + 7 days,
+            startTime: uint64(block.timestamp),
+            endTime: uint64(block.timestamp + 7 days),
             minOfferPrice: 0.5 ether,
             acceptOffers: true,
             bundleId: bytes32(0),
@@ -219,8 +219,8 @@ contract ListingValidatorTest is Test, TestHelpers {
             tokenId: 1,
             quantity: 1,
             price: 1 ether,
-            startTime: block.timestamp,
-            endTime: block.timestamp + 7 days,
+            startTime: uint64(block.timestamp),
+            endTime: uint64(block.timestamp + 7 days),
             minOfferPrice: 0.5 ether,
             acceptOffers: true,
             bundleId: bytes32(0),
@@ -237,8 +237,8 @@ contract ListingValidatorTest is Test, TestHelpers {
             tokenId: 2, // Different token ID
             quantity: 1,
             price: 1 ether,
-            startTime: block.timestamp,
-            endTime: block.timestamp + 7 days,
+            startTime: uint64(block.timestamp),
+            endTime: uint64(block.timestamp + 7 days),
             minOfferPrice: 0.5 ether,
             acceptOffers: true,
             bundleId: bytes32(0),
@@ -281,8 +281,8 @@ contract ListingValidatorTest is Test, TestHelpers {
             tokenId: 1,
             quantity: 1,
             price: 0.05 ether, // Below minimum
-            startTime: block.timestamp,
-            endTime: block.timestamp + 7 days,
+            startTime: uint64(block.timestamp),
+            endTime: uint64(block.timestamp + 7 days),
             minOfferPrice: 0.01 ether,
             acceptOffers: true,
             bundleId: bytes32(0),
@@ -306,8 +306,8 @@ contract ListingValidatorTest is Test, TestHelpers {
             tokenId: 1,
             quantity: 1,
             price: 1 ether,
-            startTime: block.timestamp,
-            endTime: block.timestamp + 7 days,
+            startTime: uint64(block.timestamp),
+            endTime: uint64(block.timestamp + 7 days),
             minOfferPrice: 0.5 ether,
             acceptOffers: true,
             bundleId: bytes32(0),
@@ -349,12 +349,12 @@ contract ListingValidatorTest is Test, TestHelpers {
 
         // Non-admin should not be able to set validation settings
         vm.prank(user);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), user));
         validator.setValidationSettings(address(mockERC721), settings);
 
         // Non-admin should not be able to pause
         vm.prank(user);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), user));
         validator.pause();
     }
 }

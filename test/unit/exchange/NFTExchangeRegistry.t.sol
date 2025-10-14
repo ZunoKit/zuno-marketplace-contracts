@@ -61,14 +61,14 @@ contract NFTExchangeRegistryTest is Test {
 
         // Deploy test tokens
         mockERC721 = new MockERC721("Test ERC721", "T721");
-        mockERC1155 = new MockERC1155("Test ERC1155", "");
+        mockERC1155 = new MockERC1155("Test ERC1155", "T1155");
 
         vm.stopPrank();
 
         // Mint tokens to user
         vm.startPrank(user);
         mockERC721.mint(user, TOKEN_ID);
-        mockERC1155.mint(user, TOKEN_ID, AMOUNT, "");
+        mockERC1155.mint(user, TOKEN_ID, AMOUNT);
         vm.stopPrank();
     }
 
@@ -144,7 +144,7 @@ contract NFTExchangeRegistryTest is Test {
     function test_ListUnsupportedNFT_Reverts() public {
         address unsupportedContract = makeAddr("unsupported");
 
-        vm.expectRevert();
+        vm.expectRevert(); // Will revert without data for unsupported contract
         registry.listNFT(unsupportedContract, TOKEN_ID, 1, PRICE, DURATION);
     }
 
@@ -207,7 +207,7 @@ contract NFTExchangeRegistryTest is Test {
     function test_GetExchangeForNFT_Unsupported_Reverts() public {
         address unsupportedContract = makeAddr("unsupported");
 
-        vm.expectRevert();
+        vm.expectRevert(); // Will revert without data for unsupported contract
         registry.getExchangeForNFT(unsupportedContract);
     }
 

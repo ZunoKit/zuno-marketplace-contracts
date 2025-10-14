@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IFeeRegistry} from "../interfaces/registry/IFeeRegistry.sol";
-import {IBaseFee} from "../interfaces/core/IBaseFee.sol";
-import {IAdvancedFeeManager} from "../interfaces/core/IAdvancedFeeManager.sol";
-import {IAdvancedRoyaltyManager} from "../interfaces/core/IAdvancedRoyaltyManager.sol";
+import {IFeeRegistry} from "src/interfaces/registry/IFeeRegistry.sol";
+import {IBaseFee} from "src/interfaces/core/IBaseFee.sol";
+import {IAdvancedFeeManager} from "src/interfaces/core/IAdvancedFeeManager.sol";
+import {IAdvancedRoyaltyManager} from "src/interfaces/core/IAdvancedRoyaltyManager.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**

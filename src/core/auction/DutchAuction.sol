@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {BaseAuction} from "./BaseAuction.sol";
+import {AuctionCreationParams, AuctionType, AuctionStatus} from "src/types/AuctionTypes.sol";
 import "src/events/AuctionEvents.sol";
 import "src/errors/AuctionErrors.sol";
 
@@ -75,7 +76,7 @@ contract DutchAuction is BaseAuction {
         uint256 defaultPriceDropPerHour = 500; // 5%
 
         // Create the auction using base functionality
-        AuctionParams memory params = AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: nftContract,
             tokenId: tokenId,
             amount: amount,
@@ -83,7 +84,9 @@ contract DutchAuction is BaseAuction {
             reservePrice: reservePrice,
             duration: duration,
             auctionType: AuctionType.DUTCH,
-            seller: seller
+            seller: seller,
+            bidIncrement: 0,
+            extendOnBid: false
         });
 
         auctionId = _createAuctionInternal(params);
@@ -122,7 +125,7 @@ contract DutchAuction is BaseAuction {
         }
 
         // Create the auction using base functionality
-        AuctionParams memory params = AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: nftContract,
             tokenId: tokenId,
             amount: amount,
@@ -130,7 +133,9 @@ contract DutchAuction is BaseAuction {
             reservePrice: reservePrice,
             duration: duration,
             auctionType: AuctionType.DUTCH,
-            seller: seller
+            seller: seller,
+            bidIncrement: 0,
+            extendOnBid: false
         });
 
         auctionId = _createAuctionInternal(params);
@@ -149,7 +154,7 @@ contract DutchAuction is BaseAuction {
      * @notice Not applicable for Dutch auctions
      * @dev This function reverts as Dutch auctions use direct purchase, not bidding
      */
-    function placeBid(bytes32 auctionId) external payable override {
+    function placeBid(bytes32) external payable override {
         revert Auction__UnsupportedAuctionType();
     }
 
@@ -174,7 +179,7 @@ contract DutchAuction is BaseAuction {
      * @notice Not applicable for Dutch auctions
      * @dev Dutch auctions don't have bid refunds
      */
-    function withdrawBid(bytes32 auctionId) external override {
+    function withdrawBid(bytes32) external override {
         revert Auction__UnsupportedAuctionType();
     }
 
@@ -495,15 +500,13 @@ contract DutchAuction is BaseAuction {
 
     /**
      * @notice Gets pending refund amount for a bidder
-     * @param auctionId Unique identifier of the auction
-     * @param bidder Address of the bidder
      * @return refundAmount Amount available for refund (always 0 for Dutch auctions)
      */
-    function getPendingRefund(bytes32 auctionId, address bidder)
+    function getPendingRefund(bytes32, address)
         external
         view
         override
-        returns (uint256 refundAmount)
+        returns (uint256)
     {
         // Dutch auctions don't have bidding, so no refunds
         return 0;

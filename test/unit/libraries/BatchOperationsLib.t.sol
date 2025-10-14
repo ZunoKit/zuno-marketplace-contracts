@@ -22,7 +22,7 @@ contract BatchOperationsLibTest is Test {
     address public buyer = address(0x3);
 
     function setUp() public {
-        mockERC721 = new MockERC721("Test NFT", "TEST");
+        mockERC721 = new MockERC721("Test NFT", "TNFT");
         mockERC1155 = new MockERC1155("Test 1155", "T1155");
 
         // Mint tokens to seller

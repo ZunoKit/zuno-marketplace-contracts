@@ -132,7 +132,7 @@ contract MarketplaceStressTest is Test {
         for (uint256 i = 0; i < NUM_NFTS; i++) {
             address user = users[i % NUM_USERS];
             mockERC721.mint(user, i + 1);
-            mockERC1155.mint(user, i + 1, 1000, "");
+            mockERC1155.mint(user, i + 1, 1000);
             mockERC20.mint(user, 10000 ether);
         }
 

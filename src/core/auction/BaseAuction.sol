@@ -10,6 +10,14 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {RoyaltyLib} from "src/libraries/RoyaltyLib.sol";
+import {
+    Auction,
+    Bid,
+    AuctionStatus,
+    AuctionType,
+    AuctionCreationParams,
+    DEFAULT_MIN_BID_INCREMENT
+} from "src/types/AuctionTypes.sol";
 import "src/events/AuctionEvents.sol";
 import "src/errors/AuctionErrors.sol";
 
@@ -26,9 +34,6 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
 
     /// @notice Basis points denominator (100% = 10000)
     uint256 public constant BPS_DENOMINATOR = 10000;
-
-    /// @notice Default minimum bid increment (5% = 500 basis points)
-    uint256 public constant DEFAULT_MIN_BID_INCREMENT = 500;
 
     /// @notice Default minimum auction duration (1 hour)
     uint256 public constant DEFAULT_MIN_DURATION = 1 hours;
@@ -184,7 +189,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
         AuctionType auctionType,
         address seller
     ) external virtual override whenNotPaused nonReentrant returns (bytes32 auctionId) {
-        AuctionParams memory params = AuctionParams({
+        AuctionCreationParams memory params = AuctionCreationParams({
             nftContract: nftContract,
             tokenId: tokenId,
             amount: amount,
@@ -192,30 +197,22 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
             reservePrice: reservePrice,
             duration: duration,
             auctionType: auctionType,
-            seller: seller
+            seller: seller,
+            bidIncrement: DEFAULT_MIN_BID_INCREMENT,
+            extendOnBid: false
         });
 
         return _createAuctionInternal(params);
     }
 
-    // Struct to reduce stack depth in auction creation
-    struct AuctionParams {
-        address nftContract;
-        uint256 tokenId;
-        uint256 amount;
-        uint256 startPrice;
-        uint256 reservePrice;
-        uint256 duration;
-        AuctionType auctionType;
-        address seller;
-    }
+    // Using AuctionCreationParams from AuctionTypes.sol instead of local struct
 
     /**
      * @notice Internal function to create auction (for child contracts)
      * @param params Auction parameters struct
      * @return auctionId Unique identifier for the created auction
      */
-    function _createAuctionInternal(AuctionParams memory params) internal returns (bytes32 auctionId) {
+    function _createAuctionInternal(AuctionCreationParams memory params) internal returns (bytes32 auctionId) {
         // Validate parameters and ownership
         _validateAuctionCreation(params);
 
@@ -276,7 +273,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
     /**
      * @notice Validates auction creation parameters and ownership
      */
-    function _validateAuctionCreation(AuctionParams memory params) internal {
+    function _validateAuctionCreation(AuctionCreationParams memory params) internal {
         _validateAuctionParameters(params);
         _validateNFTOwnership(params.nftContract, params.tokenId, params.amount, params.seller);
         _validateNFTAvailability(params.nftContract, params.tokenId, params.seller);
@@ -285,7 +282,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
     /**
      * @notice Validates auction creation parameters
      */
-    function _validateAuctionParameters(AuctionParams memory params) internal view {
+    function _validateAuctionParameters(AuctionCreationParams memory params) internal view {
         if (params.nftContract == address(0)) revert Auction__ZeroAddress();
         if (params.startPrice == 0) revert Auction__InvalidStartPrice();
         if (params.amount == 0) revert Auction__InvalidAuctionParameters();
@@ -373,7 +370,7 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
     /**
      * @notice Creates and stores auction with all mappings
      */
-    function _createAndStoreAuction(bytes32 auctionId, AuctionParams memory params) internal {
+    function _createAndStoreAuction(bytes32 auctionId, AuctionCreationParams memory params) internal {
         // Create auction struct
         Auction memory newAuction = Auction({
             auctionId: auctionId,
@@ -576,11 +573,9 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
 
     /**
      * @notice Gets pending refund amount for a bidder
-     * @param auctionId Unique identifier of the auction
-     * @param bidder Address of the bidder
      * @return refundAmount Amount available for refund
      */
-    function getPendingRefund(bytes32 auctionId, address bidder)
+    function getPendingRefund(bytes32, address)
         external
         view
         virtual
@@ -828,40 +823,32 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
 
     /**
      * @notice Places a bid in an English auction (called by factory)
-     * @param auctionId Unique identifier of the auction
-     * @param bidder Address of the actual bidder
      */
-    function placeBidFor(bytes32 auctionId, address bidder) external payable virtual override onlyFactory {
+    function placeBidFor(bytes32, address) external payable virtual override onlyFactory {
         // This will be implemented by child contracts
         revert Auction__UnsupportedAuctionType();
     }
 
     /**
      * @notice Purchases NFT in a Dutch auction (called by factory)
-     * @param auctionId Unique identifier of the auction
-     * @param buyer Address of the actual buyer
      */
-    function buyNowFor(bytes32 auctionId, address buyer) external payable virtual override onlyFactory {
+    function buyNowFor(bytes32, address) external payable virtual override onlyFactory {
         // This will be implemented by child contracts
         revert Auction__UnsupportedAuctionType();
     }
 
     /**
      * @notice Withdraws a refunded bid (called by factory)
-     * @param auctionId Unique identifier of the auction
-     * @param bidder Address of the actual bidder
      */
-    function withdrawBidFor(bytes32 auctionId, address bidder) external virtual override onlyFactory {
+    function withdrawBidFor(bytes32, address) external virtual override onlyFactory {
         // This will be implemented by child contracts
         revert Auction__UnsupportedAuctionType();
     }
 
     /**
      * @notice Cancels an auction (called by factory)
-     * @param auctionId Unique identifier of the auction
-     * @param seller Address of the seller
      */
-    function cancelAuctionFor(bytes32 auctionId, address seller) external virtual override onlyFactory {
+    function cancelAuctionFor(bytes32, address) external virtual override onlyFactory {
         // This will be implemented by child contracts
         revert Auction__UnsupportedAuctionType();
     }

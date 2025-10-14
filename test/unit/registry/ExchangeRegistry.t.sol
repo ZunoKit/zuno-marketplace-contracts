@@ -68,7 +68,7 @@ contract ExchangeRegistryTest is Test {
 
     function test_RevertIf_UnauthorizedRegister() public {
         vm.prank(makeAddr("notAdmin"));
-        vm.expectRevert();
+        vm.expectRevert(); // AccessControlUnauthorizedAccount error
         registry.registerExchange(IExchangeRegistry.TokenStandard.ERC721, makeAddr("newExchange"));
     }
 

@@ -6,7 +6,8 @@ import {AuctionFactory} from "src/core/factory/AuctionFactory.sol";
 import {EnglishAuction} from "src/core/auction/EnglishAuction.sol";
 import {DutchAuction} from "src/core/auction/DutchAuction.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
-import {AuctionTestHelpers} from "../../utils/auction/AuctionTestHelpers.sol";
+import {AuctionStatus} from "src/types/AuctionTypes.sol";
+import {AuctionTestHelpers} from "test/utils/auction/AuctionTestHelpers.sol";
 
 /**
  * @title AuctionIntegrationTest
@@ -84,7 +85,7 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
         assertNFTOwnership(address(mockERC721), tokenId, BIDDER3);
 
         auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.SETTLED));
+        assertEq(uint256(auction.status), uint256(AuctionStatus.SETTLED));
 
         // Verify payments
         uint256 marketplaceFee = (bid3 * 200) / 10000; // 2% fee
@@ -146,7 +147,7 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
 
         // Verify auction ended without sale
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.ENDED));
+        assertEq(uint256(auction.status), uint256(AuctionStatus.ENDED));
 
         // Verify NFT still with seller
         assertNFTOwnership(address(mockERC721), tokenId, SELLER);
@@ -197,7 +198,7 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
         assertNFTOwnership(address(mockERC721), tokenId, BIDDER1);
 
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.SETTLED));
+        assertEq(uint256(auction.status), uint256(AuctionStatus.SETTLED));
         assertEq(auction.highestBidder, BIDDER1);
         assertEq(auction.highestBid, currentPrice);
 
@@ -263,7 +264,7 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
 
         // Verify auction ended without sale
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.ENDED));
+        assertEq(uint256(auction.status), uint256(AuctionStatus.ENDED));
 
         // Verify NFT still with seller
         assertNFTOwnership(address(mockERC721), tokenId, SELLER);
@@ -302,10 +303,10 @@ contract AuctionIntegrationTest is AuctionTestHelpers {
         IAuction.Auction memory dutchAuction = auctionFactory.getAuction(dutchAuctionId);
 
         assertEq(englishAuction.highestBidder, BIDDER1);
-        assertEq(uint256(englishAuction.status), uint256(IAuction.AuctionStatus.ACTIVE));
+        assertEq(uint256(englishAuction.status), uint256(AuctionStatus.ACTIVE));
 
         assertEq(dutchAuction.highestBidder, BIDDER2);
-        assertEq(uint256(dutchAuction.status), uint256(IAuction.AuctionStatus.SETTLED));
+        assertEq(uint256(dutchAuction.status), uint256(AuctionStatus.SETTLED));
 
         // Verify NFT ownership
         assertNFTOwnership(address(mockERC721), 1, SELLER); // Still in English auction

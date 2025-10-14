@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
@@ -17,8 +18,9 @@ import {IExchangeCore} from "src/interfaces/IMarketplaceCore.sol";
 import {PaymentDistributionLib} from "src/libraries/PaymentDistributionLib.sol";
 import {RoyaltyLib} from "src/libraries/RoyaltyLib.sol";
 import {ArrayUtilsLib} from "src/libraries/ArrayUtilsLib.sol";
+import {GasOptimizedLibrary} from "src/optimizations/GasOptimizedLibrary.sol";
 
-contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
+contract BaseNFTExchange is Initializable, Ownable, ReentrancyGuard, ERC165, IExchangeCore {
     struct Listing {
         address contractAddress;
         uint256 tokenId;
@@ -132,7 +134,13 @@ contract BaseNFTExchange is Initializable, Ownable, ERC165, IExchangeCore {
         view
         returns (bytes32)
     {
-        return keccak256(abi.encodePacked(m_contractAddress, m_tokenId, m_sender, block.timestamp));
+        // Use gas-optimized assembly version for listing ID generation
+        return GasOptimizedLibrary.generateOptimizedListingId(
+            m_contractAddress, 
+            m_tokenId, 
+            m_sender, 
+            block.timestamp
+        );
     }
 
     // Internal function to create a single listing

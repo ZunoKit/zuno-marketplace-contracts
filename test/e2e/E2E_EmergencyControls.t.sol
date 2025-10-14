@@ -3,7 +3,8 @@ pragma solidity ^0.8.30;
 
 import {E2E_BaseSetup} from "./E2E_BaseSetup.sol";
 import {console2} from "lib/forge-std/src/Test.sol";
-import {IAuction} from "../../src/interfaces/IAuction.sol";
+import {IAuction} from "src/interfaces/IAuction.sol";
+import {AuctionType} from "src/types/AuctionTypes.sol";
 
 /**
  * @title E2E_EmergencyControls
@@ -27,7 +28,7 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
         // Step 2: Emergency detected - Admin pauses
         vm.prank(admin);
         emergencyManager.emergencyPause("Emergency detected - system pause");
-        assertTrue(emergencyManager.paused(), "Should be paused");
+        assertTrue(emergencyManager.paused());
         console2.log("Step 2: Emergency pause activated");
 
         // Step 3: Verify all operations blocked when checking paused state
@@ -39,7 +40,7 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
         // Step 5: Admin resumes operations
         vm.prank(admin);
         emergencyManager.emergencyUnpause();
-        assertFalse(emergencyManager.paused(), "Should be unpaused");
+        assertFalse(emergencyManager.paused());
         console2.log("Step 5: Operations resumed");
 
         // Step 6: Verify operations work again
@@ -162,7 +163,7 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
         console2.log("Step 1: Alice (non-admin) attempts pause");
 
         vm.prank(alice);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), alice));
         emergencyManager.emergencyPause("Unauthorized pause");
         console2.log("Step 2: Unauthorized pause correctly rejected");
 
@@ -176,7 +177,7 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
         // Step 4: Only admin can pause
         vm.prank(admin);
         emergencyManager.emergencyPause("Admin testing pause");
-        assertTrue(emergencyManager.paused(), "Admin pause should work");
+        assertTrue(emergencyManager.paused());
         console2.log("Step 4: Admin pause successful");
 
         vm.prank(admin);
@@ -200,7 +201,7 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
         vm.startPrank(alice);
         mockERC721.approve(address(englishAuction), 40);
         bytes32 auctionId = englishAuction.createAuction(
-            address(mockERC721), 40, 1, 1 ether, 2 ether, AUCTION_DURATION, IAuction.AuctionType.ENGLISH, alice
+            address(mockERC721), 40, 1, 1 ether, 2 ether, AUCTION_DURATION, AuctionType.ENGLISH, alice
         );
         vm.stopPrank();
         console2.log("Step 1: Auction created");
@@ -342,7 +343,7 @@ contract E2E_EmergencyControlsTest is E2E_BaseSetup {
 
         // Verify Alice received all payments
         uint256 aliceBalanceAfter = alice.balance;
-        assertGt(aliceBalanceAfter, aliceBalanceBefore, "Alice should have received payments");
+        assertGt(aliceBalanceAfter, aliceBalanceBefore);
         console2.log("Step 5: State integrity verified");
 
         console2.log("=== State Integrity After Pause: SUCCESS ===\n");
