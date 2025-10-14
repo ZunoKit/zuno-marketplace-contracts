@@ -77,7 +77,7 @@ contract BaseNFTExchangeCoverageBoostTest is Test {
         address nonOwner = makeAddr("nonOwner");
 
         vm.prank(nonOwner);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), nonOwner));
         testableExchange.updateMarketplaceWallet(makeAddr("newWallet"));
     }
 
@@ -85,7 +85,7 @@ contract BaseNFTExchangeCoverageBoostTest is Test {
         address nonOwner = makeAddr("nonOwner");
 
         vm.prank(nonOwner);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), nonOwner));
         testableExchange.updateTakerFee(500);
     }
 

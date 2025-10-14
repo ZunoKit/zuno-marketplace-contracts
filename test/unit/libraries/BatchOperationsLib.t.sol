@@ -93,7 +93,7 @@ contract BatchOperationsLibTest is Test {
         (bool isValid, string memory errorMessage) = BatchOperationsLib.validateBatchListing(params);
 
         assertFalse(isValid);
-        assertEq(errorMessage, "");
+        assertEq(errorMessage, "Empty arrays");
     }
 
     function testValidateBatchListing_ArrayLengthMismatch() public {
@@ -124,7 +124,7 @@ contract BatchOperationsLibTest is Test {
         (bool isValid, string memory errorMessage) = BatchOperationsLib.validateBatchListing(params);
 
         assertFalse(isValid);
-        assertEq(errorMessage, "");
+        assertEq(errorMessage, "Array length mismatch");
     }
 
     function testValidateBatchListing_InvalidNFT() public {
@@ -184,7 +184,7 @@ contract BatchOperationsLibTest is Test {
         (bool isValid, string memory errorMessage) = BatchOperationsLib.validateBatchListing(params);
 
         assertFalse(isValid);
-        assertEq(errorMessage, "");
+        assertEq(errorMessage, "Zero price not allowed");
     }
 
     function testValidateBatchListing_ZeroAmount() public {
@@ -213,7 +213,7 @@ contract BatchOperationsLibTest is Test {
         (bool isValid, string memory errorMessage) = BatchOperationsLib.validateBatchListing(params);
 
         assertFalse(isValid);
-        assertEq(errorMessage, "");
+        assertEq(errorMessage, "Zero amount not allowed");
     }
 
     // ============================================================================

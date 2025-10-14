@@ -214,7 +214,7 @@ contract AuctionUtilsLibTest is Test {
         AuctionUtilsLib.ValidationResult memory result = AuctionUtilsLib.validateBid(params);
 
         assertFalse(result.isValid);
-        assertEq(result.errorMessage, "");
+        assertEq(result.errorMessage, "Auction has ended");
     }
 
     function testValidateBid_BidTooLow() public {
@@ -230,7 +230,7 @@ contract AuctionUtilsLibTest is Test {
         AuctionUtilsLib.ValidationResult memory result = AuctionUtilsLib.validateBid(params);
 
         assertFalse(result.isValid);
-        assertEq(result.errorMessage, "");
+        assertEq(result.errorMessage, "Bid too low");
     }
 
     function testValidateBid_BelowReservePrice() public {
@@ -246,7 +246,7 @@ contract AuctionUtilsLibTest is Test {
         AuctionUtilsLib.ValidationResult memory result = AuctionUtilsLib.validateBid(params);
 
         assertFalse(result.isValid);
-        assertEq(result.errorMessage, "");
+        assertEq(result.errorMessage, "Bid below reserve price");
     }
 
     function testCalculateMinimumBid_WithReservePrice() public {
