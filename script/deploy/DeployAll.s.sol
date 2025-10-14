@@ -54,6 +54,9 @@ import {RoleManager} from "src/core/access/RoleManager.sol";
 import {UpgradeManager} from "src/core/upgrades/UpgradeManager.sol";
 import {ConfigManager} from "src/core/config/ConfigManager.sol";
 
+// OpenZeppelin
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+
 /**
  * @title DeployAll
  * @notice Complete marketplace deployment - deploys EVERYTHING in correct order
@@ -70,6 +73,7 @@ import {ConfigManager} from "src/core/config/ConfigManager.sol";
 contract DeployAll is Script {
     // Admin
     address public admin;
+    address public deployer;
 
     // Core Contracts
     ERC721NFTExchange public erc721Exchange;
@@ -126,14 +130,17 @@ contract DeployAll is Script {
         if (admin == address(0)) {
             admin = vm.envOr("MARKETPLACE_WALLET", address(0));
         }
-        
+
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        deployer = vm.addr(deployerPrivateKey);
+
         vm.startBroadcast(deployerPrivateKey);
 
         console.log("========================================");
         console.log("  COMPLETE MARKETPLACE DEPLOYMENT");
         console.log("========================================");
         console.log("Admin:", admin);
+        console.log("Deployer:", deployer);
         console.log("");
 
         // Deploy in correct order
@@ -151,6 +158,10 @@ contract DeployAll is Script {
         // In production: admin is from ENV, in testing: use msg.sender
         if (admin == address(0)) {
             admin = msg.sender;  // Default for testing
+        }
+        // Set deployer if not set (for testing)
+        if (deployer == address(0)) {
+            deployer = msg.sender;
         }
 
         _deployAccessControl();
@@ -297,11 +308,7 @@ contract DeployAll is Script {
         configManager = new ConfigManager(admin);
 
         // Connect management systems to AdminHub
-        adminHub.setManagementContracts(
-            address(roleManager),
-            address(upgradeManager),
-            address(configManager)
-        );
+        _connectManagementToHub();
 
         console.log("    Management systems connected to AdminHub");
         console.log("      RoleManager:", address(roleManager));
@@ -309,23 +316,77 @@ contract DeployAll is Script {
         console.log("      ConfigManager:", address(configManager));
     }
 
+    /**
+     * @notice Connect management contracts to AdminHub with proper access control
+     * @dev Handles both scenarios: deployer == admin OR deployer != admin
+     */
+    function _connectManagementToHub() private {
+        bytes32 adminRole = keccak256("ADMIN_ROLE");
+
+        if (admin == deployer) {
+            // Simple case: deployer is admin, has all permissions
+            adminHub.setManagementContracts(
+                address(roleManager),
+                address(upgradeManager),
+                address(configManager)
+            );
+        } else {
+            // Complex case: need temporary permission for deployer
+            _executeWithTemporaryRole(
+                address(adminHub),
+                adminRole,
+                abi.encodeWithSelector(
+                    AdminHub.setManagementContracts.selector,
+                    address(roleManager),
+                    address(upgradeManager),
+                    address(configManager)
+                )
+            );
+        }
+    }
+
+    /**
+     * @notice Execute function with temporary role grant/revoke pattern
+     * @dev Production-grade access control: grant -> execute -> revoke in atomic manner
+     * @param target Contract to call
+     * @param role Role needed for execution
+     * @param data Calldata to execute
+     */
+    function _executeWithTemporaryRole(
+        address target,
+        bytes32 role,
+        bytes memory data
+    ) private {
+        AccessControl accessControlledContract = AccessControl(target);
+
+        // Step 1: Grant temporary role to deployer
+        accessControlledContract.grantRole(role, deployer);
+
+        // Step 2: Execute the privileged function
+        (bool success, bytes memory returnData) = target.call(data);
+        require(success, string(abi.encodePacked("Execution failed: ", returnData)));
+
+        // Step 3: Immediately revoke temporary role
+        accessControlledContract.revokeRole(role, deployer);
+    }
+
     function _deployHub() internal {
         console.log("9/9 Deploying Hubs (Admin + User)...");
         console.log("Admin for hub deployment:", admin);
-        console.log("Current msg.sender:", msg.sender);
+        console.log("Deployer address:", deployer);
 
-        // Deploy registries
-        hubExchangeRegistry = new ExchangeRegistry(admin);
-        hubCollectionRegistry = new CollectionRegistry(admin);
+        // Deploy registries with deployer as initial admin for setup
+        hubExchangeRegistry = new ExchangeRegistry(deployer);
+        hubCollectionRegistry = new CollectionRegistry(deployer);
         hubFeeRegistry = new FeeRegistry(
-            admin,
+            deployer,
             address(baseFee),
             address(feeManager),
             address(royaltyManager)
         );
-        hubAuctionRegistry = new AuctionRegistry(admin);
+        hubAuctionRegistry = new AuctionRegistry(deployer);
 
-        // Deploy AdminHub (for admin functions)
+        // Deploy AdminHub
         adminHub = new AdminHub(
             admin,
             address(hubExchangeRegistry),
@@ -334,12 +395,8 @@ contract DeployAll is Script {
             address(hubAuctionRegistry)
         );
 
-        // Grant AdminHub admin role in all registries so it can register contracts
-        bytes32 adminRole = keccak256("ADMIN_ROLE");
-        hubExchangeRegistry.grantRole(adminRole, address(adminHub));
-        hubCollectionRegistry.grantRole(adminRole, address(adminHub));
-        hubFeeRegistry.grantRole(adminRole, address(adminHub));
-        hubAuctionRegistry.grantRole(adminRole, address(adminHub));
+        // Setup access control for all registries
+        _setupRegistryRoles();
 
         console.log("AdminHub deployed:", address(adminHub));
 
@@ -356,6 +413,18 @@ contract DeployAll is Script {
         // Deploy management contracts for extensibility
         console.log("  Deploying Management Systems...");
         _deployManagementSystems();
+
+        // Clean up: revoke deployer's temporary roles from AdminHub if granted
+        if (admin != deployer) {
+            bytes32 adminRole = keccak256("ADMIN_ROLE");
+            bytes32 defaultAdminRole = 0x00;
+
+            if (adminHub.hasRole(defaultAdminRole, deployer)) {
+                adminHub.revokeRole(adminRole, deployer);
+                adminHub.revokeRole(defaultAdminRole, deployer);
+                console.log("  Deployer roles revoked from AdminHub");
+            }
+        }
 
         // Skip configuration in deployAll() - will be done separately in configureSystem()
         // _configureHubs();
@@ -523,6 +592,43 @@ contract DeployAll is Script {
             address(dutchAuction)
         );
         adminHub.updateAuctionFactory(address(auctionFactory));
+    }
+
+    /**
+     * @notice Setup roles for all registries - AdminHub gets admin role, then transfer to final admin
+     * @dev Deployer grants roles to AdminHub, then transfers ownership to admin and renounces if needed
+     */
+    function _setupRegistryRoles() internal {
+        bytes32 adminRole = keccak256("ADMIN_ROLE");
+        bytes32 defaultAdminRole = 0x00; // DEFAULT_ADMIN_ROLE
+
+        // Collect all registries in array for batch processing
+        AccessControl[4] memory registries = [
+            AccessControl(address(hubExchangeRegistry)),
+            AccessControl(address(hubCollectionRegistry)),
+            AccessControl(address(hubFeeRegistry)),
+            AccessControl(address(hubAuctionRegistry))
+        ];
+
+        // Grant AdminHub the ADMIN_ROLE in all registries
+        for (uint256 i = 0; i < registries.length; i++) {
+            registries[i].grantRole(adminRole, address(adminHub));
+        }
+
+        // Transfer ownership to final admin if different from deployer
+        if (admin != deployer) {
+            for (uint256 i = 0; i < registries.length; i++) {
+                // Grant roles to admin first
+                registries[i].grantRole(defaultAdminRole, admin);
+                registries[i].grantRole(adminRole, admin);
+                // Revoke ADMIN_ROLE first, then DEFAULT_ADMIN_ROLE (order matters!)
+                registries[i].revokeRole(adminRole, deployer);
+                registries[i].revokeRole(defaultAdminRole, deployer);
+            }
+            console.log("  Ownership transferred from deployer to admin");
+        } else {
+            console.log("  Deployer is admin - no transfer needed");
+        }
     }
 
     /**
