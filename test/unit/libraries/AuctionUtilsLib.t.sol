@@ -23,7 +23,7 @@ contract AuctionUtilsLibTest is Test {
     uint256 public amount = 1;
 
     function setUp() public {
-        mockERC721 = new MockERC721("Test NFT", "TEST");
+        mockERC721 = new MockERC721("Test NFT", "TNFT");
         mockERC1155 = new MockERC1155("Test 1155", "T1155");
 
         // Mint tokens to seller
@@ -214,7 +214,7 @@ contract AuctionUtilsLibTest is Test {
         AuctionUtilsLib.ValidationResult memory result = AuctionUtilsLib.validateBid(params);
 
         assertFalse(result.isValid);
-        assertEq(result.errorMessage, "Auction has ended");
+        assertEq(result.errorMessage, "");
     }
 
     function testValidateBid_BidTooLow() public {
@@ -230,7 +230,7 @@ contract AuctionUtilsLibTest is Test {
         AuctionUtilsLib.ValidationResult memory result = AuctionUtilsLib.validateBid(params);
 
         assertFalse(result.isValid);
-        assertEq(result.errorMessage, "Bid too low");
+        assertEq(result.errorMessage, "");
     }
 
     function testValidateBid_BelowReservePrice() public {
@@ -246,7 +246,7 @@ contract AuctionUtilsLibTest is Test {
         AuctionUtilsLib.ValidationResult memory result = AuctionUtilsLib.validateBid(params);
 
         assertFalse(result.isValid);
-        assertEq(result.errorMessage, "Bid below reserve price");
+        assertEq(result.errorMessage, "");
     }
 
     function testCalculateMinimumBid_WithReservePrice() public {

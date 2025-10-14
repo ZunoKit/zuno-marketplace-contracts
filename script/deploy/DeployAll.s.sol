@@ -4,49 +4,55 @@ pragma solidity ^0.8.30;
 import {Script, console} from "forge-std/Script.sol";
 
 // Core Exchange
-import {ERC721NFTExchange} from "../../src/core/exchange/ERC721NFTExchange.sol";
-import {ERC1155NFTExchange} from "../../src/core/exchange/ERC1155NFTExchange.sol";
+import {ERC721NFTExchange} from "src/core/exchange/ERC721NFTExchange.sol";
+import {ERC1155NFTExchange} from "src/core/exchange/ERC1155NFTExchange.sol";
 
 // Collection System
-import {ERC721CollectionFactory} from "../../src/core/factory/ERC721CollectionFactory.sol";
-import {ERC1155CollectionFactory} from "../../src/core/factory/ERC1155CollectionFactory.sol";
-import {CollectionFactoryRegistry} from "../../src/core/factory/CollectionFactoryRegistry.sol";
+import {ERC721CollectionFactory} from "src/core/factory/ERC721CollectionFactory.sol";
+import {ERC1155CollectionFactory} from "src/core/factory/ERC1155CollectionFactory.sol";
+import {CollectionFactoryRegistry} from "src/core/factory/CollectionFactoryRegistry.sol";
 
 // Auction System
-import {AuctionFactory} from "../../src/core/factory/AuctionFactory.sol";
-import {EnglishAuction} from "../../src/core/auction/EnglishAuction.sol";
-import {DutchAuction} from "../../src/core/auction/DutchAuction.sol";
+import {AuctionFactory} from "src/core/factory/AuctionFactory.sol";
+import {EnglishAuction} from "src/core/auction/EnglishAuction.sol";
+import {DutchAuction} from "src/core/auction/DutchAuction.sol";
 
 // Fee Management
-import {Fee} from "../../src/common/Fee.sol";
-import {AdvancedFeeManager} from "../../src/core/fees/AdvancedFeeManager.sol";
-import {AdvancedRoyaltyManager} from "../../src/core/fees/AdvancedRoyaltyManager.sol";
+import {Fee} from "src/common/Fee.sol";
+import {AdvancedFeeManager} from "src/core/fees/AdvancedFeeManager.sol";
+import {AdvancedRoyaltyManager} from "src/core/fees/AdvancedRoyaltyManager.sol";
 
 // Access Control
-import {MarketplaceAccessControl} from "../../src/core/access/MarketplaceAccessControl.sol";
+import {MarketplaceAccessControl} from "src/core/access/MarketplaceAccessControl.sol";
 
 // Hub Architecture
-import {MarketplaceHub} from "../../src/router/MarketplaceHub.sol";
-import {ExchangeRegistry} from "../../src/registry/ExchangeRegistry.sol";
-import {CollectionRegistry} from "../../src/registry/CollectionRegistry.sol";
-import {FeeRegistry} from "../../src/registry/FeeRegistry.sol";
-import {AuctionRegistry} from "../../src/registry/AuctionRegistry.sol";
-import {IExchangeRegistry} from "../../src/interfaces/registry/IExchangeRegistry.sol";
-import {IAuctionRegistry} from "../../src/interfaces/registry/IAuctionRegistry.sol";
+import {AdminHub} from "src/router/AdminHub.sol";
+import {UserHub} from "src/router/UserHub.sol";
+import {ExchangeRegistry} from "src/registry/ExchangeRegistry.sol";
+import {CollectionRegistry} from "src/registry/CollectionRegistry.sol";
+import {FeeRegistry} from "src/registry/FeeRegistry.sol";
+import {AuctionRegistry} from "src/registry/AuctionRegistry.sol";
+import {IExchangeRegistry} from "src/interfaces/registry/IExchangeRegistry.sol";
+import {IAuctionRegistry} from "src/interfaces/registry/IAuctionRegistry.sol";
 // Advanced Features
-import {OfferManager} from "../../src/core/offers/OfferManager.sol";
-import {BundleManager} from "../../src/core/bundles/BundleManager.sol";
-import {AdvancedListingManager} from "../../src/core/listing/AdvancedListingManager.sol";
+import {OfferManager} from "src/core/offers/OfferManager.sol";
+import {BundleManager} from "src/core/bundles/BundleManager.sol";
+import {AdvancedListingManager} from "src/core/listing/AdvancedListingManager.sol";
 
 // Security & Validation
-import {EmergencyManager} from "../../src/core/security/EmergencyManager.sol";
-import {MarketplaceTimelock} from "../../src/core/security/MarketplaceTimelock.sol";
-import {ListingValidator} from "../../src/core/validation/ListingValidator.sol";
-import {MarketplaceValidator} from "../../src/core/validation/MarketplaceValidator.sol";
-import {CollectionVerifier} from "../../src/core/collection/CollectionVerifier.sol";
+import {EmergencyManager} from "src/core/security/EmergencyManager.sol";
+import {MarketplaceTimelock} from "src/core/security/MarketplaceTimelock.sol";
+import {ListingValidator} from "src/core/validation/ListingValidator.sol";
+import {MarketplaceValidator} from "src/core/validation/MarketplaceValidator.sol";
+import {CollectionVerifier} from "src/core/collection/CollectionVerifier.sol";
 
 // Analytics
-import {ListingHistoryTracker} from "../../src/core/analytics/ListingHistoryTracker.sol";
+import {ListingHistoryTracker} from "src/core/analytics/ListingHistoryTracker.sol";
+
+// Management Systems
+import {RoleManager} from "src/core/access/RoleManager.sol";
+import {UpgradeManager} from "src/core/upgrades/UpgradeManager.sol";
+import {ConfigManager} from "src/core/config/ConfigManager.sol";
 
 /**
  * @title DeployAll
@@ -84,7 +90,9 @@ contract DeployAll is Script {
     MarketplaceAccessControl public accessControl;
 
     // Hub Architecture
-    MarketplaceHub public hub;
+    // Hubs (separated for admin/user)
+    AdminHub public adminHub;
+    UserHub public userHub;
     ExchangeRegistry public hubExchangeRegistry;
     CollectionRegistry public hubCollectionRegistry;
     FeeRegistry public hubFeeRegistry;
@@ -104,14 +112,19 @@ contract DeployAll is Script {
     // Analytics
     ListingHistoryTracker public historyTracker;
 
+    // Management Systems for extensibility
+    RoleManager public roleManager;
+    UpgradeManager public upgradeManager;
+    ConfigManager public configManager;
+
     function setUp() public {
-        admin = vm.envAddress("MARKETPLACE_WALLET");
+        admin = vm.envOr("MARKETPLACE_WALLET", address(0));
     }
 
     function run() public {
         // Ensure admin is set
         if (admin == address(0)) {
-            admin = vm.envAddress("MARKETPLACE_WALLET");
+            admin = vm.envOr("MARKETPLACE_WALLET", address(0));
         }
         
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
@@ -124,6 +137,22 @@ contract DeployAll is Script {
         console.log("");
 
         // Deploy in correct order
+        deployAll();
+        _printSummary();
+
+        vm.stopBroadcast();
+    }
+    
+    /**
+     * @notice Deploy all contracts without broadcast (for testing)
+     * @dev This function can be called from tests without broadcast conflicts
+     */
+    function deployAll() public {
+        // In production: admin is from ENV, in testing: use msg.sender
+        if (admin == address(0)) {
+            admin = msg.sender;  // Default for testing
+        }
+
         _deployAccessControl();
         _deploySecurityAndValidation();
         _deployFees();
@@ -133,9 +162,6 @@ contract DeployAll is Script {
         _deployAdvancedManagers();
         _deployAnalytics();
         _deployHub();
-        _printSummary();
-
-        vm.stopBroadcast();
     }
 
     function _deployAccessControl() internal {
@@ -260,8 +286,33 @@ contract DeployAll is Script {
         console.log("  ListingHistoryTracker:", address(historyTracker));
     }
 
+    function _deployManagementSystems() internal {
+        console.log("    RoleManager...");
+        roleManager = new RoleManager(admin);
+
+        console.log("    UpgradeManager...");
+        upgradeManager = new UpgradeManager(admin);
+
+        console.log("    ConfigManager...");
+        configManager = new ConfigManager(admin);
+
+        // Connect management systems to AdminHub
+        adminHub.setManagementContracts(
+            address(roleManager),
+            address(upgradeManager),
+            address(configManager)
+        );
+
+        console.log("    Management systems connected to AdminHub");
+        console.log("      RoleManager:", address(roleManager));
+        console.log("      UpgradeManager:", address(upgradeManager));
+        console.log("      ConfigManager:", address(configManager));
+    }
+
     function _deployHub() internal {
-        console.log("9/9 Deploying MarketplaceHub...");
+        console.log("9/9 Deploying Hubs (Admin + User)...");
+        console.log("Admin for hub deployment:", admin);
+        console.log("Current msg.sender:", msg.sender);
 
         // Deploy registries
         hubExchangeRegistry = new ExchangeRegistry(admin);
@@ -274,9 +325,26 @@ contract DeployAll is Script {
         );
         hubAuctionRegistry = new AuctionRegistry(admin);
 
-        // Deploy hub
-        hub = new MarketplaceHub(
+        // Deploy AdminHub (for admin functions)
+        adminHub = new AdminHub(
             admin,
+            address(hubExchangeRegistry),
+            address(hubCollectionRegistry),
+            address(hubFeeRegistry),
+            address(hubAuctionRegistry)
+        );
+
+        // Grant AdminHub admin role in all registries so it can register contracts
+        bytes32 adminRole = keccak256("ADMIN_ROLE");
+        hubExchangeRegistry.grantRole(adminRole, address(adminHub));
+        hubCollectionRegistry.grantRole(adminRole, address(adminHub));
+        hubFeeRegistry.grantRole(adminRole, address(adminHub));
+        hubAuctionRegistry.grantRole(adminRole, address(adminHub));
+
+        console.log("AdminHub deployed:", address(adminHub));
+
+        // Deploy UserHub (for user/frontend functions)
+        userHub = new UserHub(
             address(hubExchangeRegistry),
             address(hubCollectionRegistry),
             address(hubFeeRegistry),
@@ -285,37 +353,20 @@ contract DeployAll is Script {
             address(offerManager)
         );
 
-        // Register all contracts
-        hubExchangeRegistry.registerExchange(
-            IExchangeRegistry.TokenStandard.ERC721,
-            address(erc721Exchange)
-        );
-        hubExchangeRegistry.registerExchange(
-            IExchangeRegistry.TokenStandard.ERC1155,
-            address(erc1155Exchange)
-        );
+        // Deploy management contracts for extensibility
+        console.log("  Deploying Management Systems...");
+        _deployManagementSystems();
 
-        hubCollectionRegistry.registerFactory("ERC721", address(erc721Factory));
-        hubCollectionRegistry.registerFactory(
-            "ERC1155",
-            address(erc1155Factory)
-        );
-
-        hubAuctionRegistry.registerAuction(
-            IAuctionRegistry.AuctionType.ENGLISH,
-            address(englishAuction)
-        );
-        hubAuctionRegistry.registerAuction(
-            IAuctionRegistry.AuctionType.DUTCH,
-            address(dutchAuction)
-        );
-        hubAuctionRegistry.updateAuctionFactory(address(auctionFactory));
+        // Skip configuration in deployAll() - will be done separately in configureSystem()
+        // _configureHubs();
+        // _configureRegistries();
 
         console.log("  HubExchangeRegistry:", address(hubExchangeRegistry));
         console.log("  HubCollectionRegistry:", address(hubCollectionRegistry));
         console.log("  HubFeeRegistry:", address(hubFeeRegistry));
         console.log("  HubAuctionRegistry:", address(hubAuctionRegistry));
-        console.log("  MarketplaceHub:", address(hub));
+        console.log("  AdminHub:", address(adminHub));
+        console.log("  UserHub:", address(userHub));
     }
 
     function _printSummary() internal view {
@@ -348,15 +399,27 @@ contract DeployAll is Script {
         console.log("ANALYTICS:");
         console.log("  HistoryTracker:    ", address(historyTracker));
         console.log("");
+        console.log("EXTENSIBILITY SYSTEM:");
+        console.log("  RoleManager:       ", address(roleManager));
+        console.log("  UpgradeManager:    ", address(upgradeManager));
+        console.log("  ConfigManager:     ", address(configManager));
+        console.log("");
         console.log("========================================");
         console.log("  FOR FRONTEND INTEGRATION");
         console.log("========================================");
-        console.log("  MarketplaceHub:    ", address(hub));
+        console.log("  AdminHub:          ", address(adminHub));
+        console.log("  UserHub:           ", address(userHub));
         console.log("");
-        console.log("Frontend only needs this ONE address!");
+        console.log("Frontend needs UserHub address for read operations:");
+        console.log("Admin needs AdminHub address for management:");
+        console.log("Use RoleManager/UpgradeManager/ConfigManager for future extensions");
         console.log("");
         console.log("Copy this to your .env:");
-        console.log("MARKETPLACE_HUB=", address(hub));
+        console.log("USER_HUB=", address(userHub));
+        console.log("ADMIN_HUB=", address(adminHub));
+        console.log("ROLE_MANAGER=", address(roleManager));
+        console.log("UPGRADE_MANAGER=", address(upgradeManager));
+        console.log("CONFIG_MANAGER=", address(configManager));
         console.log("");
         console.log("========================================");
     }
@@ -382,7 +445,7 @@ contract DeployAll is Script {
         )
     {
         return (
-            address(hub),
+            address(userHub),
             address(erc721Exchange),
             address(erc1155Exchange),
             address(erc721Factory),
@@ -393,5 +456,96 @@ contract DeployAll is Script {
             address(emergencyManager),
             address(timelock)
         );
+    }
+
+    /**
+     * @notice Configure both hubs with additional contracts
+     * @dev Requires admin role - will be called automatically in tests, manually in production
+     */
+    function _configureHubs() internal {
+        console.log("Configuring AdminHub with msg.sender:", msg.sender);
+        console.log("Admin set during deployment:", admin);
+
+        // Check if admin has the role
+        bytes32 adminRole = keccak256("ADMIN_ROLE");
+        bool hasAdminRole = adminHub.hasRole(adminRole, admin);
+        bool senderHasAdminRole = adminHub.hasRole(adminRole, msg.sender);
+
+        console.log("Admin has ADMIN_ROLE:", hasAdminRole);
+        console.log("msg.sender has ADMIN_ROLE:", senderHasAdminRole);
+        console.log("ADMIN_ROLE hash:", vm.toString(adminRole));
+
+        // Configure AdminHub
+        adminHub.setAdditionalContracts(
+            address(listingValidator),
+            address(emergencyManager),
+            address(accessControl),
+            address(historyTracker)
+        );
+
+        console.log("AdminHub configured successfully");
+
+        // Update UserHub references
+        userHub.updateAdditionalContracts(
+            address(listingValidator),
+            address(emergencyManager),
+            address(accessControl),
+            address(historyTracker)
+        );
+
+        console.log("UserHub configured successfully");
+    }
+
+    /**
+     * @notice Register contracts in registries
+     * @dev Requires admin role - will be called automatically in tests, manually in production
+     */
+    function _configureRegistries() internal {
+        // Use AdminHub to register contracts (this has proper admin roles)
+        adminHub.registerExchange(
+            IExchangeRegistry.TokenStandard.ERC721,
+            address(erc721Exchange)
+        );
+        adminHub.registerExchange(
+            IExchangeRegistry.TokenStandard.ERC1155,
+            address(erc1155Exchange)
+        );
+
+        adminHub.registerCollectionFactory("ERC721", address(erc721Factory));
+        adminHub.registerCollectionFactory("ERC1155", address(erc1155Factory));
+
+        adminHub.registerAuction(
+            IAuctionRegistry.AuctionType.ENGLISH,
+            address(englishAuction)
+        );
+        adminHub.registerAuction(
+            IAuctionRegistry.AuctionType.DUTCH,
+            address(dutchAuction)
+        );
+        adminHub.updateAuctionFactory(address(auctionFactory));
+    }
+
+    /**
+     * @notice Configure hub and registries externally (for production use)
+     * @dev Must be called by admin after deployment in production
+     */
+    function configureSystem() external {
+        require(address(adminHub) != address(0), "AdminHub not deployed");
+        require(address(userHub) != address(0), "UserHub not deployed");
+        _configureHubs();
+        _configureRegistries();
+    }
+
+    /**
+     * @notice Production deployment function
+     * @dev Sets admin from ENV variable, deploys but doesn't configure (admin must call configureSystem separately)
+     */
+    function deployForProduction() external {
+        admin = vm.envAddress("MARKETPLACE_WALLET");
+        require(admin != address(0), "Admin address not set in ENV");
+
+        deployAll();
+        // Note: Admin must call configureSystem() separately for security
+        console.log("WARNING: Admin must call configureSystem() to complete setup");
     }
 }

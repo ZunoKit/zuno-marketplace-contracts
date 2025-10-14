@@ -29,10 +29,10 @@ contract ListingHistoryTrackerTest is Test, TestHelpers {
         bytes32 pauserRole = accessControl.PAUSER_ROLE();
 
         vm.prank(admin);
-        accessControl.grantRoleWithReason(operatorRole, admin, "Test setup");
+        accessControl.grantRoleSimple(operatorRole, admin);
 
         vm.prank(admin);
-        accessControl.grantRoleWithReason(pauserRole, admin, "Test setup");
+        accessControl.grantRoleSimple(pauserRole, admin);
 
         // Deploy tracker
         vm.prank(admin);

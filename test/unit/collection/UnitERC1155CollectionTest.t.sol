@@ -52,9 +52,9 @@ contract UnitERC1155CollectionTest is Test {
         setup.collection.mint{value: setup.params.publicMintPrice}(setup.user, 1);
         vm.stopPrank();
 
-        assertEq(setup.collection.balanceOf(setup.user, 1), 1, "User should have 1 token");
-        assertEq(setup.collection.getTotalMinted(), 1, "Total minted should be 1");
-        assertEq(setup.collection.getMintedPerWallet(setup.user), 1, "User should have minted 1 token");
+        assertEq(setup.collection.balanceOf(setup.user, 1), 1);
+        assertEq(setup.collection.getTotalMinted(), 1);
+        assertEq(setup.collection.getMintedPerWallet(setup.user), 1);
     }
 
     function test_BatchMint() public {
@@ -68,11 +68,11 @@ contract UnitERC1155CollectionTest is Test {
         setup.collection.batchMintERC1155{value: setup.params.publicMintPrice * 3}(setup.user, 3);
         vm.stopPrank();
 
-        assertEq(setup.collection.balanceOf(setup.user, 1), 1, "User should have token 1");
-        assertEq(setup.collection.balanceOf(setup.user, 2), 1, "User should have token 2");
-        assertEq(setup.collection.balanceOf(setup.user, 3), 1, "User should have token 3");
-        assertEq(setup.collection.getTotalMinted(), 3, "Total minted should be 3");
-        assertEq(setup.collection.getMintedPerWallet(setup.user), 3, "User should have minted 3 tokens");
+        assertEq(setup.collection.balanceOf(setup.user, 1), 1);
+        assertEq(setup.collection.balanceOf(setup.user, 2), 1);
+        assertEq(setup.collection.balanceOf(setup.user, 3), 1);
+        assertEq(setup.collection.getTotalMinted(), 3);
+        assertEq(setup.collection.getMintedPerWallet(setup.user), 3);
     }
 
     function test_TokenURI() public {
@@ -84,14 +84,14 @@ contract UnitERC1155CollectionTest is Test {
         setup.collection.mint{value: setup.params.publicMintPrice}(setup.user, 1);
         vm.stopPrank();
 
-        assertEq(setup.collection.uri(1), setup.params.tokenURI, "Token URI should match base URI");
+        assertEq(setup.collection.uri(1), setup.params.tokenURI);
     }
 
     function test_SupportsInterface() public {
-        assertTrue(setup.collection.supportsInterface(0xd9b67a26), "Should support ERC1155");
-        assertTrue(setup.collection.supportsInterface(0x0e89341c), "Should support ERC1155MetadataURI");
-        assertTrue(setup.collection.supportsInterface(0x2a55205a), "Should support ERC2981");
-        assertFalse(setup.collection.supportsInterface(0x12345678), "Should not support random interface");
+        assertTrue(setup.collection.supportsInterface(0xd9b67a26));
+        assertTrue(setup.collection.supportsInterface(0x0e89341c));
+        assertTrue(setup.collection.supportsInterface(0x2a55205a));
+        assertFalse(setup.collection.supportsInterface(0x12345678));
     }
 
     function test_Mint_InsufficientPayment() public {
@@ -163,8 +163,8 @@ contract UnitERC1155CollectionTest is Test {
         setup.collection.mint{value: setup.params.allowlistMintPrice}(setup.user, 1);
         vm.stopPrank();
 
-        assertEq(setup.collection.balanceOf(setup.user, 1), 1, "User should have 1 token");
-        assertEq(setup.collection.getTotalMinted(), 1, "Total minted should be 1");
-        assertEq(setup.collection.getMintedPerWallet(setup.user), 1, "User should have minted 1 token");
+        assertEq(setup.collection.balanceOf(setup.user, 1), 1);
+        assertEq(setup.collection.getTotalMinted(), 1);
+        assertEq(setup.collection.getMintedPerWallet(setup.user), 1);
     }
 }

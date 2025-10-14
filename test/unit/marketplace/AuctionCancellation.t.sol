@@ -7,7 +7,7 @@ import "src/core/auction/DutchAuction.sol";
 import "src/core/factory/AuctionFactory.sol";
 import "src/interfaces/IAuction.sol";
 import "src/errors/AuctionErrors.sol";
-import "../../mocks/MockERC721.sol";
+import "test/mocks/MockERC721.sol";
 
 /**
  * @title AuctionCancellation Test
@@ -35,7 +35,7 @@ contract AuctionCancellationTest is Test {
 
     function setUp() public {
         // Deploy contracts
-        mockERC721 = new MockERC721("Test NFT", "TEST");
+        mockERC721 = new MockERC721("Test NFT", "TNFT");
         auctionFactory = new AuctionFactory(MARKETPLACE_WALLET);
         englishAuction = auctionFactory.englishAuction();
         dutchAuction = auctionFactory.dutchAuction();
@@ -70,7 +70,7 @@ contract AuctionCancellationTest is Test {
 
         // Verify auction is cancelled
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.CANCELLED));
+        assertEq(uint256(auction.status), uint256(AuctionStatus.CANCELLED));
     }
 
     function test_EnglishAuction_CancelWithBids_ShouldRevert() public {
@@ -110,7 +110,7 @@ contract AuctionCancellationTest is Test {
 
         // Verify auction is cancelled
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.CANCELLED));
+        assertEq(uint256(auction.status), uint256(AuctionStatus.CANCELLED));
     }
 
     // ============================================================================
@@ -163,11 +163,11 @@ contract AuctionCancellationTest is Test {
         // BIDDER1 should have NO refunds because they are currently the highest bidder
         // When a user becomes highest bidder again, their pending refunds are cleared
         // This prevents the double-withdraw bug
-        assertEq(bidder1Refund, 0, "BIDDER1 should have NO refunds when they are highest bidder");
+        assertEq(bidder1Refund, 0);
 
         // BIDDER2 should have refund only from fourth bid (1.3 ETH)
         // Their second bid (1.1 ETH) was already refunded when they became highest bidder
-        assertEq(bidder2Refund, fourthBid, "BIDDER2 should have refund from fourth bid only");
+        assertEq(bidder2Refund, fourthBid);
 
         // Test withdrawals
         uint256 bidder2BalanceBefore = BIDDER2.balance;
@@ -182,10 +182,10 @@ contract AuctionCancellationTest is Test {
         auctionFactory.withdrawBid(auctionId);
 
         // Verify BIDDER2 withdrawal
-        assertEq(BIDDER2.balance, bidder2BalanceBefore + bidder2Refund, "BIDDER2 should receive all refunds");
+        assertEq(BIDDER2.balance, bidder2BalanceBefore + bidder2Refund);
 
         // Verify BIDDER2 refunds are cleared
-        assertEq(auctionFactory.getPendingRefund(auctionId, BIDDER2), 0, "BIDDER2 refunds should be cleared");
+        assertEq(auctionFactory.getPendingRefund(auctionId, BIDDER2), 0);
     }
 
     function test_AuctionSettlement_RefundsAllLosers() public {
@@ -222,19 +222,19 @@ contract AuctionCancellationTest is Test {
         auctionFactory.settleAuction(auctionId);
 
         // Verify BIDDER3 won the auction
-        assertEq(mockERC721.ownerOf(1), BIDDER3, "BIDDER3 should win the auction");
+        assertEq(mockERC721.ownerOf(1), BIDDER3);
 
         // Verify seller received payment (minus fees)
-        assertGt(SELLER.balance, sellerBalanceBefore, "Seller should receive payment");
+        assertGt(SELLER.balance, sellerBalanceBefore);
 
         // Verify losing bidders can withdraw refunds
         vm.prank(BIDDER1);
         auctionFactory.withdrawBid(auctionId);
-        assertEq(BIDDER1.balance, bidder1BalanceBefore + bid1, "BIDDER1 should get refund");
+        assertEq(BIDDER1.balance, bidder1BalanceBefore + bid1);
 
         vm.prank(BIDDER2);
         auctionFactory.withdrawBid(auctionId);
-        assertEq(BIDDER2.balance, bidder2BalanceBefore + bid2, "BIDDER2 should get refund");
+        assertEq(BIDDER2.balance, bidder2BalanceBefore + bid2);
     }
 
     function test_ReserveNotMet_RefundsAllBidders() public {
@@ -275,19 +275,19 @@ contract AuctionCancellationTest is Test {
 
         // Verify auction ended without sale
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.ENDED));
+        assertEq(uint256(auction.status), uint256(AuctionStatus.ENDED));
 
         // Verify NFT still belongs to seller
-        assertEq(mockERC721.ownerOf(1), SELLER, "Seller should still own NFT");
+        assertEq(mockERC721.ownerOf(1), SELLER);
 
         // Verify all bidders can withdraw refunds
         vm.prank(BIDDER1);
         auctionFactory.withdrawBid(auctionId);
-        assertEq(BIDDER1.balance, bidder1BalanceBefore + bid1, "BIDDER1 should get full refund");
+        assertEq(BIDDER1.balance, bidder1BalanceBefore + bid1);
 
         vm.prank(BIDDER2);
         auctionFactory.withdrawBid(auctionId);
-        assertEq(BIDDER2.balance, bidder2BalanceBefore + bid2, "BIDDER2 should get full refund");
+        assertEq(BIDDER2.balance, bidder2BalanceBefore + bid2);
     }
 
     // ============================================================================
@@ -351,7 +351,7 @@ contract AuctionCancellationTest is Test {
 
         // Verify A has pending refunds
         uint256 refundBeforeRebid = auctionFactory.getPendingRefund(auctionId, BIDDER1);
-        assertEq(refundBeforeRebid, DEFAULT_START_PRICE, "BIDDER1 should have pending refund");
+        assertEq(refundBeforeRebid, DEFAULT_START_PRICE);
 
         // User A bids again and becomes highest bidder
         vm.prank(BIDDER1);
@@ -359,16 +359,16 @@ contract AuctionCancellationTest is Test {
 
         // 🔥 CRITICAL TEST: A should NOT have pending refunds when they're highest bidder
         uint256 refundAfterRebid = auctionFactory.getPendingRefund(auctionId, BIDDER1);
-        assertEq(refundAfterRebid, 0, "BIDDER1 should NOT have pending refunds when highest bidder");
+        assertEq(refundAfterRebid, 0);
 
         // Verify A is indeed the highest bidder
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(auction.highestBidder, BIDDER1, "BIDDER1 should be highest bidder");
-        assertEq(auction.highestBid, DEFAULT_START_PRICE + 0.2 ether, "Highest bid should be correct");
+        assertEq(auction.highestBidder, BIDDER1);
+        assertEq(auction.highestBid, DEFAULT_START_PRICE + 0.2 ether);
 
         // Verify B has pending refunds
         uint256 bidder2Refund = auctionFactory.getPendingRefund(auctionId, BIDDER2);
-        assertEq(bidder2Refund, DEFAULT_START_PRICE + 0.1 ether, "BIDDER2 should have pending refund");
+        assertEq(bidder2Refund, DEFAULT_START_PRICE + 0.1 ether);
     }
 
     function test_PreventDoubleWithdrawBug() public {
@@ -399,7 +399,7 @@ contract AuctionCancellationTest is Test {
         uint256 bidder2BalanceBefore = BIDDER2.balance;
         vm.prank(BIDDER2);
         auctionFactory.withdrawBid(auctionId);
-        assertEq(BIDDER2.balance, bidder2BalanceBefore + 1.5 ether, "BIDDER2 should get refund");
+        assertEq(BIDDER2.balance, bidder2BalanceBefore + 1.5 ether);
     }
 
     // ============================================================================

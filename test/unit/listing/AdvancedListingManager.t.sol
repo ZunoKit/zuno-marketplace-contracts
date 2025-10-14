@@ -68,7 +68,7 @@ contract AdvancedListingManagerTest is Test {
         listingManager = new AdvancedListingManager(address(accessControl), address(validator));
 
         // Deploy mock NFTs
-        mockERC721 = new MockERC721("Test NFT", "TEST");
+        mockERC721 = new MockERC721("Test NFT", "TNFT");
         mockERC1155 = new MockERC1155("Test ERC1155", "T1155");
 
         // Setup supported contracts
@@ -82,7 +82,7 @@ contract AdvancedListingManagerTest is Test {
         mockERC721.mint(seller, TOKEN_ID);
         mockERC721.setApprovalForAll(address(listingManager), true);
 
-        mockERC1155.mint(seller, TOKEN_ID, QUANTITY, "");
+        mockERC1155.mint(seller, TOKEN_ID, QUANTITY);
         mockERC1155.setApprovalForAll(address(listingManager), true);
         vm.stopPrank();
 
@@ -605,7 +605,7 @@ contract AdvancedListingManagerTest is Test {
 
         vm.startPrank(user1);
         vm.expectRevert(AdvancedListing__NotSeller.selector);
-        listingManager.cancelListing(listingId, "Unauthorized");
+        listingManager.cancelListing(listingId, "Changed mind");
     }
 
     // ============================================================================
@@ -709,7 +709,7 @@ contract AdvancedListingManagerTest is Test {
     function test_EmergencyPause_Success() public {
         // Grant emergency role to admin
         vm.startPrank(owner);
-        accessControl.grantRoleWithReason(accessControl.EMERGENCY_ROLE(), admin, "Test emergency role");
+        accessControl.grantRoleSimple(accessControl.EMERGENCY_ROLE(), admin);
         vm.stopPrank();
 
         vm.startPrank(admin);
@@ -721,7 +721,7 @@ contract AdvancedListingManagerTest is Test {
     function test_Unpause_Success() public {
         // Pause first
         vm.startPrank(owner);
-        accessControl.grantRoleWithReason(accessControl.EMERGENCY_ROLE(), admin, "Test emergency role");
+        accessControl.grantRoleSimple(accessControl.EMERGENCY_ROLE(), admin);
         vm.stopPrank();
 
         vm.startPrank(admin);

@@ -6,7 +6,8 @@ import {AuctionFactory} from "src/core/factory/AuctionFactory.sol";
 import {EnglishAuction} from "src/core/auction/EnglishAuction.sol";
 import {DutchAuction} from "src/core/auction/DutchAuction.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
-import {AuctionTestHelpers} from "../../utils/auction/AuctionTestHelpers.sol";
+import {AuctionType, AuctionStatus} from "src/types/AuctionTypes.sol";
+import {AuctionTestHelpers} from "test/utils/auction/AuctionTestHelpers.sol";
 import "src/errors/AuctionErrors.sol";
 
 /**
@@ -29,7 +30,7 @@ contract AuctionFactoryTest is AuctionTestHelpers {
         bytes32 indexed auctionId,
         address indexed auctionContract,
         address indexed seller,
-        IAuction.AuctionType auctionType
+        AuctionType auctionType
     );
 
     // ============================================================================
@@ -103,7 +104,7 @@ contract AuctionFactoryTest is AuctionTestHelpers {
         assertEq(auction.nftContract, address(mockERC721));
         assertEq(auction.tokenId, tokenId);
         assertEq(auction.seller, SELLER);
-        assertEq(uint256(auction.auctionType), uint256(IAuction.AuctionType.ENGLISH));
+        assertEq(uint256(auction.auctionType), uint256(AuctionType.ENGLISH));
     }
 
     function test_CreateEnglishAuction_RevertIfPaused() public {
@@ -138,7 +139,7 @@ contract AuctionFactoryTest is AuctionTestHelpers {
             bytes32(0), // Will be calculated - don't check this field
             address(0), // Proxy address will be calculated - don't check this field
             SELLER,
-            IAuction.AuctionType.DUTCH
+            AuctionType.DUTCH
         );
 
         bytes32 auctionId = auctionFactory.createDutchAuction(
@@ -166,7 +167,7 @@ contract AuctionFactoryTest is AuctionTestHelpers {
         assertEq(auction.nftContract, address(mockERC721));
         assertEq(auction.tokenId, tokenId);
         assertEq(auction.seller, SELLER);
-        assertEq(uint256(auction.auctionType), uint256(IAuction.AuctionType.DUTCH));
+        assertEq(uint256(auction.auctionType), uint256(AuctionType.DUTCH));
     }
 
     // ============================================================================
@@ -211,7 +212,7 @@ contract AuctionFactoryTest is AuctionTestHelpers {
         assertNFTOwnership(address(mockERC721), 1, BIDDER1);
 
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.SETTLED));
+        assertEq(uint256(auction.status), uint256(AuctionStatus.SETTLED));
     }
 
     function test_CancelAuction_ThroughFactory_Success() public {
@@ -228,7 +229,7 @@ contract AuctionFactoryTest is AuctionTestHelpers {
 
         // Verify cancellation
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.CANCELLED));
+        assertEq(uint256(auction.status), uint256(AuctionStatus.CANCELLED));
     }
 
     function test_SettleAuction_ThroughFactory_Success() public {
@@ -254,7 +255,7 @@ contract AuctionFactoryTest is AuctionTestHelpers {
         assertNFTOwnership(address(mockERC721), 1, BIDDER1);
 
         IAuction.Auction memory auction = auctionFactory.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.SETTLED));
+        assertEq(uint256(auction.status), uint256(AuctionStatus.SETTLED));
     }
 
     function test_WithdrawBid_ThroughFactory_Success() public {

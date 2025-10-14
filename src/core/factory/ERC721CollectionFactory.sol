@@ -6,7 +6,7 @@ import {ERC721CollectionCreated} from "src/events/CollectionEvents.sol";
 import {ICollectionFactory} from "src/interfaces/IMarketplaceCore.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-import {ERC721CollectionImplementation} from "../proxy/ERC721CollectionImplementation.sol";
+import {ERC721CollectionImplementation} from "src/core/proxy/ERC721CollectionImplementation.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
 /**

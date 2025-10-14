@@ -92,9 +92,9 @@ contract TestHelpers is Test {
      * @param b Second array
      */
     function assertArrayEqual(address[] memory a, address[] memory b) internal {
-        assertEq(a.length, b.length, "Array lengths don't match");
+        assertEq(a.length, b.length);
         for (uint256 i = 0; i < a.length; i++) {
-            assertEq(a[i], b[i], "Array elements don't match");
+            assertEq(a[i], b[i]);
         }
     }
 
@@ -104,9 +104,9 @@ contract TestHelpers is Test {
      * @param b Second array
      */
     function assertArrayEqual(uint256[] memory a, uint256[] memory b) internal {
-        assertEq(a.length, b.length, "Array lengths don't match");
+        assertEq(a.length, b.length);
         for (uint256 i = 0; i < a.length; i++) {
-            assertEq(a[i], b[i], "Array elements don't match");
+            assertEq(a[i], b[i]);
         }
     }
 
@@ -143,7 +143,7 @@ contract TestHelpers is Test {
      * @return Random bytes32 value
      */
     function randomBytes32(uint256 seed) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(seed, "random"));
+        return keccak256(abi.encodePacked(seed));
     }
 
     /**
@@ -193,7 +193,7 @@ contract TestHelpers is Test {
      * @param value Value to log
      */
     function logValue(string memory label, uint256 value) internal view {
-        console.log(string(abi.encodePacked("[", label, "] ")), value);
+        console.log(string(abi.encodePacked("[", label)), value);
     }
 
     /**
@@ -202,7 +202,7 @@ contract TestHelpers is Test {
      * @param addr Address to log
      */
     function logAddress(string memory label, address addr) internal view {
-        console.log(string(abi.encodePacked("[", label, "] ")), addr);
+        console.log(string(abi.encodePacked("[", label)), addr);
     }
 
     // ============================================================================
@@ -280,6 +280,6 @@ contract TestHelpers is Test {
         uint256 balanceAfter = account.balance;
         int256 actualChange = int256(balanceAfter) - int256(balanceBefore);
 
-        assertEq(actualChange, expectedChange, "Balance change doesn't match expected");
+        assertEq(actualChange, expectedChange);
     }
 }

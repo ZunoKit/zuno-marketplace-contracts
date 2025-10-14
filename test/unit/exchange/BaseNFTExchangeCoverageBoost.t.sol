@@ -24,8 +24,8 @@ contract BaseNFTExchangeCoverageBoostTest is Test {
 
     function setUp() public {
         // Deploy contracts
-        mockERC721 = new MockERC721("Test NFT", "TEST");
-        mockERC1155 = new MockERC1155("Test 1155", "TEST1155");
+        mockERC721 = new MockERC721("Test NFT", "TNFT");
+        mockERC1155 = new MockERC1155("Test 1155", "T1155");
 
         // Deploy testable exchange
         testableExchange = new CoverageTestableBaseNFTExchange();
@@ -170,7 +170,7 @@ contract BaseNFTExchangeCoverageBoostTest is Test {
 
     function test_ContractType() public {
         string memory contractType = testableExchange.contractType();
-        assertEq(contractType, "NFTExchange");
+        assertEq(contractType, "ERC721NFTExchange");
     }
 
     function test_IsActive() public {

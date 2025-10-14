@@ -11,11 +11,12 @@ It supports ERC721 and ERC1155 tokens with advanced trading features including a
 **Tech Stack:**
 
 - Foundry for smart contract development, testing, and deployment
-- OpenZeppelin contracts for security and standards
-- Solidity ^0.8.30
-- Makefile for common tasks
+- OpenZeppelin contracts for security and standards (Ownable, ReentrancyGuard, Initializable)
+- OpenZeppelin Clones for minimal proxy pattern (gas-efficient deployments)
+- Solidity ^0.8.30 with custom errors and type-safe operations
+- Makefile for common tasks and shortcuts
 
-**Note:** This is a pure Foundry project. Despite the README mentioning pnpm, there is no package.json - use Foundry or Makefile commands instead.
+**Note:** This is a pure Foundry project - use Foundry or Makefile commands for all operations.
 
 **⚠️ Critical**: This is a security-critical smart contract project handling financial transactions and NFT transfers.
 
@@ -127,10 +128,11 @@ make deploy-collections
 ### Deployment (Network)
 
 ```bash
-# Deploy EVERYTHING (core + hub) in one command
+# Deploy EVERYTHING (core + dual hubs) in one command
 forge script script/deploy/DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast --verify
 
-# Output will show MarketplaceHub address - that's the ONLY address frontend needs!
+# Output will show AdminHub and UserHub addresses
+# Frontend needs UserHub address, Admin operations use AdminHub address
 ```
 
 ## Architecture Overview
@@ -157,13 +159,25 @@ forge script script/deploy/DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcas
 - Separate files for Events, Errors, Types/Structs
 - **Registry + Hub Pattern** for frontend integration (see below)
 
-**4. Registry + Hub Pattern (NEW - Simplified Frontend Integration):**
+**4. Dual Hub Pattern (Production-Grade Admin/User Separation):**
 
-- **MarketplaceHub**: Single entry point contract that provides address discovery
-- **Registries**: ExchangeRegistry, CollectionRegistry, FeeRegistry, AuctionRegistry
-- **Philosophy**: Hub does NOT wrap function calls, only provides contract addresses
-- **Benefits**: Minimal gas overhead, easy maintenance, direct contract calls from frontend
-- See `docs/user-guide.md` for details
+- **AdminHub** (`src/router/AdminHub.sol`): Admin-only functions for marketplace management
+  - Contract registrations (exchanges, collections, auctions)
+  - Emergency controls and system configuration
+  - Role-based access control with OpenZeppelin AccessControl
+  - Key Methods: `registerExchange()`, `registerCollectionFactory()`, `setAdditionalContracts()`
+- **UserHub** (`src/router/UserHub.sol`): Read-only hub for frontend integration
+  - Address discovery and query functions for users
+  - No admin functions, only view/query operations
+  - Key Methods: `getAllAddresses()`, `getExchangeFor()`, `verifyCollection()`
+- **Registries** (`src/registry/`):
+  - `ExchangeRegistry` - Maps TokenStandard enum to exchange addresses
+  - `CollectionRegistry` - Maps collection types to factory addresses
+  - `FeeRegistry` - Centralized fee calculations
+  - `AuctionRegistry` - Maps AuctionType enum to implementation addresses
+- **Philosophy**: Clear separation between admin operations and user queries
+- **Benefits**: Enhanced security, better access control, production-ready architecture
+- See `docs/user-guide.md` for complete integration guide
 
 **5. Role-Based Access Control:**
 
@@ -171,14 +185,23 @@ forge script script/deploy/DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcas
 - `EmergencyManager` provides pause/unpause functionality for critical scenarios
 - `MarketplaceTimelock` enforces 48-hour delay on critical parameter changes to prevent rug pulls
 
-### Hub + Registry Architecture
+### Dual Hub + Registry Architecture
 
-**MarketplaceHub (src/router/MarketplaceHub.sol):**
+**AdminHub (src/router/AdminHub.sol):**
 
-- Single contract address for frontend integration
+- Admin-only functions for marketplace management
+- OpenZeppelin AccessControl with ADMIN_ROLE
+- Functions: `registerExchange()`, `registerCollectionFactory()`, `registerAuction()`, `setAdditionalContracts()`
+- Emergency controls: `emergencyPause()`
+- **Only accessible by designated admin addresses**
+
+**UserHub (src/router/UserHub.sol):**
+
+- Read-only hub for frontend integration
+- No admin functions, only view/query operations
 - Provides `getAllAddresses()` to get all contract addresses in one call
 - Provides `getExchangeFor(nftContract)` to auto-detect ERC721 vs ERC1155
-- Helper functions: `calculateFees()`, `verifyCollection()`, etc.
+- Helper functions: `verifyCollection()`, `getSystemStatus()`, etc.
 - **Does NOT wrap function calls** - only provides addresses and queries
 
 **Registries (src/registry/):**
@@ -190,19 +213,31 @@ forge script script/deploy/DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcas
 
 **Frontend Flow:**
 
-1. Initialize with MarketplaceHub address only
-2. Call `hub.getAllAddresses()` to get all contract addresses
+1. Initialize with UserHub address only
+2. Call `userHub.getAllAddresses()` to get all contract addresses
 3. Create contract instances for each address
 4. Call contracts directly (not through hub)
 
+**Admin Flow:**
+
+1. Initialize with AdminHub address (admin wallet only)
+2. Use AdminHub for all system configuration and emergency controls
+3. Registrations and admin functions are protected by AccessControl
+
 See `docs/user-guide.md` for complete documentation.
 
-### Hub + Registry Quick Start
+### Dual Hub + Registry Quick Start
 
-1. Frontend needs only the `MarketplaceHub` address
-2. Call `hub.getAllAddresses()` once and cache returned contract addresses
-3. Auto-detect exchange via `hub.getExchangeFor(nftContract)` and call the exchange directly
-4. Use Hub helpers for queries only: `calculateFees(...)`, `verifyCollection(...)`
+**For Frontend/Users:**
+1. Frontend needs only the `UserHub` address
+2. Call `userHub.getAllAddresses()` once and cache returned contract addresses
+3. Auto-detect exchange via `userHub.getExchangeFor(nftContract)` and call the exchange directly
+4. Use UserHub helpers for queries only: `verifyCollection(...)`, `getSystemStatus(...)`
+
+**For Admin Operations:**
+1. Admin needs the `AdminHub` address and proper admin role
+2. Use AdminHub for all system configuration: registrations, emergency controls
+3. All admin functions are protected by OpenZeppelin AccessControl
 
 #### Add a new token standard or module
 
@@ -304,26 +339,34 @@ Reusable logic organized in `src/libraries/`:
 Tests organized by type in `test/`:
 
 **Unit Tests** (`test/unit/`):
-
-- `collection/` - Collection factory and NFT contract tests
-- `exchange/` - Exchange contract tests
-- `auction/` - Auction mechanism tests
+- `auction/` - BaseAuction, EnglishAuction, DutchAuction, AuctionFactory tests
+- `collection/` - Collection factory and verifier tests
+- `exchange/` - ERC721/ERC1155 exchange tests
+- `fees/` - Fee manager and royalty tests
+- `offers/` - Offer manager tests
+- `marketplace/` - Payment distribution and auction cancellation tests
+- `validation/` - Listing validator and marketplace validator tests
 - `access/` - Access control tests
 - `analytics/` - History tracking tests
-- `fees/` - Fee management tests
 - `security/` - Emergency and timelock tests
-- `validation/` - Validator tests
 
 **Integration Tests** (`test/integration/`):
+- `AuctionIntegration.t.sol` - Complete auction workflows
+- `BasicWorkflows.t.sol` - End-to-end trading scenarios
 
-- End-to-end workflows
-- Cross-contract interactions
-- Complete trading scenarios
-- Stress tests
+**End-to-End Tests** (`test/e2e/`):
+- `E2E_Auctions.t.sol` - Full auction lifecycle tests
+- `E2E_EmergencyControls.t.sol` - Emergency pause/unpause scenarios
 
-**Mock Contracts** (`test/mocks/`):
+**Deployment Tests** (`test/deploy/`):
+- `DeployAll.t.sol` - Complete deployment validation
 
-- Used for isolated unit testing
+**Gas Tests** (`test/gas/`):
+- `CanaryTests.t.sol` - Gas optimization benchmarks
+
+**Test Utilities** (`test/utils/`):
+- `TestSetup.sol` - Common test setup
+- `auction/AuctionTestHelpers.sol` - Auction-specific helpers
 
 ## Important Patterns and Conventions
 
@@ -398,8 +441,8 @@ forge script script/deploy/DeployAll.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcas
 Output:
 
 - All core contracts deployed
-- MarketplaceHub deployed and configured
-- **Frontend only needs MarketplaceHub address** (shown at end of deployment)
+- AdminHub and UserHub deployed and configured
+- **Frontend needs UserHub address, Admin operations use AdminHub address** (shown at end of deployment)
 
 ## Commit Convention
 
@@ -453,7 +496,7 @@ forge snapshot           # Generate gas snapshots
 
 1. **Proxy Pattern** - OpenZeppelin Clones for minimal proxies
 2. **Initializer Pattern** - `Initializable` with `initialize()` functions
-3. **Registry + Hub Pattern** - MarketplaceHub as single entry point
+3. **Dual Hub Pattern** - AdminHub for admin ops, UserHub for frontend
 4. **Role-Based Access Control** - MarketplaceAccessControl for permissions
 
 ### Security Requirements
@@ -486,7 +529,7 @@ forge snapshot           # Generate gas snapshots
 ## Documentation References
 
 - `.cursor/rules/rules-code.mdc` - Detailed technical patterns and best practices
-- `docs/user-guide.md` - Hub + Registry architecture
+- `docs/user-guide.md` - Dual Hub + Registry architecture
 - `docs/security/` - Security patterns and audit preparation
 - `docs/guides/integration-guide.md` - Frontend integration guide
 

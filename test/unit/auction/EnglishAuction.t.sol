@@ -4,7 +4,8 @@ pragma solidity ^0.8.30;
 import {Test, console2} from "forge-std/Test.sol";
 import {EnglishAuction} from "src/core/auction/EnglishAuction.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
-import {AuctionTestHelpers} from "../../utils/auction/AuctionTestHelpers.sol";
+import {AuctionType, AuctionStatus} from "src/types/AuctionTypes.sol";
+import {AuctionTestHelpers} from "test/utils/auction/AuctionTestHelpers.sol";
 import "src/errors/AuctionErrors.sol";
 
 /**
@@ -61,7 +62,7 @@ contract EnglishAuctionTest is AuctionTestHelpers {
             DEFAULT_START_PRICE,
             DEFAULT_RESERVE_PRICE,
             DEFAULT_DURATION,
-            IAuction.AuctionType.ENGLISH,
+            AuctionType.ENGLISH,
             SELLER
         );
 
@@ -87,8 +88,8 @@ contract EnglishAuctionTest is AuctionTestHelpers {
         assertEq(auction.seller, SELLER);
         assertEq(auction.startPrice, DEFAULT_START_PRICE);
         assertEq(auction.reservePrice, DEFAULT_RESERVE_PRICE);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.ACTIVE));
-        assertEq(uint256(auction.auctionType), uint256(IAuction.AuctionType.ENGLISH));
+        assertEq(uint256(auction.status), uint256(AuctionStatus.ACTIVE));
+        assertEq(uint256(auction.auctionType), uint256(AuctionType.ENGLISH));
         assertEq(auction.highestBidder, address(0));
         assertEq(auction.highestBid, 0);
     }
@@ -104,7 +105,7 @@ contract EnglishAuctionTest is AuctionTestHelpers {
             DEFAULT_START_PRICE,
             DEFAULT_RESERVE_PRICE,
             DEFAULT_DURATION,
-            IAuction.AuctionType.ENGLISH,
+            AuctionType.ENGLISH,
             BIDDER1 // Wrong owner
         );
     }
@@ -121,7 +122,7 @@ contract EnglishAuctionTest is AuctionTestHelpers {
             DEFAULT_START_PRICE,
             DEFAULT_RESERVE_PRICE,
             DEFAULT_DURATION,
-            IAuction.AuctionType.ENGLISH,
+            AuctionType.ENGLISH,
             SELLER
         );
         vm.stopPrank();
@@ -139,7 +140,7 @@ contract EnglishAuctionTest is AuctionTestHelpers {
             0, // Invalid start price
             DEFAULT_RESERVE_PRICE,
             DEFAULT_DURATION,
-            IAuction.AuctionType.ENGLISH,
+            AuctionType.ENGLISH,
             SELLER
         );
         vm.stopPrank();
@@ -157,7 +158,7 @@ contract EnglishAuctionTest is AuctionTestHelpers {
             DEFAULT_START_PRICE,
             DEFAULT_RESERVE_PRICE,
             30 minutes, // Too short
-            IAuction.AuctionType.ENGLISH,
+            AuctionType.ENGLISH,
             SELLER
         );
         vm.stopPrank();
@@ -343,7 +344,7 @@ contract EnglishAuctionTest is AuctionTestHelpers {
 
         // Verify auction status
         IAuction.Auction memory settledAuction = englishAuction.getAuction(auctionId);
-        assertEq(uint256(settledAuction.status), uint256(IAuction.AuctionStatus.SETTLED));
+        assertEq(uint256(settledAuction.status), uint256(AuctionStatus.SETTLED));
 
         // Verify payments (seller should receive bid minus marketplace fee)
         uint256 marketplaceFee = (winningBid * 200) / 10000; // 2% fee
@@ -363,7 +364,7 @@ contract EnglishAuctionTest is AuctionTestHelpers {
 
         // Verify auction ended without winner
         IAuction.Auction memory settledAuction = englishAuction.getAuction(auctionId);
-        assertEq(uint256(settledAuction.status), uint256(IAuction.AuctionStatus.ENDED));
+        assertEq(uint256(settledAuction.status), uint256(AuctionStatus.ENDED));
 
         // Verify NFT still with seller
         assertNFTOwnership(address(mockERC721), 1, SELLER);
@@ -385,7 +386,7 @@ contract EnglishAuctionTest is AuctionTestHelpers {
             startPrice,
             reservePrice,
             DEFAULT_DURATION,
-            IAuction.AuctionType.ENGLISH,
+            AuctionType.ENGLISH,
             SELLER
         );
         vm.stopPrank();
@@ -403,7 +404,7 @@ contract EnglishAuctionTest is AuctionTestHelpers {
 
         // Verify auction ended without winner (reserve not met)
         IAuction.Auction memory settledAuction = englishAuction.getAuction(auctionId);
-        assertEq(uint256(settledAuction.status), uint256(IAuction.AuctionStatus.ENDED));
+        assertEq(uint256(settledAuction.status), uint256(AuctionStatus.ENDED));
 
         // Verify NFT still with seller
         assertNFTOwnership(address(mockERC721), 1, SELLER);
@@ -431,7 +432,7 @@ contract EnglishAuctionTest is AuctionTestHelpers {
         englishAuction.cancelAuction(auctionId);
 
         IAuction.Auction memory auction = englishAuction.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.CANCELLED));
+        assertEq(uint256(auction.status), uint256(AuctionStatus.CANCELLED));
     }
 
     function test_CancelAuction_RevertIfHasBids() public {

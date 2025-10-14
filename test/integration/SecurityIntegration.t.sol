@@ -77,7 +77,7 @@ contract SecurityIntegrationTest is Test {
         // Admin can pause
         vm.prank(admin);
         emergencyManager.emergencyPause("Test pause");
-        assertTrue(emergencyManager.paused(), "Should be paused");
+        assertTrue(emergencyManager.paused());
         console2.log("Admin pause successful");
 
         // Operator cannot unpause (only admin)
@@ -89,7 +89,7 @@ contract SecurityIntegrationTest is Test {
         // Admin can unpause
         vm.prank(admin);
         emergencyManager.emergencyUnpause();
-        assertFalse(emergencyManager.paused(), "Should be unpaused");
+        assertFalse(emergencyManager.paused());
         console2.log("Admin unpause successful");
 
         console2.log("=== Access Control + Emergency Manager: SUCCESS ===\n");
@@ -128,7 +128,7 @@ contract SecurityIntegrationTest is Test {
         malicious.attack();
 
         // Verify only one purchase occurred (no reentrancy)
-        assertEq(mockNFT.ownerOf(1), address(malicious), "NFT should be transferred once");
+        assertEq(mockNFT.ownerOf(1), address(malicious));
 
         console2.log("Reentrancy prevented by secure transfer pattern");
         console2.log("=== Reentrancy Prevention: SUCCESS ===\n");
@@ -266,9 +266,9 @@ contract SecurityIntegrationTest is Test {
         console2.log("Operator escalation to admin prevented");
 
         // Verify role hierarchy maintained
-        assertTrue(accessControl.hasRole(ADMIN_ROLE, admin), "Admin should have admin role");
-        assertTrue(accessControl.hasRole(OPERATOR_ROLE, operator), "Operator should have operator role");
-        assertFalse(accessControl.hasRole(OPERATOR_ROLE, attacker), "Attacker should have no roles");
+        assertTrue(accessControl.hasRole(ADMIN_ROLE, admin));
+        assertTrue(accessControl.hasRole(OPERATOR_ROLE, operator));
+        assertFalse(accessControl.hasRole(OPERATOR_ROLE, attacker));
         console2.log("Role hierarchy integrity verified");
 
         console2.log("=== Permission Escalation Prevention: SUCCESS ===\n");
@@ -284,18 +284,18 @@ contract SecurityIntegrationTest is Test {
         console2.log("\n=== Test: Comprehensive Security Audit ===");
 
         // Test 1: Access Control
-        assertTrue(accessControl.hasRole(ADMIN_ROLE, admin), "Admin role exists");
-        assertTrue(accessControl.hasRole(OPERATOR_ROLE, operator), "Operator role exists");
+        assertTrue(accessControl.hasRole(ADMIN_ROLE, admin));
+        assertTrue(accessControl.hasRole(OPERATOR_ROLE, operator));
         console2.log("[PASS] Access Control functional");
 
         // Test 2: Emergency Manager
-        assertFalse(emergencyManager.paused(), "Initially unpaused");
+        assertFalse(emergencyManager.paused());
         vm.prank(admin);
         emergencyManager.emergencyPause("Test pause");
-        assertTrue(emergencyManager.paused(), "Can pause");
+        assertTrue(emergencyManager.paused());
         vm.prank(admin);
         emergencyManager.emergencyUnpause();
-        assertFalse(emergencyManager.paused(), "Can unpause");
+        assertFalse(emergencyManager.paused());
         console2.log("[PASS] Emergency Manager functional");
 
         // Test 3: ReentrancyGuard (tested in separate test)

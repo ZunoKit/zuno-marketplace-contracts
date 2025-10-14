@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "src/core/collection/CollectionVerifier.sol";
 import "src/core/access/MarketplaceAccessControl.sol";
 import "src/errors/CollectionErrors.sol";
-import "../../mocks/MockERC721.sol";
+import "test/mocks/MockERC721.sol";
 
 contract CollectionVerifierTest is Test {
     CollectionVerifier public verifier;
@@ -44,14 +44,14 @@ contract CollectionVerifierTest is Test {
         verifier = new CollectionVerifier(address(accessControl), feeRecipient, VERIFICATION_FEE);
 
         // Deploy mock NFT
-        mockNFT = new MockERC721("Test NFT", "TEST");
+        mockNFT = new MockERC721("Test NFT", "TNFT");
 
         // Grant roles
-        accessControl.grantRoleWithReason(accessControl.VERIFIER_ROLE(), verifierRole, "Test verifier");
+        accessControl.grantRoleSimple(accessControl.VERIFIER_ROLE(), verifierRole);
 
-        accessControl.grantRoleWithReason(accessControl.ADMIN_ROLE(), admin, "Test admin");
+        accessControl.grantRoleSimple(accessControl.ADMIN_ROLE(), admin);
 
-        accessControl.grantRoleWithReason(accessControl.MODERATOR_ROLE(), moderator, "Test moderator");
+        accessControl.grantRoleSimple(accessControl.MODERATOR_ROLE(), moderator);
 
         vm.stopPrank();
 
@@ -135,7 +135,7 @@ contract CollectionVerifierTest is Test {
         });
 
         vm.expectRevert(Collection__InsufficientFee.selector);
-        verifier.requestVerification{value: 0.05 ether}(address(mockNFT), metadata, "Please verify this collection");
+        verifier.requestVerification{value: 0.05 ether}(address(mockNFT), metadata, "Please verify");
 
         vm.stopPrank();
     }
@@ -353,7 +353,7 @@ contract CollectionVerifierTest is Test {
     }
 
     function testBatchVerifyCollections() public {
-        MockERC721 mockNFT2 = new MockERC721("Test NFT 2", "TEST2");
+        MockERC721 mockNFT2 = new MockERC721("Test NFT 2", "TNFT2");
 
         vm.startPrank(admin);
 
@@ -412,7 +412,7 @@ contract CollectionVerifierTest is Test {
         vm.startPrank(user1);
 
         vm.expectRevert(Collection__UnauthorizedAccess.selector);
-        verifier.revokeVerification(address(mockNFT), "Test");
+        verifier.revokeVerification(address(mockNFT), "Unauthorized attempt");
 
         vm.stopPrank();
     }
@@ -436,7 +436,7 @@ contract CollectionVerifierTest is Test {
             isActive: true
         });
 
-        verifier.requestVerification{value: VERIFICATION_FEE}(collection, metadata, "Test");
+        verifier.requestVerification{value: VERIFICATION_FEE}(collection, metadata, "Please verify this collection");
 
         vm.stopPrank();
 

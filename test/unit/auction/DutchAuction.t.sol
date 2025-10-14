@@ -4,7 +4,8 @@ pragma solidity ^0.8.30;
 import {Test, console2} from "forge-std/Test.sol";
 import {DutchAuction} from "src/core/auction/DutchAuction.sol";
 import {IAuction} from "src/interfaces/IAuction.sol";
-import {AuctionTestHelpers} from "../../utils/auction/AuctionTestHelpers.sol";
+import {AuctionType, AuctionStatus} from "src/types/AuctionTypes.sol";
+import {AuctionTestHelpers} from "test/utils/auction/AuctionTestHelpers.sol";
 import "src/errors/AuctionErrors.sol";
 
 /**
@@ -85,8 +86,8 @@ contract DutchAuctionTest is AuctionTestHelpers {
         assertEq(auction.seller, SELLER);
         assertEq(auction.startPrice, DEFAULT_START_PRICE);
         assertEq(auction.reservePrice, DEFAULT_RESERVE_PRICE);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.ACTIVE));
-        assertEq(uint256(auction.auctionType), uint256(IAuction.AuctionType.DUTCH));
+        assertEq(uint256(auction.status), uint256(AuctionStatus.ACTIVE));
+        assertEq(uint256(auction.auctionType), uint256(AuctionType.DUTCH));
 
         // Verify Dutch auction specific parameters
         uint256 priceDropPerHour = dutchAuction.getPriceDropPerHour(auctionId);
@@ -227,7 +228,7 @@ contract DutchAuctionTest is AuctionTestHelpers {
 
         // Verify auction settled
         IAuction.Auction memory auction = dutchAuction.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.SETTLED));
+        assertEq(uint256(auction.status), uint256(AuctionStatus.SETTLED));
         assertEq(auction.highestBidder, BIDDER1);
         assertEq(auction.highestBid, purchasePrice);
     }
@@ -320,7 +321,7 @@ contract DutchAuctionTest is AuctionTestHelpers {
 
         // Verify auction ended without winner
         IAuction.Auction memory settledAuction = dutchAuction.getAuction(auctionId);
-        assertEq(uint256(settledAuction.status), uint256(IAuction.AuctionStatus.ENDED));
+        assertEq(uint256(settledAuction.status), uint256(AuctionStatus.ENDED));
 
         // Verify NFT still with seller
         assertNFTOwnership(address(mockERC721), 1, SELLER);
@@ -344,7 +345,7 @@ contract DutchAuctionTest is AuctionTestHelpers {
         dutchAuction.cancelAuction(auctionId);
 
         IAuction.Auction memory auction = dutchAuction.getAuction(auctionId);
-        assertEq(uint256(auction.status), uint256(IAuction.AuctionStatus.CANCELLED));
+        assertEq(uint256(auction.status), uint256(AuctionStatus.CANCELLED));
     }
 
     function test_CancelAuction_RevertIfNotSeller() public {

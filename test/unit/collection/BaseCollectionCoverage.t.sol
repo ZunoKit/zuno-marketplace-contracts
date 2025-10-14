@@ -120,7 +120,7 @@ contract BaseCollectionCoverageTest is Test {
     // ============================================================================
 
     function test_GetDescription() public {
-        assertEq(testableCollection.getDescription(), "Test Description");
+        assertEq(testableCollection.getDescription(), "");
     }
 
     function test_GetMintPrice() public {

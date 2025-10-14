@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ERC721Collection} from "../collection/ERC721Collection.sol";
+import {ERC721Collection} from "src/core/collection/ERC721Collection.sol";
 import {CollectionParams, MintStage} from "src/types/ListingTypes.sol";
 import {Fee} from "src/common/Fee.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";

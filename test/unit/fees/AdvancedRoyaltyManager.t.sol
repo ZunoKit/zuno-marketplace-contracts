@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "src/core/fees/AdvancedRoyaltyManager.sol";
 import "src/core/access/MarketplaceAccessControl.sol";
 import "src/common/Fee.sol";
-import "../../utils/TestHelpers.sol";
+import "test/utils/TestHelpers.sol";
 
 contract AdvancedRoyaltyManagerTest is Test, TestHelpers {
     AdvancedRoyaltyManager public royaltyManager;

@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {ERC721NFTExchange} from "./ERC721NFTExchange.sol";
 import {ERC1155NFTExchange} from "./ERC1155NFTExchange.sol";
-import {NFTExchangeFactory} from "../factory/NFTExchangeFactory.sol";
+import {NFTExchangeFactory} from "src/core/factory/NFTExchangeFactory.sol";
 import {BaseNFTExchange} from "src/common/BaseNFTExchange.sol";
 import {IExchangeCore} from "src/interfaces/IMarketplaceCore.sol";
 import {Constants} from "src/common/Constants.sol";

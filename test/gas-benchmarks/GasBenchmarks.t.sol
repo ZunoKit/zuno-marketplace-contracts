@@ -69,7 +69,7 @@ contract GasBenchmarks is Test {
         }
 
         // Alert if significantly over target (20% tolerance)
-        assertLt(gasUsed, (TARGET_LIST_GAS * 120) / 100, "Gas usage significantly exceeds target");
+        assertLt(gasUsed, (TARGET_LIST_GAS * 120) / 100);
 
         vm.stopPrank();
     }
@@ -100,7 +100,7 @@ contract GasBenchmarks is Test {
             console2.log("Gas usage within target");
         }
 
-        assertLt(gasUsed, (TARGET_BUY_GAS * 120) / 100, "Gas usage significantly exceeds target");
+        assertLt(gasUsed, (TARGET_BUY_GAS * 120) / 100);
 
         vm.stopPrank();
     }
@@ -139,7 +139,7 @@ contract GasBenchmarks is Test {
             console2.log("Batch gas efficiency within target");
         }
 
-        assertLt(gasPerNFT, (TARGET_BATCH_LIST_GAS * 120) / 100, "Batch gas efficiency exceeds target");
+        assertLt(gasPerNFT, (TARGET_BATCH_LIST_GAS * 120) / 100);
 
         vm.stopPrank();
     }
@@ -169,7 +169,7 @@ contract GasBenchmarks is Test {
             console2.log("Gas usage within target");
         }
 
-        assertLt(gasUsed, (TARGET_CANCEL_GAS * 120) / 100, "Gas usage significantly exceeds target");
+        assertLt(gasUsed, (TARGET_CANCEL_GAS * 120) / 100);
 
         vm.stopPrank();
     }
@@ -181,10 +181,10 @@ contract GasBenchmarks is Test {
         console2.log("");
         console2.log("GAS OPTIMIZATION TARGETS");
         console2.log("============================");
-        console2.log("Single NFT Listing:", TARGET_LIST_GAS, "gas");
-        console2.log("Single NFT Purchase:", TARGET_BUY_GAS, "gas");
-        console2.log("Listing Cancellation:", TARGET_CANCEL_GAS, "gas");
-        console2.log("Batch Listing (per NFT):", TARGET_BATCH_LIST_GAS, "gas");
+        console2.log("Single NFT Listing:", TARGET_LIST_GAS);
+        console2.log("Single NFT Purchase:", TARGET_BUY_GAS);
+        console2.log("Listing Cancellation:", TARGET_CANCEL_GAS);
+        console2.log("Batch Listing (per NFT):", TARGET_BATCH_LIST_GAS);
         console2.log("");
         console2.log("Run individual benchmark tests to see current usage");
         console2.log("Tests will fail if gas usage exceeds targets by >20%");

@@ -78,7 +78,7 @@ contract EmergencyManagerTest is Test {
 
         // Test pause
         vm.expectEmit(true, false, false, true);
-        emit EmergencyPauseActivated(owner, block.timestamp, "Security incident");
+        emit EmergencyPauseActivated(owner, block.timestamp, "Emergency pause");
 
         emergencyManager.emergencyPause("Security incident");
 
@@ -152,9 +152,9 @@ contract EmergencyManagerTest is Test {
         vm.startPrank(owner);
 
         vm.expectEmit(true, false, false, true);
-        emit ContractBlacklisted(maliciousContract, true, "Malicious behavior detected");
+        emit ContractBlacklisted(maliciousContract, true, "Malicious contract");
 
-        emergencyManager.setContractBlacklist(maliciousContract, true, "Malicious behavior detected");
+        emergencyManager.setContractBlacklist(maliciousContract, true, "Malicious contract");
 
         assertTrue(emergencyManager.blacklistedContracts(maliciousContract));
         assertTrue(emergencyManager.isContractBlacklisted(maliciousContract));
@@ -164,28 +164,28 @@ contract EmergencyManagerTest is Test {
         vm.startPrank(owner);
 
         vm.expectRevert(EmergencyManager__ZeroAddress.selector);
-        emergencyManager.setContractBlacklist(address(0), true, "Invalid address");
+        emergencyManager.setContractBlacklist(address(0), true, "Zero address");
     }
 
     function test_SetContractBlacklist_RevertNotOwner() public {
         vm.startPrank(user1);
 
         vm.expectRevert();
-        emergencyManager.setContractBlacklist(maliciousContract, true, "Unauthorized");
+        emergencyManager.setContractBlacklist(maliciousContract, true, "Malicious contract");
     }
 
     function test_SetContractBlacklist_Unblacklist() public {
         vm.startPrank(owner);
 
         // Blacklist first
-        emergencyManager.setContractBlacklist(maliciousContract, true, "Initial blacklist");
+        emergencyManager.setContractBlacklist(maliciousContract, true, "Malicious contract");
         assertTrue(emergencyManager.isContractBlacklisted(maliciousContract));
 
         // Unblacklist
         vm.expectEmit(true, false, false, true);
-        emit ContractBlacklisted(maliciousContract, false, "Issue resolved");
+        emit ContractBlacklisted(maliciousContract, false, "Removed from blacklist");
 
-        emergencyManager.setContractBlacklist(maliciousContract, false, "Issue resolved");
+        emergencyManager.setContractBlacklist(maliciousContract, false, "Removed from blacklist");
         assertFalse(emergencyManager.isContractBlacklisted(maliciousContract));
     }
 
@@ -197,9 +197,9 @@ contract EmergencyManagerTest is Test {
         vm.startPrank(owner);
 
         vm.expectEmit(true, false, false, true);
-        emit UserBlacklisted(user1, true, "Suspicious activity");
+        emit UserBlacklisted(user1, true, "Blacklisted user");
 
-        emergencyManager.setUserBlacklist(user1, true, "Suspicious activity");
+        emergencyManager.setUserBlacklist(user1, true, "Blacklisted user");
 
         assertTrue(emergencyManager.blacklistedUsers(user1));
         assertTrue(emergencyManager.isUserBlacklisted(user1));
@@ -209,14 +209,14 @@ contract EmergencyManagerTest is Test {
         vm.startPrank(owner);
 
         vm.expectRevert(EmergencyManager__ZeroAddress.selector);
-        emergencyManager.setUserBlacklist(address(0), true, "Invalid address");
+        emergencyManager.setUserBlacklist(address(0), true, "Zero address");
     }
 
     function test_SetUserBlacklist_RevertNotOwner() public {
         vm.startPrank(user1);
 
         vm.expectRevert();
-        emergencyManager.setUserBlacklist(user2, true, "Unauthorized");
+        emergencyManager.setUserBlacklist(user2, true, "Blacklisted user");
     }
 
     // ============================================================================
@@ -262,7 +262,7 @@ contract EmergencyManagerTest is Test {
         contracts[1] = address(0); // Invalid address
 
         vm.expectRevert(EmergencyManager__ZeroAddress.selector);
-        emergencyManager.batchSetContractBlacklist(contracts, true, "Contains zero address");
+        emergencyManager.batchSetContractBlacklist(contracts, true, "Batch blacklist");
     }
 
     // ============================================================================
@@ -341,7 +341,7 @@ contract EmergencyManagerTest is Test {
         uint256 initialBalance = user1.balance;
 
         // Withdraw all (amount = 0)
-        emergencyManager.emergencyWithdraw(payable(user1), 0, "Withdraw all");
+        emergencyManager.emergencyWithdraw(payable(user1), 0, "Zero amount");
 
         assertEq(user1.balance, initialBalance + 1 ether);
         assertEq(address(emergencyManager).balance, 0);
@@ -352,14 +352,14 @@ contract EmergencyManagerTest is Test {
         vm.startPrank(owner);
 
         vm.expectRevert(EmergencyManager__ZeroAddress.selector);
-        emergencyManager.emergencyWithdraw(payable(address(0)), 0.5 ether, "Invalid recipient");
+        emergencyManager.emergencyWithdraw(payable(address(0)), 0.5 ether, "Zero address");
     }
 
     function test_EmergencyWithdraw_RevertNoFunds() public {
         vm.startPrank(owner);
 
         vm.expectRevert(EmergencyManager__NoFundsToWithdraw.selector);
-        emergencyManager.emergencyWithdraw(payable(user1), 0.5 ether, "No funds");
+        emergencyManager.emergencyWithdraw(payable(user1), 0.5 ether, "Emergency withdrawal");
     }
 
     function test_EmergencyWithdraw_RevertInsufficientBalance() public {
@@ -422,7 +422,7 @@ contract EmergencyManagerTest is Test {
         assertTrue(emergencyManager.paused());
 
         // Blacklist malicious contract
-        emergencyManager.setContractBlacklist(maliciousContract, true, "Malicious behavior");
+        emergencyManager.setContractBlacklist(maliciousContract, true, "Malicious contract");
         assertTrue(emergencyManager.isContractBlacklisted(maliciousContract));
 
         // Unpause
@@ -441,7 +441,7 @@ contract EmergencyManagerTest is Test {
         vm.assume(contractAddr != address(0));
         vm.startPrank(owner);
 
-        emergencyManager.setContractBlacklist(contractAddr, isBlacklisted, "Fuzz test");
+        emergencyManager.setContractBlacklist(contractAddr, isBlacklisted, "Test reason");
         assertEq(emergencyManager.isContractBlacklisted(contractAddr), isBlacklisted);
     }
 
@@ -453,7 +453,7 @@ contract EmergencyManagerTest is Test {
         vm.startPrank(owner);
 
         uint256 initialBalance = user1.balance;
-        emergencyManager.emergencyWithdraw(payable(user1), amount, "Fuzz withdrawal");
+        emergencyManager.emergencyWithdraw(payable(user1), amount, "Test withdrawal");
 
         assertEq(user1.balance, initialBalance + amount);
         assertEq(address(emergencyManager).balance, 0);
