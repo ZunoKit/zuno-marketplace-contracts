@@ -1,6 +1,7 @@
 # 🔗 Zuno Marketplace - Complete Frontend Integration Guide
 
 ## 📋 Table of Contents
+
 - [Quick Start](#-quick-start)
 - [Contract Addresses](#-contract-addresses)
 - [Core Functions](#-core-functions)
@@ -30,14 +31,13 @@ Frontend only needs **ONE** contract address:
 
 ```javascript
 // This is the ONLY address you need to store for users
-const USER_HUB = "0x..."; // Get from deployment output
+const USER_HUB = '0x...'; // Get from deployment output
 
 // Initialize user hub (for frontend/user operations)
 const userHub = new ethers.Contract(USER_HUB, UserHubABI, provider);
 
-// Get all other contract addresses
-const addresses = await userHub.getAllAddresses();
-const {
+// Get all core contract addresses from UserHub
+const [
   erc721Exchange,
   erc1155Exchange,
   erc721Factory,
@@ -48,8 +48,62 @@ const {
   feeRegistry,
   bundleManager,
   offerManager
-} = addresses;
+] = await userHub.getAllAddresses();
+
+// ⚠️ Additional contracts (not in getAllAddresses yet)
+// Now you can get them via dedicated getter functions:
+const listingValidator = await userHub.getListingValidator();
+const emergencyManager = await userHub.getEmergencyManager();
+const accessControl = await userHub.getAccessControl();
+const historyTracker = await userHub.getHistoryTracker();
+
+// OR get all additional addresses at once
+const [
+  listingValidatorAddr,
+  emergencyManagerAddr,
+  accessControlAddr,
+  historyTrackerAddr
+] = await userHub.getAdditionalAddresses();
+
+// Helper functions from UserHub
+const feeRegistryAddr = await userHub.getFeeRegistry();
+const erc721FactoryAddr = await userHub.getFactoryFor('ERC721');
+const englishAuctionAddr = await userHub.getAuctionFor(0); // 0 = ENGLISH
+const dutchAuctionAddr = await userHub.getAuctionFor(1); // 1 = DUTCH
+
+// Auto-detect exchange for any NFT
+const nftExchange = await userHub.getExchangeFor(nftContractAddress);
+
+// Check system status
+const [isHealthy, activeContracts, timestamp] = await userHub.getSystemStatus();
 ```
+
+**⚠️ Important Note:**
+UserHub provides two main functions for getting contract addresses:
+
+1. **`getAllAddresses()`** - Returns 10 core contracts:
+
+   - ERC721 Exchange
+   - ERC1155 Exchange
+   - ERC721 Factory
+   - ERC1155 Factory
+   - English Auction
+   - Dutch Auction
+   - Auction Factory
+   - Fee Registry
+   - Bundle Manager
+   - Offer Manager
+
+2. **`getAdditionalAddresses()`** - Returns 4 additional contracts:
+   - Listing Validator
+   - Emergency Manager
+   - Access Control
+   - History Tracker
+
+**Not available via UserHub:**
+
+- `advancedFeeManager` - ❌ Query FeeRegistry instead
+- `marketplaceValidator` - ❌ Deploy separately and store address
 
 ### 2. AdminHub (Admin Operations Only)
 
@@ -57,7 +111,7 @@ const {
 
 ```javascript
 // Admin operations require AdminHub address and admin role
-const ADMIN_HUB = "0x..."; // Get from deployment output
+const ADMIN_HUB = '0x...'; // Get from deployment output
 
 // Initialize admin hub (requires admin wallet/signer)
 const adminHub = new ethers.Contract(ADMIN_HUB, AdminHubABI, adminSigner);
@@ -69,7 +123,7 @@ await adminHub.registerExchange(
 );
 
 // Register new collection factory (admin only)
-await adminHub.registerCollectionFactory("ERC721", newFactoryAddress);
+await adminHub.registerCollectionFactory('ERC721', newFactoryAddress);
 
 // Register auction contracts (admin only)
 await adminHub.registerAuction(
@@ -111,22 +165,44 @@ const bundleManager = await hub.getBundleManager();
 
 ### 1. Listing NFTs
 
+**Step 1: Get Exchange Address from UserHub**
+
+```javascript
+// Initialize UserHub first (ONE TIME ONLY)
+const userHub = new ethers.Contract(USER_HUB, UserHubABI, provider);
+
+// Get exchange address for your NFT
+const exchangeAddress = await userHub.getExchangeFor(nftContract);
+
+// OR get specific exchange
+const [erc721Exchange, erc1155Exchange] = await userHub.getAllAddresses();
+```
+
+**Step 2: List NFT**
+
 #### Fixed Price Listing (ERC721)
 
 ```javascript
+// Connect to exchange
+const exchange = new ethers.Contract(exchangeAddress, ExchangeABI, signer);
+
 // 1. Approve marketplace
 await nft.approve(exchangeAddress, tokenId);
 
 // 2. List NFT
 await exchange.listNFT(
-  nftContract,     // NFT contract address
-  tokenId,         // Token ID
-  price,           // Price in wei
-  duration         // Listing duration in seconds
+  nftContract, // NFT contract address
+  tokenId, // Token ID
+  price, // Price in wei
+  duration // Listing duration in seconds
 );
 
 // Get listing ID
-const listingId = await exchange.getGeneratedListingId(nftContract, tokenId, seller);
+const listingId = await exchange.getGeneratedListingId(
+  nftContract,
+  tokenId,
+  seller
+);
 ```
 
 #### Batch Listing (ERC721)
@@ -137,10 +213,10 @@ await nft.setApprovalForAll(exchangeAddress, true);
 
 // Batch list
 await exchange.batchListNFT(
-  nftContract,     // NFT contract address
-  tokenIds,        // Array of token IDs
-  prices,          // Array of prices
-  duration         // Same duration for all
+  nftContract, // NFT contract address
+  tokenIds, // Array of token IDs
+  prices, // Array of prices
+  duration // Same duration for all
 );
 ```
 
@@ -154,8 +230,8 @@ await nft1155.setApprovalForAll(exchangeAddress, true);
 await erc1155Exchange.listNFT(
   nftContract,
   tokenId,
-  amount,          // Number of tokens to list
-  pricePerToken,   // Price per token
+  amount, // Number of tokens to list
+  pricePerToken, // Price per token
   duration
 );
 ```
@@ -193,7 +269,11 @@ await exchange.batchBuyNFT(listingIds, {
 #### Create English Auction
 
 ```javascript
-const auctionFactory = new ethers.Contract(auctionFactoryAddress, FactoryABI, signer);
+const auctionFactory = new ethers.Contract(
+  auctionFactoryAddress,
+  FactoryABI,
+  signer
+);
 
 // Approve NFT
 await nft.approve(auctionFactoryAddress, tokenId);
@@ -202,10 +282,10 @@ await nft.approve(auctionFactoryAddress, tokenId);
 const tx = await auctionFactory.createEnglishAuction(
   nftContract,
   tokenId,
-  amount,           // 1 for ERC721
-  startingPrice,    // Minimum bid
-  reservePrice,     // Optional reserve (0 for none)
-  duration          // Auction duration
+  amount, // 1 for ERC721
+  startingPrice, // Minimum bid
+  reservePrice, // Optional reserve (0 for none)
+  duration // Auction duration
 );
 
 // Get auction ID from event
@@ -216,7 +296,11 @@ const auctionId = receipt.events[0].args.auctionId;
 #### Place Bid (English)
 
 ```javascript
-const englishAuction = new ethers.Contract(englishAuctionAddress, AuctionABI, signer);
+const englishAuction = new ethers.Contract(
+  englishAuctionAddress,
+  AuctionABI,
+  signer
+);
 
 await englishAuction.placeBid(auctionId, {
   value: bidAmount
@@ -230,16 +314,20 @@ await auctionFactory.createDutchAuction(
   nftContract,
   tokenId,
   amount,
-  startingPrice,   // High starting price
-  endingPrice,     // Low ending price
-  duration         // Price decrease duration
+  startingPrice, // High starting price
+  endingPrice, // Low ending price
+  duration // Price decrease duration
 );
 ```
 
 #### Buy Dutch Auction
 
 ```javascript
-const dutchAuction = new ethers.Contract(dutchAuctionAddress, AuctionABI, signer);
+const dutchAuction = new ethers.Contract(
+  dutchAuctionAddress,
+  AuctionABI,
+  signer
+);
 
 // Get current price
 const currentPrice = await dutchAuction.getCurrentPrice(auctionId);
@@ -264,7 +352,7 @@ const offerId = await offerManager.createNFTOffer(
   offerAmount,
   duration,
   {
-    value: offerAmount  // Lock ETH
+    value: offerAmount // Lock ETH
   }
 );
 
@@ -293,13 +381,36 @@ await offerManager.acceptNFTOffer(offerId);
 // Make offer on any NFT in collection
 await offerManager.createCollectionOffer(
   collection,
+  paymentToken, // address(0) for ETH
   pricePerNFT,
-  quantity,      // How many NFTs you want
-  duration,
+  quantity, // How many NFTs you want (max 100)
+  expiration, // Unix timestamp
   {
-    value: pricePerNFT * quantity
+    value: pricePerNFT * quantity // Only if ETH
   }
 );
+```
+
+#### Trait-Based Offer
+
+```javascript
+// Make offer on NFTs with specific traits
+await offerManager.createTraitOffer(
+  collection,
+  'Background', // trait type
+  'Blue', // trait value
+  paymentToken, // address(0) for ETH
+  pricePerNFT,
+  quantity, // How many NFTs you want (max 50)
+  expiration,
+  {
+    value: pricePerNFT * quantity // Only if ETH
+  }
+);
+
+// Accept trait offer (as NFT owner)
+await nft.approve(offerManagerAddress, tokenId);
+await offerManager.acceptTraitOffer(offerId, tokenId);
 ```
 
 ### 5. Bundles
@@ -307,10 +418,14 @@ await offerManager.createCollectionOffer(
 #### Create Bundle
 
 ```javascript
-const bundleManager = new ethers.Contract(bundleManagerAddress, BundleABI, signer);
+const bundleManager = new ethers.Contract(
+  bundleManagerAddress,
+  BundleABI,
+  signer
+);
 
 // Approve all NFTs
-for(const nft of nfts) {
+for (const nft of nfts) {
   await nft.contract.approve(bundleManagerAddress, nft.tokenId);
 }
 
@@ -319,8 +434,8 @@ const bundleItems = [
   {
     nftContract: nft1Address,
     tokenId: 1,
-    amount: 1,      // 1 for ERC721
-    tokenType: 0    // 0 = ERC721, 1 = ERC1155
+    amount: 1, // 1 for ERC721
+    tokenType: 0 // 0 = ERC721, 1 = ERC1155
   },
   {
     nftContract: nft2Address,
@@ -332,7 +447,7 @@ const bundleItems = [
 
 const tx = await bundleManager.createBundle(
   bundleItems,
-  totalPrice,     // Price for entire bundle
+  totalPrice, // Price for entire bundle
   duration
 );
 
@@ -357,20 +472,24 @@ await bundleManager.purchaseBundle(bundleId, {
 For complex listing types:
 
 ```javascript
-const listingManager = new ethers.Contract(listingManagerAddress, ListingABI, signer);
+const listingManager = new ethers.Contract(
+  listingManagerAddress,
+  ListingABI,
+  signer
+);
 
 // Create auction listing
 await listingManager.createAuctionListing(
   nftContract,
   tokenId,
-  auctionParams    // Starting bid, reserve, duration, etc.
+  auctionParams // Starting bid, reserve, duration, etc.
 );
 
 // Create Dutch auction
 await listingManager.createDutchAuctionListing(
   nftContract,
   tokenId,
-  dutchParams      // Start price, end price, duration
+  dutchParams // Start price, end price, duration
 );
 
 // Update listing price
@@ -396,12 +515,12 @@ const erc721Factory = new ethers.Contract(
 );
 
 const tx = await erc721Factory.createCollection(
-  "My NFT Collection",     // name
-  "MNC",                  // symbol
-  "ipfs://metadata/",     // baseURI
-  1000,                   // maxSupply
-  owner,                  // collection owner
-  500                     // royalty basis points (5%)
+  'My NFT Collection', // name
+  'MNC', // symbol
+  'ipfs://metadata/', // baseURI
+  1000, // maxSupply
+  owner, // collection owner
+  500 // royalty basis points (5%)
 );
 
 const receipt = await tx.wait();
@@ -415,9 +534,9 @@ const erc1155Factory = new ethers.Contract(
 );
 
 await erc1155Factory.createCollection(
-  "My Multi-Token Collection",
-  "MMT",
-  "ipfs://metadata/{id}.json",
+  'My Multi-Token Collection',
+  'MMT',
+  'ipfs://metadata/{id}.json',
   owner
 );
 ```
@@ -435,17 +554,19 @@ const collectionVerifier = new ethers.Contract(
 await collectionVerifier.requestVerification(
   collectionAddress,
   {
-    name: "Collection Name",
-    description: "Collection Description",
-    website: "https://collection.com",
-    twitter: "@collection"
+    name: 'Collection Name',
+    description: 'Collection Description',
+    website: 'https://collection.com',
+    twitter: '@collection'
   },
-  "Additional submission data",
+  'Additional submission data',
   { value: verificationFee }
 );
 
 // Check verification status
-const status = await collectionVerifier.getVerificationStatus(collectionAddress);
+const status = await collectionVerifier.getVerificationStatus(
+  collectionAddress
+);
 const isVerified = await collectionVerifier.isVerified(collectionAddress);
 ```
 
@@ -480,10 +601,7 @@ await exchange.batchListNFT(
 );
 
 // Batch buy NFTs
-await exchange.batchBuyNFT(
-  [listingId1, listingId2],
-  { value: totalPrice }
-);
+await exchange.batchBuyNFT([listingId1, listingId2], { value: totalPrice });
 
 // Batch cancel listings
 await exchange.batchCancelListing([listingId1, listingId2]);
@@ -519,7 +637,11 @@ const listing = await exchange.getListingByNFT(nftContract, tokenId);
 
 ```javascript
 // English Auction Functions
-const englishAuction = new ethers.Contract(englishAuctionAddress, AuctionABI, signer);
+const englishAuction = new ethers.Contract(
+  englishAuctionAddress,
+  AuctionABI,
+  signer
+);
 
 // Get auction details
 const auction = await englishAuction.getAuction(auctionId);
@@ -543,7 +665,11 @@ const canBid = await englishAuction.canBid(auctionId, bidAmount);
 const timeLeft = await englishAuction.getTimeRemaining(auctionId);
 
 // Dutch Auction Functions
-const dutchAuction = new ethers.Contract(dutchAuctionAddress, DutchAuctionABI, signer);
+const dutchAuction = new ethers.Contract(
+  dutchAuctionAddress,
+  DutchAuctionABI,
+  signer
+);
 
 // Get current price at any time
 const currentPrice = await dutchAuction.getCurrentPrice(auctionId);
@@ -615,7 +741,11 @@ const isValid = await bundleManager.isBundleValid(bundleId);
 
 ```javascript
 // Collection management
-const collection = new ethers.Contract(collectionAddress, CollectionABI, signer);
+const collection = new ethers.Contract(
+  collectionAddress,
+  CollectionABI,
+  signer
+);
 
 // Mint NFT (if authorized)
 await collection.mint(recipientAddress, tokenId, metadata);
@@ -624,10 +754,10 @@ await collection.mint(recipientAddress, tokenId, metadata);
 await collection.batchMint(recipients, tokenIds, metadataArray);
 
 // Set base URI
-await collection.setBaseURI("ipfs://new-base-uri/");
+await collection.setBaseURI('ipfs://new-base-uri/');
 
 // Set token URI
-await collection.setTokenURI(tokenId, "ipfs://token-metadata.json");
+await collection.setTokenURI(tokenId, 'ipfs://token-metadata.json');
 
 // Pause/Unpause minting
 await collection.pauseMinting();
@@ -643,65 +773,255 @@ const totalSupply = await collection.totalSupply();
 const canMint = await collection.canMint(userAddress);
 
 // Get royalty info
-const [royaltyRecipient, royaltyAmount] = await collection.royaltyInfo(tokenId, salePrice);
+const [royaltyRecipient, royaltyAmount] = await collection.royaltyInfo(
+  tokenId,
+  salePrice
+);
 ```
 
 ### 15. Registry & Hub Query Functions
 
 ```javascript
 // Hub queries
-const hub = new ethers.Contract(hubAddress, HubABI, provider);
+const userHub = new ethers.Contract(userHubAddress, UserHubABI, provider);
 
-// Get contract for token standard
-const exchange = await hub.getExchangeFor(nftContract);
+// Get contract for token standard (auto-detect)
+const exchange = await userHub.getExchangeFor(nftContract);
 
-// Check if exchange is registered
-const isRegistered = await hub.isRegisteredExchange(exchangeAddress);
+// Get fee registry for calculations
+const feeRegistry = await userHub.getFeeRegistry();
 
 // Get factory for collection type
-const factory = await hub.getFactoryFor("ERC721");
+const factory = await userHub.getFactoryFor('ERC721');
+const erc1155Factory = await userHub.getFactoryFor('ERC1155');
 
-// Get auction contract
-const auctionContract = await hub.getAuctionContract("ENGLISH");
+// Get auction contract for auction type
+const englishAuction = await userHub.getAuctionFor(0); // 0 = ENGLISH
+const dutchAuction = await userHub.getAuctionFor(1); // 1 = DUTCH
 
-// Get fee configuration
-const feeConfig = await hub.getFeeConfiguration();
+// Verify collection is valid
+const isValid = await userHub.verifyCollection(collectionAddress);
 
-// Calculate total price with fees
-const totalWithFees = await hub.calculateTotalPrice(basePrice);
+// Check if system is paused
+const isPaused = await userHub.isPaused();
 
-// Verify collection support
-const isSupported = await hub.isCollectionSupported(collectionAddress);
-
-// Get platform statistics
-const stats = await hub.getPlatformStatistics();
+// Get system health status
+const { isHealthy, activeContracts, timestamp } =
+  await userHub.getSystemStatus();
 ```
 
 ### 16. Analytics & History Functions
 
 ```javascript
-const historyTracker = new ethers.Contract(historyAddress, HistoryABI, provider);
+const historyTracker = new ethers.Contract(
+  historyTrackerAddress,
+  ListingHistoryTrackerABI,
+  provider
+);
 
-// Get NFT price history
-const priceHistory = await historyTracker.getNFTPriceHistory(nftContract, tokenId);
+// ============================================================================
+// NFT TRANSACTION HISTORY
+// ============================================================================
 
-// Get collection floor price
-const floorPrice = await historyTracker.getCollectionFloorPrice(collection);
+// Get complete transaction history for an NFT
+const nftHistory = await historyTracker.getNFTHistory(
+  nftContract,
+  tokenId,
+  limit // max records to return (0 = all)
+);
+/*
+Returns: TransactionRecord[] {
+  listingId: bytes32,
+  seller: address,
+  buyer: address,
+  price: uint256,
+  timestamp: uint256,
+  txType: enum (LISTING_CREATED, SALE_COMPLETED, etc.),
+  listingType: uint8,
+  isActive: bool
+}
+*/
 
-// Get collection volume (24h, 7d, 30d, all time)
-const volume24h = await historyTracker.getVolume(collection, "24h");
-const volume7d = await historyTracker.getVolume(collection, "7d");
-const volume30d = await historyTracker.getVolume(collection, "30d");
-const volumeTotal = await historyTracker.getVolume(collection, "total");
+// Get NFT history metadata
+const nftMeta = await historyTracker.nftHistoryMeta(nftContract, tokenId);
+/*
+Returns: {
+  totalTransactions: number of all transactions
+  totalVolume: total trading volume for this NFT
+  lastSalePrice: price of last sale
+  lastSaleTime: timestamp of last sale
+  currentOwner: current owner address
+}
+*/
 
-// Get trending collections
-const trending = await historyTracker.getTrendingCollections(limit);
+// ============================================================================
+// COLLECTION STATISTICS
+// ============================================================================
 
-// Get user transaction history
-const userTxHistory = await historyTracker.getUserTransactionHistory(userAddress);
+// Get comprehensive collection stats
+const collectionStats = await historyTracker.collectionStats(collection);
+/*
+Returns: CollectionStats {
+  totalListings: total listings created
+  totalSales: completed sales count
+  totalVolume: total trading volume (ETH/WETH)
+  floorPrice: current floor price ✅
+  averagePrice: average sale price ✅
+  highestSale: highest sale ever
+  activeListings: current active listings
+  lastUpdated: last update timestamp
+}
+*/
 
-// Get marketplace metrics
-const metrics = await historyTracker.getMarketplaceMetrics();
+// Get collection price history (for charts)
+const priceHistory = await historyTracker.getCollectionPriceHistory(
+  collection,
+  limit // max price points (0 = all, max 1000)
+);
+/*
+Returns: PricePoint[] {
+  price: sale price
+  timestamp: when it happened
+  volume: volume at this price
+  source: transaction type
+}
+// Use this to build price charts!
+*/
+
+// ============================================================================
+// USER STATISTICS
+// ============================================================================
+
+// Get user trading statistics
+const userStats = await historyTracker.userStats(userAddress);
+/*
+Returns: UserStats {
+  totalListings: listings created by user
+  totalSales: successful sales
+  totalPurchases: NFTs purchased
+  volumeSold: total ETH earned
+  volumeBought: total ETH spent
+  averageSalePrice: avg price when selling
+  averagePurchasePrice: avg price when buying
+  firstActivity: first transaction timestamp
+  lastActivity: most recent activity
+}
+*/
+
+// ============================================================================
+// GLOBAL MARKETPLACE METRICS
+// ============================================================================
+
+// Get global marketplace statistics
+const globalStats = await historyTracker.globalStats();
+/*
+Returns: MarketplaceStats {
+  totalListings: all listings ever created
+  totalSales: all completed sales
+  totalVolume: total trading volume (all time)
+  totalUsers: unique users count
+  totalCollections: collections with activity
+  averageSalePrice: global average price
+  dailyActiveUsers: active users today
+  lastUpdated: last stats update
+}
+*/
+
+// Get daily trading volume
+const today = Math.floor(Date.now() / 1000 / 86400); // days since epoch
+const dailyVolume = await historyTracker.dailyVolumes(today);
+/*
+Returns: DailyVolume {
+  volume: total volume today
+  transactions: transaction count today
+  uniqueUsers: unique users today
+  averagePrice: avg price today
+}
+*/
+
+// Get yesterday's volume
+const yesterday = today - 1;
+const yesterdayVolume = await historyTracker.dailyVolumes(yesterday);
+
+// ============================================================================
+// REAL-TIME ANALYTICS EXAMPLES
+// ============================================================================
+
+// Calculate floor price for display
+function displayFloorPrice(collectionStats) {
+  if (collectionStats.floorPrice === 0n) {
+    return 'No active listings';
+  }
+  return `${ethers.formatEther(collectionStats.floorPrice)} ETH`;
+}
+
+// Calculate 24h volume change
+async function calculate24hVolumeChange(historyTracker) {
+  const today = Math.floor(Date.now() / 1000 / 86400);
+  const yesterday = today - 1;
+
+  const todayVol = await historyTracker.dailyVolumes(today);
+  const yesterdayVol = await historyTracker.dailyVolumes(yesterday);
+
+  const change =
+    ((todayVol.volume - yesterdayVol.volume) * 100n) / yesterdayVol.volume;
+  return Number(change);
+}
+
+// Get trending collections (manual implementation)
+async function getTrendingCollections(historyTracker, collections) {
+  const today = Math.floor(Date.now() / 1000 / 86400);
+  const trending = [];
+
+  for (const collection of collections) {
+    const stats = await historyTracker.collectionStats(collection);
+    const dailyVol = await historyTracker.dailyVolumes(today);
+
+    trending.push({
+      collection,
+      volume24h: dailyVol.volume,
+      totalVolume: stats.totalVolume,
+      floorPrice: stats.floorPrice,
+      averagePrice: stats.averagePrice,
+      sales24h: dailyVol.transactions
+    });
+  }
+
+  // Sort by 24h volume
+  return trending.sort((a, b) => Number(b.volume24h - a.volume24h));
+}
+
+// Build price chart data
+async function buildPriceChart(historyTracker, collection, days = 30) {
+  const priceHistory = await historyTracker.getCollectionPriceHistory(
+    collection,
+    0 // get all points
+  );
+
+  const cutoffTime = Date.now() / 1000 - days * 86400;
+
+  return priceHistory
+    .filter((point) => point.timestamp >= cutoffTime)
+    .map((point) => ({
+      date: new Date(Number(point.timestamp) * 1000),
+      price: Number(ethers.formatEther(point.price)),
+      volume: Number(ethers.formatEther(point.volume))
+    }));
+}
+
+// Calculate user profit/loss
+function calculateUserProfitLoss(userStats) {
+  const profit = userStats.volumeSold - userStats.volumeBought;
+  const profitPercent = (profit * 100n) / (userStats.volumeBought || 1n); // avoid div by 0
+
+  return {
+    profit: ethers.formatEther(profit),
+    profitPercent: Number(profitPercent),
+    totalTraded: ethers.formatEther(
+      userStats.volumeSold + userStats.volumeBought
+    )
+  };
+}
 ```
 
 ### 17. Utility & Helper Functions
@@ -711,7 +1031,7 @@ const metrics = await historyTracker.getMarketplaceMetrics();
 function generateListingId(nftContract, tokenId, seller, timestamp) {
   return ethers.keccak256(
     ethers.AbiCoder.defaultAbiCoder().encode(
-      ["address", "uint256", "address", "uint256"],
+      ['address', 'uint256', 'address', 'uint256'],
       [nftContract, tokenId, seller, timestamp]
     )
   );
@@ -720,7 +1040,7 @@ function generateListingId(nftContract, tokenId, seller, timestamp) {
 // Check NFT ownership
 async function checkOwnership(nftContract, tokenId, address) {
   const nft = new ethers.Contract(nftContract, ERC721ABI, provider);
-  return await nft.ownerOf(tokenId) === address;
+  return (await nft.ownerOf(tokenId)) === address;
 }
 
 // Check approval status
@@ -743,7 +1063,7 @@ function parsePrice(priceString) {
 
 // Calculate fee amount
 function calculateFee(price, feeBasisPoints) {
-  return price * BigInt(feeBasisPoints) / BigInt(10000);
+  return (price * BigInt(feeBasisPoints)) / BigInt(10000);
 }
 
 // Validate ethereum address
@@ -807,8 +1127,14 @@ const { isValid, tokenType } = await hub.verifyCollection(collectionAddress);
 
 ### Fee Management
 
+#### Basic Fee Management
+
 ```javascript
-const feeManager = new ethers.Contract(addresses.feeManager, FeeManagerABI, signer);
+const feeManager = new ethers.Contract(
+  addresses.feeManager,
+  FeeManagerABI,
+  signer
+);
 
 // Get current fee rates
 const platformFee = await feeManager.getPlatformFee(); // in basis points
@@ -819,17 +1145,135 @@ const fees = await feeManager.calculateFees(salePrice);
 
 // Admin functions (only for marketplace admin)
 await feeManager.updatePlatformFee(250); // 2.5%
-await feeManager.updateMinimumPrice(ethers.parseEther("0.001"));
+await feeManager.updateMinimumPrice(ethers.parseEther('0.001'));
 await feeManager.setFeeRecipient(newRecipient);
 ```
+
+#### Advanced Fee Features (Volume-Based Tiers & VIP)
+
+**⚠️ Note:** AdvancedFeeManager is NOT directly accessible via UserHub. Query through FeeRegistry:
+
+```javascript
+// Get FeeRegistry from UserHub
+const feeRegistryAddr = await userHub.getFeeRegistry();
+const feeRegistry = new ethers.Contract(
+  feeRegistryAddr,
+  FeeRegistryABI,
+  provider
+);
+
+// Get AdvancedFeeManager address from FeeRegistry
+// (Implementation-specific - check your FeeRegistry contract)
+const advancedFeeManagerAddr = await feeRegistry.advancedFeeManager();
+const advancedFeeManager = new ethers.Contract(
+  advancedFeeManagerAddr,
+  AdvancedFeeManagerABI,
+  provider
+);
+
+// Get user's fee tier and volume
+const feeTier = await advancedFeeManager.userFeeTiers(userAddress);
+const volumeData = await advancedFeeManager.userVolumeData(userAddress);
+
+console.log('User Fee Tier:', feeTier.tierId);
+console.log('Discount:', feeTier.discountBps / 100, '%');
+console.log('Total Volume:', ethers.formatEther(volumeData.totalVolume), 'ETH');
+console.log('Total Trades:', volumeData.tradeCount.toString());
+
+// Calculate actual fees for a transaction
+const [finalFee, appliedDiscount] = await advancedFeeManager.calculateFees(
+  userAddress, // trader address
+  collectionAddress, // NFT collection
+  salePrice, // sale price in wei
+  false // false = taker fee, true = maker fee
+);
+
+console.log('Final Fee:', ethers.formatEther(finalFee), 'ETH');
+console.log('Discount Applied:', appliedDiscount / 100, '%');
+
+// Check VIP status
+const vipStatus = await advancedFeeManager.vipStatus(userAddress);
+if (vipStatus.isVIP && Date.now() / 1000 < vipStatus.vipExpiryTimestamp) {
+  console.log('VIP Tier:', vipStatus.vipTier);
+  console.log('VIP Discount:', vipStatus.vipDiscountBps / 100, '%');
+}
+
+// Check tier upgrade eligibility
+const [canUpgrade, nextTierId, volumeNeeded] =
+  await advancedFeeManager.checkTierUpgradeEligibility(userAddress);
+
+if (canUpgrade) {
+  console.log('✅ User can upgrade to tier', nextTierId);
+} else if (volumeNeeded > 0) {
+  console.log(
+    'Need',
+    ethers.formatEther(volumeNeeded),
+    'ETH more volume to upgrade'
+  );
+}
+
+// Get collection-specific fee override
+const collectionOverride = await advancedFeeManager.collectionFeeOverrides(
+  collectionAddress
+);
+
+if (collectionOverride.hasOverride) {
+  console.log(
+    'Collection Maker Fee:',
+    collectionOverride.makerFeeOverride / 100,
+    '%'
+  );
+  console.log(
+    'Collection Taker Fee:',
+    collectionOverride.takerFeeOverride / 100,
+    '%'
+  );
+  console.log(
+    'Collection Discount:',
+    collectionOverride.discountBps / 100,
+    '%'
+  );
+  console.log('Is Verified:', collectionOverride.isVerified);
+}
+
+// Get total marketplace volume
+const totalVolume = await advancedFeeManager.totalMarketplaceVolume();
+console.log(
+  'Total Marketplace Volume:',
+  ethers.formatEther(totalVolume),
+  'ETH'
+);
+```
+
+**Fee Tier System:**
+
+- **Bronze** (0+ ETH): 0% discount
+- **Silver** (10+ ETH): 0.5% discount
+- **Gold** (50+ ETH): 1% discount
+- **Platinum** (100+ ETH): 2% discount
+- **Diamond** (500+ ETH): 3% discount
+
+**VIP Benefits:**
+
+- Additional 1-5% discount on top of tier discount
+- Custom fee rates for specific collections
+- Priority support
+- Time-limited (renewable)
 
 ### Royalty System
 
 ```javascript
-const royaltyManager = new ethers.Contract(addresses.royaltyManager, RoyaltyManagerABI, signer);
+const royaltyManager = new ethers.Contract(
+  addresses.royaltyManager,
+  RoyaltyManagerABI,
+  signer
+);
 
 // Get royalty info (EIP-2981)
-const [recipient, amount] = await royaltyManager.royaltyInfo(tokenId, salePrice);
+const [recipient, amount] = await royaltyManager.royaltyInfo(
+  tokenId,
+  salePrice
+);
 
 // Set custom royalty (collection owner only)
 await royaltyManager.setTokenRoyalty(
@@ -848,7 +1292,11 @@ await royaltyManager.deleteTokenRoyalty(tokenId);
 ### Access Control
 
 ```javascript
-const accessControl = new ethers.Contract(addresses.accessControl, AccessControlABI, signer);
+const accessControl = new ethers.Contract(
+  addresses.accessControl,
+  AccessControlABI,
+  signer
+);
 
 // Check roles
 const isAdmin = await accessControl.hasRole(ADMIN_ROLE, userAddress);
@@ -871,11 +1319,11 @@ const timelock = new ethers.Contract(addresses.timelock, TimelockABI, signer);
 // Schedule a transaction (admin only)
 const delay = 48 * 60 * 60; // 48 hours
 await timelock.schedule(
-  target,           // Contract address
-  value,           // ETH value
-  data,            // Function calldata
-  predecessor,     // Previous tx hash (0x0 if none)
-  salt,           // Unique salt
+  target, // Contract address
+  value, // ETH value
+  data, // Function calldata
+  predecessor, // Previous tx hash (0x0 if none)
+  salt, // Unique salt
   delay
 );
 
@@ -893,7 +1341,11 @@ const isPending = await timelock.isOperationPending(operationId);
 ### Listing Validation
 
 ```javascript
-const validator = new ethers.Contract(addresses.listingValidator, ValidatorABI, signer);
+const validator = new ethers.Contract(
+  addresses.listingValidator,
+  ValidatorABI,
+  signer
+);
 
 // Validate listing parameters
 const isValid = await validator.validateListing(
@@ -919,14 +1371,16 @@ const errors = await validator.getValidationErrors(listingParams);
 ### Collection Verification
 
 ```javascript
-const verifier = new ethers.Contract(addresses.collectionVerifier, VerifierABI, signer);
+const verifier = new ethers.Contract(
+  addresses.collectionVerifier,
+  VerifierABI,
+  signer
+);
 
 // Submit collection for verification
-await verifier.submitForVerification(
-  collectionAddress,
-  metadata,
-  { value: verificationFee }
-);
+await verifier.submitForVerification(collectionAddress, metadata, {
+  value: verificationFee
+});
 
 // Check verification status
 const status = await verifier.getVerificationStatus(collectionAddress);
@@ -942,7 +1396,13 @@ await verifier.batchVerifyCollections([collection1, collection2]);
 ### History & Analytics
 
 ```javascript
-const historyTracker = new ethers.Contract(addresses.historyTracker, HistoryABI, provider);
+// Get HistoryTracker from UserHub
+const historyTrackerAddr = await userHub.getHistoryTracker();
+const historyTracker = new ethers.Contract(
+  historyTrackerAddr,
+  HistoryABI,
+  provider
+);
 
 // Get user trading history
 const userHistory = await historyTracker.getUserHistory(userAddress);
@@ -984,7 +1444,10 @@ Returns:
 */
 
 // Get price history for NFT
-const priceHistory = await historyTracker.getNFTPriceHistory(nftContract, tokenId);
+const priceHistory = await historyTracker.getNFTPriceHistory(
+  nftContract,
+  tokenId
+);
 ```
 
 ## 🔔 Events
@@ -995,460 +1458,601 @@ const priceHistory = await historyTracker.getNFTPriceHistory(nftContract, tokenI
 
 ```javascript
 // NFT Listed for sale
-exchange.on("NFTListed", (
-  listingId,      // bytes32
-  contractAddress, // address
-  tokenId,        // uint256
-  seller,         // address
-  price,          // uint256
-  amount,         // uint256 (1 for ERC721, multiple for ERC1155)
-  paymentToken,   // address
-  expirationTime  // uint256
-) => {
-  console.log("NFT Listed:", { listingId, seller, price });
-});
+exchange.on(
+  'NFTListed',
+  (
+    listingId, // bytes32
+    contractAddress, // address
+    tokenId, // uint256
+    seller, // address
+    price, // uint256
+    amount, // uint256 (1 for ERC721, multiple for ERC1155)
+    paymentToken, // address
+    expirationTime // uint256
+  ) => {
+    console.log('NFT Listed:', { listingId, seller, price });
+  }
+);
 
 // NFT Sold
-exchange.on("NFTSold", (
-  listingId,      // bytes32
-  buyer,          // address
-  soldPrice,      // uint256
-  platformFee,    // uint256
-  royaltyAmount   // uint256
-) => {
-  console.log("NFT Sold:", { listingId, buyer, soldPrice });
-});
+exchange.on(
+  'NFTSold',
+  (
+    listingId, // bytes32
+    buyer, // address
+    soldPrice, // uint256
+    platformFee, // uint256
+    royaltyAmount // uint256
+  ) => {
+    console.log('NFT Sold:', { listingId, buyer, soldPrice });
+  }
+);
 
 // Listing Cancelled
-exchange.on("ListingCancelled", (
-  listingId,      // bytes32
-  seller          // address
-) => {
-  console.log("Listing Cancelled:", listingId);
-});
+exchange.on(
+  'ListingCancelled',
+  (
+    listingId, // bytes32
+    seller // address
+  ) => {
+    console.log('Listing Cancelled:', listingId);
+  }
+);
 
 // Listing Price Updated
-exchange.on("ListingPriceUpdated", (
-  listingId,      // bytes32
-  oldPrice,       // uint256
-  newPrice        // uint256
-) => {
-  console.log("Price Updated:", { listingId, newPrice });
-});
+exchange.on(
+  'ListingPriceUpdated',
+  (
+    listingId, // bytes32
+    oldPrice, // uint256
+    newPrice // uint256
+  ) => {
+    console.log('Price Updated:', { listingId, newPrice });
+  }
+);
 
 // Batch Events
-exchange.on("BatchListingCreated", (
-  listingIds,     // bytes32[]
-  seller          // address
-) => {
-  console.log("Batch Listing Created:", listingIds);
-});
+exchange.on(
+  'BatchListingCreated',
+  (
+    listingIds, // bytes32[]
+    seller // address
+  ) => {
+    console.log('Batch Listing Created:', listingIds);
+  }
+);
 
-exchange.on("BatchPurchaseCompleted", (
-  buyer,          // address
-  listingIds,     // bytes32[]
-  totalAmount     // uint256
-) => {
-  console.log("Batch Purchase:", { buyer, totalAmount });
-});
+exchange.on(
+  'BatchPurchaseCompleted',
+  (
+    buyer, // address
+    listingIds, // bytes32[]
+    totalAmount // uint256
+  ) => {
+    console.log('Batch Purchase:', { buyer, totalAmount });
+  }
+);
 ```
 
 #### Auction Events
 
 ```javascript
 // English Auction Events
-englishAuction.on("AuctionCreated", (
-  auctionId,      // bytes32
-  seller,         // address
-  nftContract,    // address
-  tokenId,        // uint256
-  startingPrice,  // uint256
-  reservePrice,   // uint256
-  startTime,      // uint256
-  endTime         // uint256
-) => {
-  console.log("English Auction Created:", auctionId);
-});
+englishAuction.on(
+  'AuctionCreated',
+  (
+    auctionId, // bytes32
+    seller, // address
+    nftContract, // address
+    tokenId, // uint256
+    startingPrice, // uint256
+    reservePrice, // uint256
+    startTime, // uint256
+    endTime // uint256
+  ) => {
+    console.log('English Auction Created:', auctionId);
+  }
+);
 
-englishAuction.on("BidPlaced", (
-  auctionId,      // bytes32
-  bidder,         // address
-  bidAmount,      // uint256
-  previousBid,    // uint256
-  previousBidder  // address
-) => {
-  console.log("New Bid:", { auctionId, bidder, bidAmount });
-});
+englishAuction.on(
+  'BidPlaced',
+  (
+    auctionId, // bytes32
+    bidder, // address
+    bidAmount, // uint256
+    previousBid, // uint256
+    previousBidder // address
+  ) => {
+    console.log('New Bid:', { auctionId, bidder, bidAmount });
+  }
+);
 
-englishAuction.on("AuctionFinalized", (
-  auctionId,      // bytes32
-  winner,         // address
-  winningBid,     // uint256
-  platformFee,    // uint256
-  royaltyAmount   // uint256
-) => {
-  console.log("Auction Ended:", { winner, winningBid });
-});
+englishAuction.on(
+  'AuctionFinalized',
+  (
+    auctionId, // bytes32
+    winner, // address
+    winningBid, // uint256
+    platformFee, // uint256
+    royaltyAmount // uint256
+  ) => {
+    console.log('Auction Ended:', { winner, winningBid });
+  }
+);
 
-englishAuction.on("AuctionCancelled", (
-  auctionId,      // bytes32
-  seller          // address
-) => {
-  console.log("Auction Cancelled:", auctionId);
-});
+englishAuction.on(
+  'AuctionCancelled',
+  (
+    auctionId, // bytes32
+    seller // address
+  ) => {
+    console.log('Auction Cancelled:', auctionId);
+  }
+);
 
-englishAuction.on("BidWithdrawn", (
-  auctionId,      // bytes32
-  bidder,         // address
-  amount          // uint256
-) => {
-  console.log("Bid Withdrawn:", { bidder, amount });
-});
+englishAuction.on(
+  'BidWithdrawn',
+  (
+    auctionId, // bytes32
+    bidder, // address
+    amount // uint256
+  ) => {
+    console.log('Bid Withdrawn:', { bidder, amount });
+  }
+);
 
 // Dutch Auction Events
-dutchAuction.on("DutchAuctionCreated", (
-  auctionId,      // bytes32
-  seller,         // address
-  nftContract,    // address
-  tokenId,        // uint256
-  startingPrice,  // uint256
-  endingPrice,    // uint256
-  duration        // uint256
-) => {
-  console.log("Dutch Auction Created:", auctionId);
-});
+dutchAuction.on(
+  'DutchAuctionCreated',
+  (
+    auctionId, // bytes32
+    seller, // address
+    nftContract, // address
+    tokenId, // uint256
+    startingPrice, // uint256
+    endingPrice, // uint256
+    duration // uint256
+  ) => {
+    console.log('Dutch Auction Created:', auctionId);
+  }
+);
 
-dutchAuction.on("DutchAuctionPurchased", (
-  auctionId,      // bytes32
-  buyer,          // address
-  purchasePrice,  // uint256
-  platformFee,    // uint256
-  royaltyAmount   // uint256
-) => {
-  console.log("Dutch Auction Purchased:", { buyer, purchasePrice });
-});
+dutchAuction.on(
+  'DutchAuctionPurchased',
+  (
+    auctionId, // bytes32
+    buyer, // address
+    purchasePrice, // uint256
+    platformFee, // uint256
+    royaltyAmount // uint256
+  ) => {
+    console.log('Dutch Auction Purchased:', { buyer, purchasePrice });
+  }
+);
 ```
 
 #### Offer Events
 
 ```javascript
 // NFT Offer Events
-offerManager.on("NFTOfferCreated", (
-  offerId,        // bytes32
-  offerer,        // address
-  collection,     // address
-  tokenId,        // uint256
-  offerAmount,    // uint256
-  paymentToken,   // address
-  expirationTime  // uint256
-) => {
-  console.log("NFT Offer Created:", { offerId, offerAmount });
-});
+offerManager.on(
+  'NFTOfferCreated',
+  (
+    offerId, // bytes32
+    offerer, // address
+    collection, // address
+    tokenId, // uint256
+    offerAmount, // uint256
+    paymentToken, // address
+    expirationTime // uint256
+  ) => {
+    console.log('NFT Offer Created:', { offerId, offerAmount });
+  }
+);
 
-offerManager.on("NFTOfferAccepted", (
-  offerId,        // bytes32
-  seller,         // address
-  offerer,        // address
-  collection,     // address
-  tokenId,        // uint256
-  offerAmount     // uint256
-) => {
-  console.log("Offer Accepted:", { offerId, seller });
-});
+offerManager.on(
+  'NFTOfferAccepted',
+  (
+    offerId, // bytes32
+    seller, // address
+    offerer, // address
+    collection, // address
+    tokenId, // uint256
+    offerAmount // uint256
+  ) => {
+    console.log('Offer Accepted:', { offerId, seller });
+  }
+);
 
-offerManager.on("NFTOfferCancelled", (
-  offerId,        // bytes32
-  offerer         // address
-) => {
-  console.log("Offer Cancelled:", offerId);
-});
+offerManager.on(
+  'NFTOfferCancelled',
+  (
+    offerId, // bytes32
+    offerer // address
+  ) => {
+    console.log('Offer Cancelled:', offerId);
+  }
+);
 
-offerManager.on("NFTOfferRejected", (
-  offerId,        // bytes32
-  seller          // address
-) => {
-  console.log("Offer Rejected:", offerId);
-});
+offerManager.on(
+  'NFTOfferRejected',
+  (
+    offerId, // bytes32
+    seller // address
+  ) => {
+    console.log('Offer Rejected:', offerId);
+  }
+);
 
 // Collection Offer Events
-offerManager.on("CollectionOfferCreated", (
-  offerId,        // bytes32
-  offerer,        // address
-  collection,     // address
-  pricePerNFT,    // uint256
-  quantity,       // uint256
-  paymentToken,   // address
-  expirationTime  // uint256
-) => {
-  console.log("Collection Offer Created:", { collection, pricePerNFT });
-});
+offerManager.on(
+  'CollectionOfferCreated',
+  (
+    offerId, // bytes32
+    offerer, // address
+    collection, // address
+    pricePerNFT, // uint256
+    quantity, // uint256
+    paymentToken, // address
+    expirationTime // uint256
+  ) => {
+    console.log('Collection Offer Created:', { collection, pricePerNFT });
+  }
+);
 
-offerManager.on("CollectionOfferFulfilled", (
-  offerId,        // bytes32
-  seller,         // address
-  tokenIds,       // uint256[]
-  totalAmount     // uint256
-) => {
-  console.log("Collection Offer Fulfilled:", { tokenIds });
-});
+offerManager.on(
+  'CollectionOfferFulfilled',
+  (
+    offerId, // bytes32
+    seller, // address
+    tokenIds, // uint256[]
+    totalAmount // uint256
+  ) => {
+    console.log('Collection Offer Fulfilled:', { tokenIds });
+  }
+);
 ```
 
 #### Bundle Events
 
 ```javascript
-bundleManager.on("BundleCreated", (
-  bundleId,       // bytes32
-  creator,        // address
-  items,          // BundleItem[]
-  totalPrice,     // uint256
-  expirationTime  // uint256
-) => {
-  console.log("Bundle Created:", { bundleId, totalPrice });
-});
+bundleManager.on(
+  'BundleCreated',
+  (
+    bundleId, // bytes32
+    creator, // address
+    items, // BundleItem[]
+    totalPrice, // uint256
+    expirationTime // uint256
+  ) => {
+    console.log('Bundle Created:', { bundleId, totalPrice });
+  }
+);
 
-bundleManager.on("BundlePurchased", (
-  bundleId,       // bytes32
-  buyer,          // address
-  totalPrice,     // uint256
-  platformFee,    // uint256
-  royaltyAmount   // uint256
-) => {
-  console.log("Bundle Purchased:", { bundleId, buyer });
-});
+bundleManager.on(
+  'BundlePurchased',
+  (
+    bundleId, // bytes32
+    buyer, // address
+    totalPrice, // uint256
+    platformFee, // uint256
+    royaltyAmount // uint256
+  ) => {
+    console.log('Bundle Purchased:', { bundleId, buyer });
+  }
+);
 
-bundleManager.on("BundleCancelled", (
-  bundleId,       // bytes32
-  creator         // address
-) => {
-  console.log("Bundle Cancelled:", bundleId);
-});
+bundleManager.on(
+  'BundleCancelled',
+  (
+    bundleId, // bytes32
+    creator // address
+  ) => {
+    console.log('Bundle Cancelled:', bundleId);
+  }
+);
 
-bundleManager.on("BundleUpdated", (
-  bundleId,       // bytes32
-  newPrice,       // uint256
-  newExpiration   // uint256
-) => {
-  console.log("Bundle Updated:", { bundleId, newPrice });
-});
+bundleManager.on(
+  'BundleUpdated',
+  (
+    bundleId, // bytes32
+    newPrice, // uint256
+    newExpiration // uint256
+  ) => {
+    console.log('Bundle Updated:', { bundleId, newPrice });
+  }
+);
 ```
 
 #### Collection Factory Events
 
 ```javascript
 // ERC721 Factory Events
-erc721Factory.on("CollectionCreated", (
-  collection,     // address
-  creator,        // address
-  name,           // string
-  symbol,         // string
-  maxSupply,      // uint256
-  royaltyBPS      // uint256
-) => {
-  console.log("ERC721 Collection Created:", collection);
-});
+erc721Factory.on(
+  'CollectionCreated',
+  (
+    collection, // address
+    creator, // address
+    name, // string
+    symbol, // string
+    maxSupply, // uint256
+    royaltyBPS // uint256
+  ) => {
+    console.log('ERC721 Collection Created:', collection);
+  }
+);
 
 // ERC1155 Factory Events
-erc1155Factory.on("CollectionCreated", (
-  collection,     // address
-  creator,        // address
-  name,           // string
-  symbol,         // string
-  uri             // string
-) => {
-  console.log("ERC1155 Collection Created:", collection);
-});
+erc1155Factory.on(
+  'CollectionCreated',
+  (
+    collection, // address
+    creator, // address
+    name, // string
+    symbol, // string
+    uri // string
+  ) => {
+    console.log('ERC1155 Collection Created:', collection);
+  }
+);
 
 // Collection Verification Events
-collectionVerifier.on("VerificationRequested", (
-  collection,     // address
-  requester,      // address
-  feePaid,        // uint256
-  timestamp       // uint256
-) => {
-  console.log("Verification Requested:", collection);
-});
+collectionVerifier.on(
+  'VerificationRequested',
+  (
+    collection, // address
+    requester, // address
+    feePaid, // uint256
+    timestamp // uint256
+  ) => {
+    console.log('Verification Requested:', collection);
+  }
+);
 
-collectionVerifier.on("CollectionVerified", (
-  collection,     // address
-  verifier,       // address
-  timestamp       // uint256
-) => {
-  console.log("Collection Verified:", collection);
-});
+collectionVerifier.on(
+  'CollectionVerified',
+  (
+    collection, // address
+    verifier, // address
+    timestamp // uint256
+  ) => {
+    console.log('Collection Verified:', collection);
+  }
+);
 
-collectionVerifier.on("CollectionRejected", (
-  collection,     // address
-  reviewer,       // address
-  reason,         // string
-  timestamp       // uint256
-) => {
-  console.log("Collection Rejected:", { collection, reason });
-});
+collectionVerifier.on(
+  'CollectionRejected',
+  (
+    collection, // address
+    reviewer, // address
+    reason, // string
+    timestamp // uint256
+  ) => {
+    console.log('Collection Rejected:', { collection, reason });
+  }
+);
 ```
 
 #### Fee & Royalty Events
 
 ```javascript
 // Fee Manager Events
-feeManager.on("PlatformFeeUpdated", (
-  oldFee,         // uint256
-  newFee,         // uint256
-  updater         // address
-) => {
-  console.log("Platform Fee Updated:", newFee);
-});
+feeManager.on(
+  'PlatformFeeUpdated',
+  (
+    oldFee, // uint256
+    newFee, // uint256
+    updater // address
+  ) => {
+    console.log('Platform Fee Updated:', newFee);
+  }
+);
 
-feeManager.on("FeeRecipientUpdated", (
-  oldRecipient,   // address
-  newRecipient,   // address
-  updater         // address
-) => {
-  console.log("Fee Recipient Updated:", newRecipient);
-});
+feeManager.on(
+  'FeeRecipientUpdated',
+  (
+    oldRecipient, // address
+    newRecipient, // address
+    updater // address
+  ) => {
+    console.log('Fee Recipient Updated:', newRecipient);
+  }
+);
 
-feeManager.on("MinimumPriceUpdated", (
-  oldMinPrice,    // uint256
-  newMinPrice,    // uint256
-  updater         // address
-) => {
-  console.log("Minimum Price Updated:", newMinPrice);
-});
+feeManager.on(
+  'MinimumPriceUpdated',
+  (
+    oldMinPrice, // uint256
+    newMinPrice, // uint256
+    updater // address
+  ) => {
+    console.log('Minimum Price Updated:', newMinPrice);
+  }
+);
 
 // Royalty Manager Events
-royaltyManager.on("RoyaltySet", (
-  tokenId,        // uint256
-  recipient,      // address
-  royaltyBPS      // uint256
-) => {
-  console.log("Royalty Set:", { tokenId, royaltyBPS });
-});
+royaltyManager.on(
+  'RoyaltySet',
+  (
+    tokenId, // uint256
+    recipient, // address
+    royaltyBPS // uint256
+  ) => {
+    console.log('Royalty Set:', { tokenId, royaltyBPS });
+  }
+);
 
-royaltyManager.on("DefaultRoyaltySet", (
-  recipient,      // address
-  royaltyBPS      // uint256
-) => {
-  console.log("Default Royalty Set:", royaltyBPS);
-});
+royaltyManager.on(
+  'DefaultRoyaltySet',
+  (
+    recipient, // address
+    royaltyBPS // uint256
+  ) => {
+    console.log('Default Royalty Set:', royaltyBPS);
+  }
+);
 
-royaltyManager.on("RoyaltyDeleted", (
-  tokenId         // uint256
-) => {
-  console.log("Royalty Deleted:", tokenId);
-});
+royaltyManager.on(
+  'RoyaltyDeleted',
+  (
+    tokenId // uint256
+  ) => {
+    console.log('Royalty Deleted:', tokenId);
+  }
+);
 ```
 
 #### Access Control & Security Events
 
 ```javascript
 // Access Control Events
-accessControl.on("RoleGranted", (
-  role,           // bytes32
-  account,        // address
-  sender          // address
-) => {
-  console.log("Role Granted:", { role, account });
-});
+accessControl.on(
+  'RoleGranted',
+  (
+    role, // bytes32
+    account, // address
+    sender // address
+  ) => {
+    console.log('Role Granted:', { role, account });
+  }
+);
 
-accessControl.on("RoleRevoked", (
-  role,           // bytes32
-  account,        // address
-  sender          // address
-) => {
-  console.log("Role Revoked:", { role, account });
-});
+accessControl.on(
+  'RoleRevoked',
+  (
+    role, // bytes32
+    account, // address
+    sender // address
+  ) => {
+    console.log('Role Revoked:', { role, account });
+  }
+);
 
-accessControl.on("RoleAdminChanged", (
-  role,           // bytes32
-  previousAdminRole, // bytes32
-  newAdminRole    // bytes32
-) => {
-  console.log("Role Admin Changed:", { role, newAdminRole });
-});
+accessControl.on(
+  'RoleAdminChanged',
+  (
+    role, // bytes32
+    previousAdminRole, // bytes32
+    newAdminRole // bytes32
+  ) => {
+    console.log('Role Admin Changed:', { role, newAdminRole });
+  }
+);
 
 // Emergency Manager Events
-emergencyManager.on("Paused", (
-  account         // address
-) => {
-  console.log("System Paused by:", account);
-});
+emergencyManager.on(
+  'Paused',
+  (
+    account // address
+  ) => {
+    console.log('System Paused by:', account);
+  }
+);
 
-emergencyManager.on("Unpaused", (
-  account         // address
-) => {
-  console.log("System Unpaused by:", account);
-});
+emergencyManager.on(
+  'Unpaused',
+  (
+    account // address
+  ) => {
+    console.log('System Unpaused by:', account);
+  }
+);
 
-emergencyManager.on("EmergencyWithdrawal", (
-  token,          // address
-  recipient,      // address
-  amount          // uint256
-) => {
-  console.log("Emergency Withdrawal:", { token, amount });
-});
+emergencyManager.on(
+  'EmergencyWithdrawal',
+  (
+    token, // address
+    recipient, // address
+    amount // uint256
+  ) => {
+    console.log('Emergency Withdrawal:', { token, amount });
+  }
+);
 
 // Timelock Events
-timelock.on("CallScheduled", (
-  id,             // bytes32
-  index,          // uint256
-  target,         // address
-  value,          // uint256
-  data,           // bytes
-  predecessor,    // bytes32
-  delay           // uint256
-) => {
-  console.log("Timelock Scheduled:", { id, delay });
-});
+timelock.on(
+  'CallScheduled',
+  (
+    id, // bytes32
+    index, // uint256
+    target, // address
+    value, // uint256
+    data, // bytes
+    predecessor, // bytes32
+    delay // uint256
+  ) => {
+    console.log('Timelock Scheduled:', { id, delay });
+  }
+);
 
-timelock.on("CallExecuted", (
-  id,             // bytes32
-  index,          // uint256
-  target,         // address
-  value,          // uint256
-  data            // bytes
-) => {
-  console.log("Timelock Executed:", id);
-});
+timelock.on(
+  'CallExecuted',
+  (
+    id, // bytes32
+    index, // uint256
+    target, // address
+    value, // uint256
+    data // bytes
+  ) => {
+    console.log('Timelock Executed:', id);
+  }
+);
 
-timelock.on("Cancelled", (
-  id              // bytes32
-) => {
-  console.log("Timelock Cancelled:", id);
-});
+timelock.on(
+  'Cancelled',
+  (
+    id // bytes32
+  ) => {
+    console.log('Timelock Cancelled:', id);
+  }
+);
 ```
 
 #### Listing Manager Events
 
 ```javascript
-listingManager.on("ListingCreated", (
-  listingId,      // bytes32
-  listingType,    // enum (FIXED, AUCTION, DUTCH, BUNDLE, OFFER)
-  seller,         // address
-  nftContract,    // address
-  tokenId         // uint256
-) => {
-  console.log("Advanced Listing Created:", { listingId, listingType });
-});
+listingManager.on(
+  'ListingCreated',
+  (
+    listingId, // bytes32
+    listingType, // enum (FIXED, AUCTION, DUTCH, BUNDLE, OFFER)
+    seller, // address
+    nftContract, // address
+    tokenId // uint256
+  ) => {
+    console.log('Advanced Listing Created:', { listingId, listingType });
+  }
+);
 
-listingManager.on("ListingStatusChanged", (
-  listingId,      // bytes32
-  oldStatus,      // enum
-  newStatus       // enum (ACTIVE, SOLD, CANCELLED, EXPIRED, PAUSED)
-) => {
-  console.log("Listing Status Changed:", { listingId, newStatus });
-});
+listingManager.on(
+  'ListingStatusChanged',
+  (
+    listingId, // bytes32
+    oldStatus, // enum
+    newStatus // enum (ACTIVE, SOLD, CANCELLED, EXPIRED, PAUSED)
+  ) => {
+    console.log('Listing Status Changed:', { listingId, newStatus });
+  }
+);
 
-listingManager.on("ListingPaused", (
-  listingId,      // bytes32
-  reason          // string
-) => {
-  console.log("Listing Paused:", { listingId, reason });
-});
+listingManager.on(
+  'ListingPaused',
+  (
+    listingId, // bytes32
+    reason // string
+  ) => {
+    console.log('Listing Paused:', { listingId, reason });
+  }
+);
 
-listingManager.on("ListingResumed", (
-  listingId       // bytes32
-) => {
-  console.log("Listing Resumed:", listingId);
-});
+listingManager.on(
+  'ListingResumed',
+  (
+    listingId // bytes32
+  ) => {
+    console.log('Listing Resumed:', listingId);
+  }
+);
 ```
 
 ### Event Filtering & Querying
@@ -1456,14 +2060,14 @@ listingManager.on("ListingResumed", (
 ```javascript
 // Filter events by specific parameters
 const filter = exchange.filters.NFTListed(
-  null,           // any listingId
-  nftContract,    // specific NFT contract
-  tokenId,        // specific tokenId
-  userAddress,    // specific seller
-  null,           // any price
-  null,           // any amount
-  null,           // any payment token
-  null            // any expiration
+  null, // any listingId
+  nftContract, // specific NFT contract
+  tokenId, // specific tokenId
+  userAddress, // specific seller
+  null, // any price
+  null, // any amount
+  null, // any payment token
+  null // any expiration
 );
 
 // Query historical events
@@ -1471,11 +2075,11 @@ const events = await exchange.queryFilter(filter, fromBlock, toBlock);
 
 // Listen for future events
 exchange.on(filter, (event) => {
-  console.log("Filtered event:", event);
+  console.log('Filtered event:', event);
 });
 
 // Remove listeners
-exchange.removeAllListeners("NFTListed");
+exchange.removeAllListeners('NFTListed');
 ```
 
 ### Event Subscription Best Practices
@@ -1488,7 +2092,7 @@ class EventManager {
   subscribeToExchange(exchange: ethers.Contract) {
     const listingListener = exchange.on("NFTListed", this.handleListing);
     const saleListener = exchange.on("NFTSold", this.handleSale);
-    
+
     this.listeners.set("listing", listingListener);
     this.listeners.set("sale", saleListener);
   }
@@ -1721,28 +2325,28 @@ async function handlePurchase(listingId: string, price: bigint) {
   } catch (error: any) {
     // Parse custom errors
     const errorName = error.reason?.split('(')[0];
-    
+
     switch(errorName) {
       // Payment errors
       case 'NFTExchange__InsufficientPayment':
         throw new Error('Insufficient payment. Please include platform fees.');
-      
-      // Listing errors  
+
+      // Listing errors
       case 'NFTExchange__ListingNotActive':
         throw new Error('This listing is no longer active.');
       case 'NFTExchange__ListingExpired':
         throw new Error('This listing has expired.');
-      
+
       // Permission errors
       case 'NFTExchange__CannotBuyOwnNFT':
         throw new Error('You cannot buy your own NFT.');
       case 'NFTExchange__NotTheOwner':
         throw new Error('You do not own this NFT.');
-      
+
       // Transaction errors
       case 'NFTExchange__TransferFailed':
         throw new Error('NFT transfer failed. Please try again.');
-      
+
       default:
         throw new Error(`Transaction failed: ${error.message}`);
     }
@@ -1752,13 +2356,13 @@ async function handlePurchase(listingId: string, price: bigint) {
 // Error recovery pattern
 async function safeTransaction(fn: () => Promise<any>, maxRetries = 3) {
   let lastError;
-  
+
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await fn();
     } catch (error: any) {
       lastError = error;
-      
+
       // Don't retry on certain errors
       const noRetryErrors = [
         'NFTExchange__ListingNotActive',
@@ -1766,16 +2370,16 @@ async function safeTransaction(fn: () => Promise<any>, maxRetries = 3) {
         'NFTExchange__NotTheOwner',
         'Auction__AuctionEnded'
       ];
-      
+
       if (noRetryErrors.some(e => error.message.includes(e))) {
         throw error;
       }
-      
+
       // Wait before retry
       await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
     }
   }
-  
+
   throw lastError;
 }
 ```
@@ -1785,6 +2389,7 @@ async function safeTransaction(fn: () => Promise<any>, maxRetries = 3) {
 ### Before Trading
 
 1. **Always check approvals**
+
 ```javascript
 const isApproved = await nft.isApprovedForAll(userAddress, exchangeAddress);
 if (!isApproved) {
@@ -1793,15 +2398,17 @@ if (!isApproved) {
 ```
 
 2. **Verify contract addresses**
+
 ```javascript
 // Always verify through hub
 const isValidExchange = await hub.isRegisteredExchange(exchangeAddress);
 ```
 
 3. **Check listing status**
+
 ```javascript
 const listing = await exchange.getListing(listingId);
-if (!listing.isActive || listing.expirationTime < Date.now()/1000) {
+if (!listing.isActive || listing.expirationTime < Date.now() / 1000) {
   // Listing expired or sold
 }
 ```
@@ -1815,7 +2422,7 @@ if (!listing.isActive || listing.expirationTime < Date.now()/1000) {
 const ethPrice = ethers.utils.formatEther(weiPrice);
 
 // ETH to Wei
-const weiPrice = ethers.utils.parseEther("1.5");
+const weiPrice = ethers.utils.parseEther('1.5');
 ```
 
 ### Generate Listing ID
@@ -1824,7 +2431,7 @@ const weiPrice = ethers.utils.parseEther("1.5");
 // Listing ID is deterministic
 const listingId = ethers.utils.keccak256(
   ethers.utils.defaultAbiCoder.encode(
-    ["address", "uint256", "address", "uint256"],
+    ['address', 'uint256', 'address', 'uint256'],
     [nftContract, tokenId, seller, timestamp]
   )
 );
@@ -1834,7 +2441,8 @@ const listingId = ethers.utils.keccak256(
 
 ```javascript
 // Check if ERC721 or ERC1155
-const isERC721 = await hub.getExchangeFor(nftContract) == await hub.getERC721Exchange();
+const isERC721 =
+  (await hub.getExchangeFor(nftContract)) == (await hub.getERC721Exchange());
 const isERC1155 = !isERC721;
 ```
 
@@ -1850,14 +2458,16 @@ const isERC1155 = !isERC721;
 If migrating from direct exchange calls:
 
 **Old way:**
+
 ```javascript
 // Had to manage multiple exchange addresses
-const erc721Exchange = "0x...";
-const erc1155Exchange = "0x...";
+const erc721Exchange = '0x...';
+const erc1155Exchange = '0x...';
 // Manual detection of which to use
 ```
 
 **New way:**
+
 ```javascript
 // Just use hub
 const exchange = await hub.getExchangeFor(nftContract);
@@ -1869,18 +2479,108 @@ const exchange = await hub.getExchangeFor(nftContract);
 ### Emergency Controls
 
 ```javascript
+// Get EmergencyManager from UserHub
+const emergencyManagerAddr = await userHub.getEmergencyManager();
+const emergencyManager = new ethers.Contract(
+  emergencyManagerAddr,
+  EmergencyManagerABI,
+  signer
+);
+
 // Check if system is paused
 const isPaused = await emergencyManager.paused();
 
-// Only admin can pause/unpause
-await emergencyManager.pause(); // Admin only
-await emergencyManager.unpause(); // Admin only
+// Admin: Emergency pause
+await emergencyManager.emergencyPause('Security incident detected');
+
+// Admin: Unpause system
+await emergencyManager.unpause();
+
+// Admin: Emergency withdraw stuck funds
+await emergencyManager.emergencyWithdraw(tokenAddress, amount);
+
+// Get pause history
+const pauseCount = await emergencyManager.pauseCount();
+const lastPauseTime = await emergencyManager.lastPauseTimestamp();
+```
+
+### NFT Status Validation (Conflict Prevention)
+
+**⚠️ Note:** MarketplaceValidator is NOT directly accessible via UserHub. You need the deployed address:
+
+```javascript
+// MarketplaceValidator address from deployment
+const MARKETPLACE_VALIDATOR = '0x...'; // From deployment output
+
+const validator = new ethers.Contract(
+  MARKETPLACE_VALIDATOR,
+  ValidatorABI,
+  provider
+);
+
+// Check if NFT is available for listing/auction
+const [isAvailable, currentStatus] = await validator.isNFTAvailable(
+  nftContract,
+  tokenId,
+  ownerAddress
+);
+
+console.log('Is Available:', isAvailable);
+console.log('Current Status:', currentStatus);
+// Status values: AVAILABLE, LISTED, AUCTIONED, SOLD, CANCELLED
+
+// Get NFT listing/auction ID
+const nftId = await validator.getNFTIdentifier(
+  nftContract,
+  tokenId,
+  ownerAddress
+);
+
+// Check if exchange is registered
+const isRegistered = await validator.registeredExchanges(exchangeAddress);
+
+// Get all registered exchanges
+const allExchanges = await validator.getAllExchanges();
+
+// Get all registered auctions
+const allAuctions = await validator.getAllAuctions();
+```
+
+**How it works:**
+
+1. When you list an NFT, it's marked as `LISTED` in the validator
+2. If you try to auction the same NFT, it will revert with `NFTNotAvailable`
+3. When NFT is sold/cancelled, status is updated to `SOLD`/`CANCELLED`
+4. Prevents double-listing and conflicts between Exchange and Auction
+
+**Admin Functions:**
+
+```javascript
+// Connect as admin
+const adminValidator = validator.connect(adminSigner);
+
+// Register new exchange
+await adminValidator.registerExchange(exchangeAddress, exchangeType);
+
+// Register new auction
+await adminValidator.registerAuction(auctionAddress, auctionType);
+
+// Emergency: Reset NFT status
+await adminValidator.emergencyResetNFTStatus(
+  nftContract,
+  tokenId,
+  ownerAddress
+);
 ```
 
 ### History Tracking
 
 ```javascript
-const historyTracker = new ethers.Contract(historyAddress, HistoryABI, provider);
+const historyTracker = new ethers.Contract(
+  historyAddress,
+  HistoryABI,
+  provider
+);
 
 // Get user's listing history
 const userListings = await historyTracker.getUserListingHistory(userAddress);
@@ -1898,29 +2598,51 @@ const addresses = await hub.getAllAddresses();
 
 // 2. List NFT
 const nft = new ethers.Contract(nftAddress, ERC721ABI, signer);
-const exchange = new ethers.Contract(addresses.erc721Exchange, ExchangeABI, signer);
+const exchange = new ethers.Contract(
+  addresses.erc721Exchange,
+  ExchangeABI,
+  signer
+);
 
 await nft.approve(addresses.erc721Exchange, tokenId);
-await exchange.listNFT(nftAddress, tokenId, parseEther("1"), 86400);
+await exchange.listNFT(nftAddress, tokenId, parseEther('1'), 86400);
 
 // 3. Make offer
-const offerManager = new ethers.Contract(addresses.offerManager, OfferABI, signer);
-await offerManager.createNFTOffer(nftAddress, tokenId, parseEther("0.8"), 86400, {
-  value: parseEther("0.8")
-});
+const offerManager = new ethers.Contract(
+  addresses.offerManager,
+  OfferABI,
+  signer
+);
+await offerManager.createNFTOffer(
+  nftAddress,
+  tokenId,
+  parseEther('0.8'),
+  86400,
+  {
+    value: parseEther('0.8')
+  }
+);
 
 // 4. Create bundle
-const bundleManager = new ethers.Contract(addresses.bundleManager, BundleABI, signer);
-await bundleManager.createBundle(items, parseEther("5"), 86400);
+const bundleManager = new ethers.Contract(
+  addresses.bundleManager,
+  BundleABI,
+  signer
+);
+await bundleManager.createBundle(items, parseEther('5'), 86400);
 
 // 5. Start auction
-const auctionFactory = new ethers.Contract(addresses.auctionFactory, FactoryABI, signer);
+const auctionFactory = new ethers.Contract(
+  addresses.auctionFactory,
+  FactoryABI,
+  signer
+);
 await auctionFactory.createEnglishAuction(
-  nftAddress, 
-  tokenId, 
-  1, 
-  parseEther("0.5"),
-  parseEther("1"), 
+  nftAddress,
+  tokenId,
+  1,
+  parseEther('0.5'),
+  parseEther('1'),
   86400
 );
 ```
@@ -2014,10 +2736,11 @@ export class MarketplaceService {
 
   async createAuction(params: AuctionParams): Promise<string> {
     const factory = this.getContract('auctionFactory');
-    const method = params.type === AuctionType.ENGLISH 
-      ? 'createEnglishAuction' 
-      : 'createDutchAuction';
-    
+    const method =
+      params.type === AuctionType.ENGLISH
+        ? 'createEnglishAuction'
+        : 'createDutchAuction';
+
     const tx = await factory[method](...Object.values(params));
     const receipt = await tx.wait();
     return receipt.logs[0].args.auctionId;
@@ -2039,7 +2762,7 @@ export class MarketplaceService {
 const exchangeAddr = await hub.getExchangeFor(nftContract);
 
 // ❌ BAD - Hardcoding addresses
-const exchange = "0x123..."; // Don't do this!
+const exchange = '0x123...'; // Don't do this!
 ```
 
 ### 2. Handle All Errors
@@ -2048,20 +2771,24 @@ const exchange = "0x123..."; // Don't do this!
 async function safePurchase(listingId: string, price: bigint) {
   try {
     // Calculate total with fees via fee registry
-    const feeRegistry = new ethers.Contract(addresses.feeRegistry, FeeRegistryABI, provider);
+    const feeRegistry = new ethers.Contract(
+      addresses.feeRegistry,
+      FeeRegistryABI,
+      provider
+    );
     const fees = await feeRegistry.calculateFees(nftContract, tokenId, price);
-    
+
     // Check user balance
     const balance = await provider.getBalance(userAddress);
     if (balance < fees.totalPrice) {
       throw new Error('Insufficient balance');
     }
-    
+
     // Execute purchase
     const tx = await exchange.buyNFT(listingId, {
       value: fees.totalPrice
     });
-    
+
     return await tx.wait();
   } catch (error) {
     if (error.code === 'INSUFFICIENT_FUNDS') {
@@ -2110,10 +2837,10 @@ class ContractManager {
 ```typescript
 // Use filters for specific events
 const filter = exchange.filters.NFTListed(
-  null,           // any listingId
-  nftContract,    // specific NFT contract
-  null,           // any tokenId
-  userAddress     // specific seller
+  null, // any listingId
+  nftContract, // specific NFT contract
+  null, // any tokenId
+  userAddress // specific seller
 );
 
 // Query historical events with block range
@@ -2144,7 +2871,7 @@ async function validateAndList(params: ListingParams) {
     params.price,
     params.duration
   );
-  
+
   if (!isValid) {
     throw new Error('Invalid listing parameters');
   }
@@ -2166,6 +2893,7 @@ async function validateAndList(params: ListingParams) {
 ---
 
 **Remember**:
+
 - The UserHub is your single entry point for frontend operations
 - AdminHub is for admin-only operations (registrations, emergency controls)
 - Always calculate fees before purchases via FeeRegistry
