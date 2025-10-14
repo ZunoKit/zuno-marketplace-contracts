@@ -36,6 +36,17 @@ import {IAuctionRegistry} from "../../src/interfaces/registry/IAuctionRegistry.s
 // Advanced Features
 import {OfferManager} from "../../src/core/offers/OfferManager.sol";
 import {BundleManager} from "../../src/core/bundles/BundleManager.sol";
+import {AdvancedListingManager} from "../../src/core/listing/AdvancedListingManager.sol";
+
+// Security & Validation
+import {EmergencyManager} from "../../src/core/security/EmergencyManager.sol";
+import {MarketplaceTimelock} from "../../src/core/security/MarketplaceTimelock.sol";
+import {ListingValidator} from "../../src/core/validation/ListingValidator.sol";
+import {MarketplaceValidator} from "../../src/core/validation/MarketplaceValidator.sol";
+import {CollectionVerifier} from "../../src/core/collection/CollectionVerifier.sol";
+
+// Analytics
+import {ListingHistoryTracker} from "../../src/core/analytics/ListingHistoryTracker.sol";
 
 /**
  * @title DeployAll
@@ -81,12 +92,28 @@ contract DeployAll is Script {
     // Managers
     OfferManager public offerManager;
     BundleManager public bundleManager;
+    AdvancedListingManager public listingManager;
+
+    // Security & Validation
+    EmergencyManager public emergencyManager;
+    MarketplaceTimelock public timelock;
+    ListingValidator public listingValidator;
+    MarketplaceValidator public marketplaceValidator;
+    CollectionVerifier public collectionVerifier;
+    
+    // Analytics
+    ListingHistoryTracker public historyTracker;
 
     function setUp() public {
         admin = vm.envAddress("MARKETPLACE_WALLET");
     }
 
     function run() public {
+        // Ensure admin is set
+        if (admin == address(0)) {
+            admin = vm.envAddress("MARKETPLACE_WALLET");
+        }
+        
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
@@ -98,10 +125,13 @@ contract DeployAll is Script {
 
         // Deploy in correct order
         _deployAccessControl();
+        _deploySecurityAndValidation();
         _deployFees();
         _deployExchanges();
         _deployCollections();
         _deployAuctions();
+        _deployAdvancedManagers();
+        _deployAnalytics();
         _deployHub();
         _printSummary();
 
@@ -109,13 +139,34 @@ contract DeployAll is Script {
     }
 
     function _deployAccessControl() internal {
-        console.log("1/6 Deploying Access Control...");
+        console.log("1/9 Deploying Access Control...");
         accessControl = new MarketplaceAccessControl();
         console.log("  AccessControl:", address(accessControl));
     }
 
+    function _deploySecurityAndValidation() internal {
+        console.log("2/9 Deploying Security & Validation...");
+        
+        // Deploy Emergency Manager
+        emergencyManager = new EmergencyManager(address(accessControl));
+        console.log("  EmergencyManager:", address(emergencyManager));
+        
+        // Deploy Timelock (48 hour delay for critical operations)
+        timelock = new MarketplaceTimelock();
+        console.log("  Timelock:", address(timelock));
+        
+        // Deploy Validators
+        listingValidator = new ListingValidator(address(accessControl));
+        marketplaceValidator = new MarketplaceValidator();
+        collectionVerifier = new CollectionVerifier(address(accessControl), admin, 0);
+        
+        console.log("  ListingValidator:", address(listingValidator));
+        console.log("  MarketplaceValidator:", address(marketplaceValidator));
+        console.log("  CollectionVerifier:", address(collectionVerifier));
+    }
+
     function _deployFees() internal {
-        console.log("2/6 Deploying Fee System...");
+        console.log("3/9 Deploying Fee System...");
         baseFee = new Fee(admin, 500); // 5% default royalty fee
         feeManager = new AdvancedFeeManager(admin, address(accessControl));
         royaltyManager = new AdvancedRoyaltyManager(
@@ -129,7 +180,7 @@ contract DeployAll is Script {
     }
 
     function _deployExchanges() internal {
-        console.log("3/6 Deploying Exchanges...");
+        console.log("4/9 Deploying Exchanges...");
 
         erc721Exchange = new ERC721NFTExchange();
         erc721Exchange.initialize(admin, admin);
@@ -142,7 +193,7 @@ contract DeployAll is Script {
     }
 
     function _deployCollections() internal {
-        console.log("4/6 Deploying Collection Factories...");
+        console.log("5/9 Deploying Collection Factories...");
 
         erc721Factory = new ERC721CollectionFactory();
         erc1155Factory = new ERC1155CollectionFactory();
@@ -157,7 +208,7 @@ contract DeployAll is Script {
     }
 
     function _deployAuctions() internal {
-        console.log("5/6 Deploying Auction System...");
+        console.log("6/9 Deploying Auction System...");
 
         auctionFactory = new AuctionFactory(admin);
 
@@ -175,21 +226,42 @@ contract DeployAll is Script {
     }
 
     function _deployAdvancedManagers() internal {
-        console.log("5.5/6 Deploying Managers...");
+        console.log("7/9 Deploying Advanced Managers...");
+        
+        // Deploy Offer Manager
         offerManager = new OfferManager(
             address(accessControl),
             address(feeManager)
         );
+        console.log("  OfferManager:", address(offerManager));
+        
+        // Deploy Bundle Manager
         bundleManager = new BundleManager(
             address(accessControl),
             address(feeManager)
         );
-        console.log("  OfferManager:", address(offerManager));
         console.log("  BundleManager:", address(bundleManager));
+        
+        // Deploy Advanced Listing Manager
+        listingManager = new AdvancedListingManager(
+            address(accessControl),
+            address(listingValidator)
+        );
+        console.log("  AdvancedListingManager:", address(listingManager));
+    }
+    
+    function _deployAnalytics() internal {
+        console.log("8/9 Deploying Analytics...");
+        
+        // Deploy History Tracker
+        historyTracker = new ListingHistoryTracker(
+            address(accessControl)
+        );
+        console.log("  ListingHistoryTracker:", address(historyTracker));
     }
 
     function _deployHub() internal {
-        console.log("6/6 Deploying MarketplaceHub...");
+        console.log("9/9 Deploying MarketplaceHub...");
 
         // Deploy registries
         hubExchangeRegistry = new ExchangeRegistry(admin);
@@ -201,9 +273,6 @@ contract DeployAll is Script {
             address(royaltyManager)
         );
         hubAuctionRegistry = new AuctionRegistry(admin);
-
-        // Deploy managers before hub
-        _deployAdvancedManagers();
 
         // Deploy hub
         hub = new MarketplaceHub(
@@ -267,6 +336,17 @@ contract DeployAll is Script {
         console.log("  RoyaltyManager:    ", address(royaltyManager));
         console.log("  OfferManager:      ", address(offerManager));
         console.log("  BundleManager:     ", address(bundleManager));
+        console.log("  ListingManager:    ", address(listingManager));
+        console.log("");
+        console.log("SECURITY & VALIDATION:");
+        console.log("  EmergencyManager:  ", address(emergencyManager));
+        console.log("  Timelock:          ", address(timelock));
+        console.log("  ListingValidator:  ", address(listingValidator));
+        console.log("  Validator:         ", address(marketplaceValidator));
+        console.log("  Verifier:          ", address(collectionVerifier));
+        console.log("");
+        console.log("ANALYTICS:");
+        console.log("  HistoryTracker:    ", address(historyTracker));
         console.log("");
         console.log("========================================");
         console.log("  FOR FRONTEND INTEGRATION");
@@ -296,9 +376,9 @@ contract DeployAll is Script {
             address _erc1155Factory,
             address _englishAuction,
             address _dutchAuction,
-            address _baseFee,
-            address _feeManager,
-            address _royaltyManager
+            address _listingManager,
+            address _emergencyManager,
+            address _timelock
         )
     {
         return (
@@ -309,9 +389,9 @@ contract DeployAll is Script {
             address(erc1155Factory),
             address(englishAuction),
             address(dutchAuction),
-            address(baseFee),
-            address(feeManager),
-            address(royaltyManager)
+            address(listingManager),
+            address(emergencyManager),
+            address(timelock)
         );
     }
 }

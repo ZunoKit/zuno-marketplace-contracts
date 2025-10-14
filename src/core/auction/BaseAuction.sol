@@ -576,11 +576,9 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
 
     /**
      * @notice Gets pending refund amount for a bidder
-     * @param auctionId Unique identifier of the auction
-     * @param bidder Address of the bidder
      * @return refundAmount Amount available for refund
      */
-    function getPendingRefund(bytes32 auctionId, address bidder)
+    function getPendingRefund(bytes32, address)
         external
         view
         virtual
@@ -828,40 +826,32 @@ abstract contract BaseAuction is IAuction, ReentrancyGuard, Pausable, Ownable {
 
     /**
      * @notice Places a bid in an English auction (called by factory)
-     * @param auctionId Unique identifier of the auction
-     * @param bidder Address of the actual bidder
      */
-    function placeBidFor(bytes32 auctionId, address bidder) external payable virtual override onlyFactory {
+    function placeBidFor(bytes32, address) external payable virtual override onlyFactory {
         // This will be implemented by child contracts
         revert Auction__UnsupportedAuctionType();
     }
 
     /**
      * @notice Purchases NFT in a Dutch auction (called by factory)
-     * @param auctionId Unique identifier of the auction
-     * @param buyer Address of the actual buyer
      */
-    function buyNowFor(bytes32 auctionId, address buyer) external payable virtual override onlyFactory {
+    function buyNowFor(bytes32, address) external payable virtual override onlyFactory {
         // This will be implemented by child contracts
         revert Auction__UnsupportedAuctionType();
     }
 
     /**
      * @notice Withdraws a refunded bid (called by factory)
-     * @param auctionId Unique identifier of the auction
-     * @param bidder Address of the actual bidder
      */
-    function withdrawBidFor(bytes32 auctionId, address bidder) external virtual override onlyFactory {
+    function withdrawBidFor(bytes32, address) external virtual override onlyFactory {
         // This will be implemented by child contracts
         revert Auction__UnsupportedAuctionType();
     }
 
     /**
      * @notice Cancels an auction (called by factory)
-     * @param auctionId Unique identifier of the auction
-     * @param seller Address of the seller
      */
-    function cancelAuctionFor(bytes32 auctionId, address seller) external virtual override onlyFactory {
+    function cancelAuctionFor(bytes32, address) external virtual override onlyFactory {
         // This will be implemented by child contracts
         revert Auction__UnsupportedAuctionType();
     }
