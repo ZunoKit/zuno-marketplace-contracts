@@ -85,7 +85,7 @@ contract ListingHistoryTrackerTest is Test, TestHelpers {
 
         // Non-admin should not be able to record transactions
         vm.prank(user);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         tracker.recordTransaction(
             address(mockERC721), 1, listingId, ListingHistoryTracker.TransactionType.LISTING_CREATED, seller, 1 ether
         );

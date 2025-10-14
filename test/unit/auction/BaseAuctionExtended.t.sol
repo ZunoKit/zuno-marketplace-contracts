@@ -191,7 +191,7 @@ contract BaseAuctionExtendedTest is AuctionTestHelpers {
 
         address nonSeller = makeAddr("nonSeller");
         vm.prank(nonSeller);
-        vm.expectRevert(); // Should revert with access control error
+        vm.expectRevert("Error message"); // Should revert with access control error
         englishAuction.cancelAuction(auctionId);
     }
 
@@ -235,7 +235,7 @@ contract BaseAuctionExtendedTest is AuctionTestHelpers {
 
         // Test that functions with onlySeller modifier revert for non-sellers
         vm.prank(nonSeller);
-        vm.expectRevert(); // Should revert with access control error
+        vm.expectRevert("Error message"); // Should revert with access control error
         englishAuction.cancelAuction(auctionId);
     }
 

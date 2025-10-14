@@ -238,15 +238,15 @@ contract OfferManagerTest is Test, TestHelpers {
         vm.startPrank(offerer);
 
         // Test invalid collection (zero address)
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         offerManager.createNFTOffer{value: offerAmount}(address(0), tokenId, address(0), offerAmount, expiration);
 
         // Test invalid amount (zero)
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         offerManager.createNFTOffer{value: 0}(collection, tokenId, address(0), 0, expiration);
 
         // Test invalid expiration (too short)
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         offerManager.createNFTOffer{value: offerAmount}(
             collection,
             tokenId,
@@ -256,7 +256,7 @@ contract OfferManagerTest is Test, TestHelpers {
         );
 
         // Test invalid expiration (too long)
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         offerManager.createNFTOffer{value: offerAmount}(
             collection,
             tokenId,
@@ -266,7 +266,7 @@ contract OfferManagerTest is Test, TestHelpers {
         );
 
         // Test incorrect ETH amount
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         offerManager.createNFTOffer{value: 0.5 ether}(
             collection,
             tokenId,
@@ -289,7 +289,7 @@ contract OfferManagerTest is Test, TestHelpers {
 
         // Try to cancel as different user
         vm.prank(seller);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         offerManager.cancelOffer(offerId, "Cancel reason");
     }
 
@@ -321,7 +321,7 @@ contract OfferManagerTest is Test, TestHelpers {
         vm.startPrank(offerer);
 
         // Test invalid quantity (zero)
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         offerManager.createCollectionOffer{value: 0}(
             collection,
             address(0),
@@ -331,7 +331,7 @@ contract OfferManagerTest is Test, TestHelpers {
         );
 
         // Test invalid quantity (too high)
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         offerManager.createCollectionOffer{value: 101 ether}(
             collection,
             address(0),
@@ -350,7 +350,7 @@ contract OfferManagerTest is Test, TestHelpers {
         vm.startPrank(offerer);
 
         // Test invalid quantity (too high for trait offers)
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         offerManager.createTraitOffer{value: 51 ether}(
             collection,
             "Background",
@@ -362,7 +362,7 @@ contract OfferManagerTest is Test, TestHelpers {
         );
 
         // Test empty trait type
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         offerManager.createTraitOffer{value: offerAmount}(
             collection,
             "", // Empty trait type
@@ -374,7 +374,7 @@ contract OfferManagerTest is Test, TestHelpers {
         );
 
         // Test empty trait value
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         offerManager.createTraitOffer{value: offerAmount}(
             collection,
             "Background",
@@ -536,7 +536,7 @@ contract OfferManagerTest is Test, TestHelpers {
         bytes32 nonExistentOfferId = keccak256("nonexistent");
 
         vm.prank(offerer);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         offerManager.cancelOffer(nonExistentOfferId, "Cancel reason");
     }
 
@@ -552,7 +552,7 @@ contract OfferManagerTest is Test, TestHelpers {
         offerManager.cancelOffer(offerId, "Cancel reason");
 
         // Try to cancel again
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         offerManager.cancelOffer(offerId, "Cancel reason");
 
         vm.stopPrank();
@@ -630,7 +630,7 @@ contract OfferManagerTest is Test, TestHelpers {
 
         // Try to create offer while paused
         vm.prank(offerer);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         offerManager.createNFTOffer{value: offerAmount}(collection, tokenId + 1, address(0), offerAmount, expiration);
 
         // Unpause

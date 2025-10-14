@@ -70,7 +70,7 @@ contract SecurityIntegrationTest is Test {
 
         // Only admin can pause
         vm.prank(attacker);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         emergencyManager.emergencyPause("Test pause");
         console2.log("Non-admin pause correctly rejected");
 
@@ -82,7 +82,7 @@ contract SecurityIntegrationTest is Test {
 
         // Operator cannot unpause (only admin)
         vm.prank(operator);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         emergencyManager.emergencyUnpause();
         console2.log("Operator unpause correctly rejected");
 
@@ -143,7 +143,7 @@ contract SecurityIntegrationTest is Test {
 
         // Layer 1: Access Control prevents unauthorized actions
         vm.prank(attacker);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         accessControl.grantRole(OPERATOR_ROLE, attacker);
         console2.log("Layer 1 (Access Control): Unauthorized role grant prevented");
 
@@ -239,7 +239,7 @@ contract SecurityIntegrationTest is Test {
 
         // Attacker's transaction fails (already sold)
         vm.prank(attacker);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         exchange.buyNFT{value: price}(listingId);
         console2.log("Front-running attempt fails (NFT already sold)");
 
@@ -255,13 +255,13 @@ contract SecurityIntegrationTest is Test {
 
         // Attacker tries to escalate to operator
         vm.prank(attacker);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         accessControl.grantRole(OPERATOR_ROLE, attacker);
         console2.log("Self-grant operator role prevented");
 
         // Operator tries to escalate to admin
         vm.prank(operator);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         accessControl.grantRole(ADMIN_ROLE, operator);
         console2.log("Operator escalation to admin prevented");
 
@@ -303,7 +303,7 @@ contract SecurityIntegrationTest is Test {
 
         // Test 4: Permission checks
         vm.prank(attacker);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         emergencyManager.emergencyPause("Test pause");
         console2.log("[PASS] Permission checks enforced");
 

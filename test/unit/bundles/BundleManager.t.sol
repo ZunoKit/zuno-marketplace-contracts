@@ -137,7 +137,7 @@ contract BundleManagerTest is Test, TestHelpers, IERC1155Receiver {
         });
 
         vm.prank(seller);
-        vm.expectRevert(); // Should revert due to excessive discount (>50%)
+        vm.expectRevert("Error message"); // Should revert due to excessive discount (>50%)
         bundleManager.createBundle(
             items,
             5 ether,
@@ -324,7 +324,7 @@ contract BundleManagerTest is Test, TestHelpers, IERC1155Receiver {
     function testAccessControl() public {
         // Non-admin should not be able to pause
         vm.prank(seller);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         bundleManager.pause();
     }
 
@@ -343,7 +343,7 @@ contract BundleManagerTest is Test, TestHelpers, IERC1155Receiver {
 
         // Should not be able to create bundle when paused
         vm.prank(seller);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         bundleManager.createBundle(items, 1 ether, 0, address(0), block.timestamp + 7 days, "Test Bundle", "");
 
         vm.prank(admin);

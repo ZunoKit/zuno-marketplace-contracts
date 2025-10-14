@@ -292,21 +292,21 @@ contract BasicWorkflowsTest is Test {
         uint256 totalPrice = PRICE + takerFee;
         vm.deal(user2, totalPrice);
         bytes32 fakeListingId = erc721Exchange.getGeneratedListingId(address(mockERC721), TOKEN_ID, user1);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         erc721Exchange.buyNFT{value: totalPrice}(fakeListingId);
         vm.stopPrank();
 
         // Try to list without approval
         vm.startPrank(user1);
         mockERC721.setApprovalForAll(address(erc721Exchange), false); // remove approval for all
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         erc721Exchange.listNFT(address(mockERC721), TOKEN_ID, PRICE, 86400);
         vm.stopPrank();
 
         // Try to list with zero price
         vm.startPrank(user1);
         mockERC721.setApprovalForAll(address(erc721Exchange), true); // re-enable approval
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         erc721Exchange.listNFT(address(mockERC721), TOKEN_ID, 0, 86400);
         vm.stopPrank();
     }

@@ -368,7 +368,7 @@ contract E2E_AuctionsTest is E2E_BaseSetup {
 
         // Alice attempts to cancel auction with existing bids -> should revert
         vm.prank(alice);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         auctionFactory.cancelAuction(auctionId);
         console2.log("Step 3: Cancellation reverted as expected (bids exist)");
 

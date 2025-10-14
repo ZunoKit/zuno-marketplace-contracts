@@ -89,7 +89,7 @@ contract EmergencyManagerTest is Test {
     function test_EmergencyPause_RevertNotOwner() public {
         vm.startPrank(user1);
 
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         emergencyManager.emergencyPause("Unauthorized attempt");
     }
 
@@ -140,7 +140,7 @@ contract EmergencyManagerTest is Test {
         vm.stopPrank();
 
         vm.startPrank(user1);
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         emergencyManager.emergencyUnpause();
     }
 
@@ -170,7 +170,7 @@ contract EmergencyManagerTest is Test {
     function test_SetContractBlacklist_RevertNotOwner() public {
         vm.startPrank(user1);
 
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         emergencyManager.setContractBlacklist(maliciousContract, true, "Malicious contract");
     }
 
@@ -215,7 +215,7 @@ contract EmergencyManagerTest is Test {
     function test_SetUserBlacklist_RevertNotOwner() public {
         vm.startPrank(user1);
 
-        vm.expectRevert();
+        vm.expectRevert("Error message");
         emergencyManager.setUserBlacklist(user2, true, "Blacklisted user");
     }
 
