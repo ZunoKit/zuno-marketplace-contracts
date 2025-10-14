@@ -53,8 +53,16 @@ contract AdminHub is AccessControl {
         require(_feeRegistry != address(0), "FeeRegistry cannot be zero");
         require(_auctionRegistry != address(0), "AuctionRegistry cannot be zero");
 
+        // Grant roles to admin (permanent)
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(ADMIN_ROLE, admin);
+
+        // Also grant roles to deployer (msg.sender) for initial setup if different from admin
+        // Deployer should revoke their own roles after deployment completes
+        if (msg.sender != admin) {
+            _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+            _grantRole(ADMIN_ROLE, msg.sender);
+        }
 
         exchangeRegistry = IExchangeRegistry(_exchangeRegistry);
         collectionRegistry = ICollectionRegistry(_collectionRegistry);
