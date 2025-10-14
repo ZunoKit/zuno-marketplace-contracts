@@ -362,12 +362,12 @@ contract BaseAuctionTest is AuctionTestHelpers {
 
         // Test that non-owner cannot set marketplace fee
         vm.prank(nonOwner);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), nonOwner));
         testableAuction.setMarketplaceFee(300);
 
         // Test that non-owner cannot set min bid increment
         vm.prank(nonOwner);
-        vm.expectRevert("Error message");
+        vm.expectRevert(abi.encodeWithSelector(bytes4(keccak256("OwnableUnauthorizedAccount(address)")), nonOwner));
         testableAuction.setMinBidIncrement(300);
     }
 }
